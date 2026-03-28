@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 
 class HomesteadHubAPITester:
-    def __init__(self, base_url="https://homesteader-match.preview.emergentagent.com"):
+    def __init__(self, base_url="https://rebel-market.preview.emergentagent.com"):
         self.base_url = base_url
         self.session = requests.Session()
         self.tests_run = 0

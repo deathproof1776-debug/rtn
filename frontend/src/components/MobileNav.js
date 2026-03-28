@@ -1,8 +1,9 @@
-import { House, ChatCircle, User, Plus } from '@phosphor-icons/react';
+import { House, ChatCircle, User, Plus, Handshake } from '@phosphor-icons/react';
 
-export default function MobileNav({ activeView, setActiveView, onCreatePost }) {
+export default function MobileNav({ activeView, setActiveView, onCreatePost, networkRequestCount = 0 }) {
   const navItems = [
     { id: 'feed', label: 'Feed', icon: House },
+    { id: 'network', label: 'Network', icon: Handshake, badge: networkRequestCount },
     { id: 'create', label: 'Post', icon: Plus, action: onCreatePost },
     { id: 'messages', label: 'Messages', icon: ChatCircle },
     { id: 'profile', label: 'Profile', icon: User },
@@ -33,10 +34,17 @@ export default function MobileNav({ activeView, setActiveView, onCreatePost }) {
                 <item.icon size={22} weight="bold" className="text-white" />
               </div>
             ) : (
-              <item.icon 
-                size={22} 
-                weight={isActive ? 'fill' : 'regular'} 
-              />
+              <div className="relative">
+                <item.icon 
+                  size={22} 
+                  weight={isActive ? 'fill' : 'regular'} 
+                />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#B45309] text-white text-[9px] px-1 py-0.5 rounded-full min-w-[14px] text-center leading-none">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
             )}
             <span>{item.label}</span>
           </button>

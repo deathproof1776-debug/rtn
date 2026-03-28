@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ArrowsLeftRight, Lightning, Users, MapPin, NavigationArrow, SealCheck } from '@phosphor-icons/react';
+import { ArrowsLeftRight, Lightning, Users, MapPin, NavigationArrow, SealCheck, Handshake } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function RightPanel({ matches }) {
+export default function RightPanel({ matches, onViewProfile }) {
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [userLocation, setUserLocation] = useState('');
   const [loadingNearby, setLoadingNearby] = useState(true);
+  const [networkCount, setNetworkCount] = useState(0);
 
   useEffect(() => {
     fetchNearbyUsers();
+    fetchNetworkCount();
   }, []);
 
   const fetchNearbyUsers = async () => {
@@ -24,6 +26,17 @@ export default function RightPanel({ matches }) {
       console.error('Error fetching nearby users:', error);
     } finally {
       setLoadingNearby(false);
+    }
+  };
+
+  const fetchNetworkCount = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/network/connections`, {
+        withCredentials: true
+      });
+      setNetworkCount(res.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching network count:', error);
     }
   };
 
@@ -71,7 +84,7 @@ export default function RightPanel({ matches }) {
         ) : (
           <div className="space-y-3">
             {nearbyUsers.slice(0, 4).map((user) => (
-              <NearbyUserCard key={user._id} user={user} />
+              <NearbyUserCard key={user._id} user={user} onClick={() => onViewProfile && onViewProfile(user._id)} />
             ))}
           </div>
         )}
@@ -96,7 +109,7 @@ export default function RightPanel({ matches }) {
         ) : (
           <div className="space-y-3">
             {sortedMatches.slice(0, 5).map((match) => (
-              <MatchCard key={match._id} match={match} />
+              <MatchCard key={match._id} match={match} onClick={() => onViewProfile && onViewProfile(match.user_id)} />
             ))}
           </div>
         )}
@@ -111,7 +124,11 @@ export default function RightPanel({ matches }) {
         </div>
         
         <div className="bg-[#1C1917] border border-[#292524] p-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-2xl font-bold text-[#B45309]">{networkCount}</p>
+              <p className="text-xs text-[#78716C] uppercase tracking-wider">Network</p>
+            </div>
             <div>
               <p className="text-2xl font-bold text-[#B45309]">{matches.length}</p>
               <p className="text-xs text-[#78716C] uppercase tracking-wider">Matches</p>
@@ -134,16 +151,20 @@ export default function RightPanel({ matches }) {
   );
 }
 
-function NearbyUserCard({ user }) {
+function NearbyUserCard({ user, onClick }) {
   return (
-    <div className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#84CC16] p-3 card-hover" data-testid={`nearby-user-${user._id}`}>
+    <div 
+      className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#84CC16] p-3 card-hover cursor-pointer" 
+      data-testid={`nearby-user-${user._id}`}
+      onClick={onClick}
+    >
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#84CC16] font-semibold shrink-0">
           {user.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-[#E7E5E4] text-sm truncate">{user.name}</h4>
+            <h4 className="font-medium text-[#E7E5E4] text-sm truncate hover:text-[#B45309]">{user.name}</h4>
             {user.is_verified && (
               <span className="verified-badge">
                 <SealCheck size={10} weight="fill" />
@@ -168,9 +189,13 @@ function NearbyUserCard({ user }) {
   );
 }
 
-function MatchCard({ match }) {
+function MatchCard({ match, onClick }) {
   return (
-    <div className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#B45309] p-3 card-hover" data-testid={`match-${match._id}`}>
+    <div 
+      className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#B45309] p-3 card-hover cursor-pointer" 
+      data-testid={`match-${match._id}`}
+      onClick={onClick}
+    >
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold shrink-0">
           {match.user_name?.charAt(0)?.toUpperCase() || 'U'}

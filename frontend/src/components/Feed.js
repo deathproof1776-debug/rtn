@@ -13,7 +13,8 @@ import {
   CaretDown,
   CaretUp,
   ArrowClockwise,
-  SealCheck
+  SealCheck,
+  Handshake
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -277,6 +278,12 @@ function PostCard({ post, onLike, currentUserId }) {
                 <span className="verified-badge" data-testid={`verified-badge-${post._id}`}>
                   <SealCheck size={10} weight="fill" />
                   Verified Trader
+                </span>
+              )}
+              {post.is_network && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#B45309]/20 text-[#F59E0B] text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`network-badge-${post._id}`}>
+                  <Handshake size={10} weight="fill" />
+                  Network
                 </span>
               )}
               {post.is_nearby && (

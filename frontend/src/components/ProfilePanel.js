@@ -10,7 +10,9 @@ import {
   Plus,
   X,
   Camera,
-  SealCheck
+  SealCheck,
+  Handshake,
+  UsersThree
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -37,10 +39,12 @@ export default function ProfilePanel() {
   const [goodsWantedInput, setGoodsWantedInput] = useState('');
   const [servicesOfferingInput, setServicesOfferingInput] = useState('');
   const [servicesWantedInput, setServicesWantedInput] = useState('');
+  const [networkConnections, setNetworkConnections] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchProfile();
+    fetchNetworkConnections();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -65,6 +69,17 @@ export default function ProfilePanel() {
       console.error('Error fetching profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNetworkConnections = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/network/connections`, {
+        withCredentials: true
+      });
+      setNetworkConnections(response.data.connections || []);
+    } catch (error) {
+      console.error('Error fetching network connections:', error);
     }
   };
 
@@ -356,6 +371,45 @@ export default function ProfilePanel() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* My Trade Network Summary */}
+        <div className="bg-[#0C0A09] p-4 border border-[#292524]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Handshake size={18} className="text-[#B45309]" />
+              <span className="text-sm font-semibold text-[#E7E5E4]">My Trade Network</span>
+            </div>
+            <span className="text-xs text-[#78716C]">{networkConnections.length} connections</span>
+          </div>
+          {networkConnections.length === 0 ? (
+            <p className="text-xs text-[#78716C]">
+              Build your network by connecting with other traders
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {networkConnections.slice(0, 6).map((conn) => (
+                <div 
+                  key={conn.id} 
+                  className="flex items-center gap-1.5 px-2 py-1 bg-[#1C1917] border border-[#292524]"
+                  title={conn.name}
+                >
+                  <div className="w-5 h-5 bg-[#292524] flex items-center justify-center text-[#B45309] text-[10px] font-semibold">
+                    {conn.avatar ? (
+                      <img src={conn.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      conn.name?.charAt(0)?.toUpperCase() || 'U'
+                    )}
+                  </div>
+                  <span className="text-xs text-[#A8A29E] truncate max-w-[80px]">{conn.name}</span>
+                  {conn.is_verified && <SealCheck size={10} className="text-[#B45309] flex-shrink-0" weight="fill" />}
+                </div>
+              ))}
+              {networkConnections.length > 6 && (
+                <span className="text-xs text-[#78716C] self-center">+{networkConnections.length - 6} more</span>
+              )}
+            </div>
+          )}
         </div>
 
         <button

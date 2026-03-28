@@ -6,15 +6,17 @@ import {
   Plus, 
   SignOut, 
   Shield,
-  X
+  X,
+  Handshake
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 
-export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose }) {
+export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose, networkRequestCount = 0 }) {
   const { user, logout } = useAuth();
 
   const navItems = [
     { id: 'feed', label: 'Feed', icon: House },
+    { id: 'network', label: 'My Trade Network', icon: Handshake, badge: networkRequestCount },
     { id: 'messages', label: 'Messages', icon: ChatCircle },
     { id: 'profile', label: 'Profile', icon: User },
   ];
@@ -69,6 +71,11 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
           >
             <item.icon size={22} weight={activeView === item.id ? 'fill' : 'regular'} />
             <span>{item.label}</span>
+            {item.badge > 0 && (
+              <span className="ml-auto bg-[#B45309] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                {item.badge}
+              </span>
+            )}
           </button>
         ))}
       </nav>

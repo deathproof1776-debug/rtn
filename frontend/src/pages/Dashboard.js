@@ -8,6 +8,8 @@ import RightPanel from '../components/RightPanel';
 import CreatePostModal from '../components/CreatePostModal';
 import MessagesPanel from '../components/MessagesPanel';
 import ProfilePanel from '../components/ProfilePanel';
+import TradeNetworkPanel from '../components/TradeNetworkPanel';
+import UserProfileView from '../components/UserProfileView';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 
@@ -22,6 +24,8 @@ export default function Dashboard() {
   const [matches, setMatches] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [networkRequestCount, setNetworkRequestCount] = useState(0);
+  const [viewingProfileId, setViewingProfileId] = useState(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,6 +37,7 @@ export default function Dashboard() {
     if (user) {
       fetchPosts();
       fetchMatches();
+      fetchNetworkRequests();
     }
   }, [user]);
 
@@ -60,9 +65,30 @@ export default function Dashboard() {
     }
   };
 
+  const fetchNetworkRequests = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/network/requests/pending`, {
+        withCredentials: true
+      });
+      setNetworkRequestCount(response.data.incoming_count || 0);
+    } catch (error) {
+      console.error('Error fetching network requests:', error);
+    }
+  };
+
   const handlePostCreated = (newPost) => {
     setPosts([newPost, ...posts]);
     setShowCreatePost(false);
+  };
+
+  const handleViewProfile = (userId) => {
+    setViewingProfileId(userId);
+  };
+
+  const handleStartChat = (userId) => {
+    setViewingProfileId(null);
+    setActiveView('messages');
+    // The MessagesPanel will need to handle starting a chat with this user
   };
 
   if (loading) {
@@ -105,6 +131,7 @@ export default function Dashboard() {
           }}
           isMobile={true}
           onClose={() => setSidebarOpen(false)}
+          networkRequestCount={networkRequestCount}
         />
       </div>
 
@@ -113,6 +140,7 @@ export default function Dashboard() {
         activeView={activeView} 
         setActiveView={setActiveView}
         onCreatePost={() => setShowCreatePost(true)}
+        networkRequestCount={networkRequestCount}
       />
       
       <main className="main-feed">
@@ -125,23 +153,37 @@ export default function Dashboard() {
             onRefresh={fetchPosts}
           />
         )}
+        {activeView === 'network' && (
+          <TradeNetworkPanel 
+            onViewProfile={handleViewProfile}
+          />
+        )}
         {activeView === 'messages' && <MessagesPanel />}
         {activeView === 'profile' && <ProfilePanel />}
       </main>
 
-      <RightPanel matches={matches} />
+      <RightPanel matches={matches} onViewProfile={handleViewProfile} />
 
       {/* Mobile Bottom Navigation */}
       <MobileNav 
         activeView={activeView}
         setActiveView={setActiveView}
         onCreatePost={() => setShowCreatePost(true)}
+        networkRequestCount={networkRequestCount}
       />
 
       {showCreatePost && (
         <CreatePostModal 
           onClose={() => setShowCreatePost(false)}
           onPostCreated={handlePostCreated}
+        />
+      )}
+
+      {viewingProfileId && (
+        <UserProfileView
+          userId={viewingProfileId}
+          onClose={() => setViewingProfileId(null)}
+          onStartChat={handleStartChat}
         />
       )}
     </div>

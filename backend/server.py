@@ -195,6 +195,13 @@ class PushSubscription(BaseModel):
     endpoint: str
     keys: Dict[str, str]  # Contains 'p256dh' and 'auth'
 
+class NetworkRequest(BaseModel):
+    target_user_id: str
+
+class NetworkRequestResponse(BaseModel):
+    request_id: str
+    accept: bool
+
 # Auth helper
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get("access_token")
@@ -414,6 +421,21 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
     user = await get_current_user(request)  # Verify auth
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
     
+    # Get user's trade network connections for priority
+    network_connections = await db.network_connections.find({
+        "$or": [
+            {"user_id": user["_id"]},
+            {"connected_user_id": user["_id"]}
+        ]
+    }).to_list(500)
+    
+    network_user_ids = set()
+    for conn in network_connections:
+        if conn["user_id"] == user["_id"]:
+            network_user_ids.add(conn["connected_user_id"])
+        else:
+            network_user_ids.add(conn["user_id"])
+    
     # Decrypt user's location for nearby filtering
     user_location = ""
     if user_doc.get("location"):
@@ -422,7 +444,7 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
         except Exception:
             user_location = user_doc.get("location", "")
     
-    posts = await db.posts.find({}, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit).to_list(100 if nearby_only else limit)
+    posts = await db.posts.find({}, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit * 3).to_list(100 if nearby_only else limit * 3)
     
     # Get user locations and verification status
     user_ids = list(set([p["user_id"] for p in posts]))
@@ -462,6 +484,15 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
         post["user_location"] = poster_location
         post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
         post["is_verified"] = user_data["is_verified"]
+        post["is_network"] = post["user_id"] in network_user_ids
+        
+        # Calculate feed priority score (network members get priority)
+        feed_score = 0
+        if post["is_network"]:
+            feed_score += 200  # Network member priority
+        if post.get("is_nearby"):
+            feed_score += 100  # Location bonus
+        post["feed_score"] = feed_score
         
         # Filter if nearby_only
         if nearby_only:
@@ -469,6 +500,10 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
                 result_posts.append(post)
         else:
             result_posts.append(post)
+    
+    # Sort by feed_score (network + nearby first), then by date
+    result_posts.sort(key=lambda x: (-x.get("feed_score", 0), x.get("created_at", "")), reverse=False)
+    result_posts.sort(key=lambda x: -x.get("feed_score", 0))
     
     return result_posts[:limit]
 
@@ -504,9 +539,24 @@ def locations_match(loc1: str, loc2: str) -> bool:
 
 @api_router.get("/posts/matches")
 async def get_matched_posts(request: Request):
-    """Get posts that match user's wants with others' offerings, prioritized by location"""
+    """Get posts that match user's wants with others' offerings, prioritized by network + location"""
     user = await get_current_user(request)
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
+    
+    # Get user's trade network connections
+    network_connections = await db.network_connections.find({
+        "$or": [
+            {"user_id": user["_id"]},
+            {"connected_user_id": user["_id"]}
+        ]
+    }).to_list(500)
+    
+    network_user_ids = set()
+    for conn in network_connections:
+        if conn["user_id"] == user["_id"]:
+            network_user_ids.add(conn["connected_user_id"])
+        else:
+            network_user_ids.add(conn["user_id"])
     
     # Decrypt user's location
     user_location = ""
@@ -564,9 +614,12 @@ async def get_matched_posts(request: Request):
         post["user_location"] = poster_location
         post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
         post["is_verified"] = user_data["is_verified"]
+        post["is_network"] = post["user_id"] in network_user_ids
         
-        # Calculate match score (higher = better)
+        # Calculate match score (higher = better) - Network members get top priority
         score = 0
+        if post["is_network"]:
+            score += 200  # Network member priority (highest)
         if post.get("is_nearby"):
             score += 100  # Location match bonus
         # Check goods/services match
@@ -580,7 +633,7 @@ async def get_matched_posts(request: Request):
                 score += 10
         post["match_score"] = score
     
-    # Sort by match_score (nearby + relevant first), then by date
+    # Sort by match_score (network + nearby + relevant first), then by date
     posts.sort(key=lambda x: (-x.get("match_score", 0), x.get("created_at", "")), reverse=False)
     posts.sort(key=lambda x: -x.get("match_score", 0))
     
@@ -1038,6 +1091,280 @@ async def test_push_notification(request: Request):
     
     return {"message": "Test notification sent"}
 
+# ========================
+# Trade Network Endpoints
+# ========================
+
+@api_router.post("/network/request")
+async def send_network_request(data: NetworkRequest, request: Request, background_tasks: BackgroundTasks):
+    """Send a trade network request to another user"""
+    user = await get_current_user(request)
+    target_user_id = data.target_user_id
+    
+    # Can't send request to self
+    if target_user_id == user["_id"]:
+        raise HTTPException(status_code=400, detail="Cannot send network request to yourself")
+    
+    # Check if target user exists
+    target_user = await db.users.find_one({"_id": ObjectId(target_user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if already connected
+    existing_connection = await db.network_connections.find_one({
+        "$or": [
+            {"user_id": user["_id"], "connected_user_id": target_user_id},
+            {"user_id": target_user_id, "connected_user_id": user["_id"]}
+        ]
+    })
+    if existing_connection:
+        raise HTTPException(status_code=400, detail="Already in trade network")
+    
+    # Check if request already exists (either direction)
+    existing_request = await db.network_requests.find_one({
+        "$or": [
+            {"from_user_id": user["_id"], "to_user_id": target_user_id, "status": "pending"},
+            {"from_user_id": target_user_id, "to_user_id": user["_id"], "status": "pending"}
+        ]
+    })
+    if existing_request:
+        raise HTTPException(status_code=400, detail="Network request already pending")
+    
+    # Create request
+    request_doc = {
+        "from_user_id": user["_id"],
+        "from_user_name": user.get("name", "Unknown"),
+        "from_user_avatar": user.get("avatar", ""),
+        "to_user_id": target_user_id,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    result = await db.network_requests.insert_one(request_doc)
+    
+    # Send push notification to target user
+    background_tasks.add_task(
+        send_push_notification,
+        user_id=target_user_id,
+        title="New Trade Network Request",
+        body=f"{user.get('name', 'Someone')} wants to join your trade network",
+        data={"type": "network_request", "from_user_id": user["_id"], "url": "/network"}
+    )
+    
+    return {"id": str(result.inserted_id), "message": "Network request sent"}
+
+@api_router.post("/network/respond")
+async def respond_to_network_request(data: NetworkRequestResponse, request: Request, background_tasks: BackgroundTasks):
+    """Accept or decline a network request"""
+    user = await get_current_user(request)
+    request_id = data.request_id
+    
+    # Find the request
+    network_request = await db.network_requests.find_one({
+        "_id": ObjectId(request_id),
+        "to_user_id": user["_id"],
+        "status": "pending"
+    })
+    
+    if not network_request:
+        raise HTTPException(status_code=404, detail="Network request not found")
+    
+    from_user_id = network_request["from_user_id"]
+    
+    if data.accept:
+        # Create bidirectional connection
+        connection_doc = {
+            "user_id": user["_id"],
+            "connected_user_id": from_user_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.network_connections.insert_one(connection_doc)
+        
+        # Update request status
+        await db.network_requests.update_one(
+            {"_id": ObjectId(request_id)},
+            {"$set": {"status": "accepted", "responded_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # Send push notification to requester
+        background_tasks.add_task(
+            send_push_notification,
+            user_id=from_user_id,
+            title="Network Request Accepted",
+            body=f"{user.get('name', 'Someone')} accepted your trade network request",
+            data={"type": "network_accepted", "user_id": user["_id"], "url": "/network"}
+        )
+        
+        return {"message": "Network request accepted", "connected": True}
+    else:
+        # Decline request
+        await db.network_requests.update_one(
+            {"_id": ObjectId(request_id)},
+            {"$set": {"status": "declined", "responded_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {"message": "Network request declined", "connected": False}
+
+@api_router.get("/network/requests/pending")
+async def get_pending_requests(request: Request):
+    """Get pending network requests for current user"""
+    user = await get_current_user(request)
+    
+    # Incoming requests
+    incoming = await db.network_requests.find({
+        "to_user_id": user["_id"],
+        "status": "pending"
+    }).sort("created_at", -1).to_list(50)
+    
+    # Outgoing requests
+    outgoing = await db.network_requests.find({
+        "from_user_id": user["_id"],
+        "status": "pending"
+    }).sort("created_at", -1).to_list(50)
+    
+    # Format responses
+    incoming_formatted = []
+    for req in incoming:
+        from_user = await db.users.find_one({"_id": ObjectId(req["from_user_id"])}, {"password_hash": 0})
+        if from_user:
+            incoming_formatted.append({
+                "id": str(req["_id"]),
+                "from_user_id": req["from_user_id"],
+                "from_user_name": from_user.get("name", "Unknown"),
+                "from_user_avatar": from_user.get("avatar", ""),
+                "is_verified": from_user.get("is_verified", False),
+                "created_at": req["created_at"]
+            })
+    
+    outgoing_formatted = []
+    for req in outgoing:
+        to_user = await db.users.find_one({"_id": ObjectId(req["to_user_id"])}, {"password_hash": 0})
+        if to_user:
+            outgoing_formatted.append({
+                "id": str(req["_id"]),
+                "to_user_id": req["to_user_id"],
+                "to_user_name": to_user.get("name", "Unknown"),
+                "to_user_avatar": to_user.get("avatar", ""),
+                "is_verified": to_user.get("is_verified", False),
+                "created_at": req["created_at"]
+            })
+    
+    return {
+        "incoming": incoming_formatted,
+        "outgoing": outgoing_formatted,
+        "incoming_count": len(incoming_formatted)
+    }
+
+@api_router.get("/network/connections")
+async def get_network_connections(request: Request):
+    """Get all users in the current user's trade network"""
+    user = await get_current_user(request)
+    
+    # Find all connections (bidirectional lookup)
+    connections = await db.network_connections.find({
+        "$or": [
+            {"user_id": user["_id"]},
+            {"connected_user_id": user["_id"]}
+        ]
+    }).to_list(500)
+    
+    # Get unique connected user IDs
+    connected_user_ids = set()
+    for conn in connections:
+        if conn["user_id"] == user["_id"]:
+            connected_user_ids.add(conn["connected_user_id"])
+        else:
+            connected_user_ids.add(conn["user_id"])
+    
+    # Fetch user details
+    network_users = []
+    for uid in connected_user_ids:
+        u = await db.users.find_one({"_id": ObjectId(uid)}, {"password_hash": 0})
+        if u:
+            u["_id"] = str(u["_id"])
+            # Decrypt location
+            if u.get("location"):
+                try:
+                    u["location"] = decrypt_data(u["location"])
+                except Exception:
+                    pass
+            network_users.append({
+                "id": u["_id"],
+                "name": u.get("name", "Unknown"),
+                "avatar": u.get("avatar", ""),
+                "location": u.get("location", ""),
+                "skills": u.get("skills", []),
+                "goods_offering": u.get("goods_offering", []),
+                "services_offering": u.get("services_offering", []),
+                "is_verified": u.get("is_verified", False)
+            })
+    
+    return {"connections": network_users, "count": len(network_users)}
+
+@api_router.delete("/network/connections/{user_id}")
+async def remove_from_network(user_id: str, request: Request):
+    """Remove a user from your trade network"""
+    user = await get_current_user(request)
+    
+    # Delete connection (either direction)
+    result = await db.network_connections.delete_one({
+        "$or": [
+            {"user_id": user["_id"], "connected_user_id": user_id},
+            {"user_id": user_id, "connected_user_id": user["_id"]}
+        ]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    return {"message": "Removed from trade network"}
+
+@api_router.get("/network/status/{user_id}")
+async def get_network_status(user_id: str, request: Request):
+    """Check network status with another user"""
+    user = await get_current_user(request)
+    
+    # Check if connected
+    connection = await db.network_connections.find_one({
+        "$or": [
+            {"user_id": user["_id"], "connected_user_id": user_id},
+            {"user_id": user_id, "connected_user_id": user["_id"]}
+        ]
+    })
+    
+    if connection:
+        return {"status": "connected", "can_request": False}
+    
+    # Check for pending request
+    pending = await db.network_requests.find_one({
+        "$or": [
+            {"from_user_id": user["_id"], "to_user_id": user_id, "status": "pending"},
+            {"from_user_id": user_id, "to_user_id": user["_id"], "status": "pending"}
+        ]
+    })
+    
+    if pending:
+        if pending["from_user_id"] == user["_id"]:
+            return {"status": "pending_sent", "can_request": False, "request_id": str(pending["_id"])}
+        else:
+            return {"status": "pending_received", "can_request": False, "request_id": str(pending["_id"])}
+    
+    return {"status": "none", "can_request": True}
+
+@api_router.post("/network/cancel/{request_id}")
+async def cancel_network_request(request_id: str, request: Request):
+    """Cancel a pending network request that you sent"""
+    user = await get_current_user(request)
+    
+    result = await db.network_requests.delete_one({
+        "_id": ObjectId(request_id),
+        "from_user_id": user["_id"],
+        "status": "pending"
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found or already processed")
+    
+    return {"message": "Network request cancelled"}
+
 # WebSocket endpoint
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
@@ -1126,6 +1453,10 @@ async def startup():
     await db.messages.create_index([("sender_id", 1), ("receiver_id", 1)])
     await db.posts.create_index("created_at")
     await db.push_subscriptions.create_index([("user_id", 1), ("endpoint", 1)], unique=True)
+    # Trade Network indexes
+    await db.network_connections.create_index([("user_id", 1), ("connected_user_id", 1)], unique=True)
+    await db.network_requests.create_index([("from_user_id", 1), ("to_user_id", 1)])
+    await db.network_requests.create_index("status")
     
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")
