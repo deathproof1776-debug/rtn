@@ -9,13 +9,15 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Full encryption (messages + all user data)
 - WebSocket-based real-time chat
 - Rebel homesteader vibe aesthetic
+- Push notifications for all activity (messages, comments, likes, matches)
 
 ## Architecture
-- **Backend**: FastAPI + MongoDB + WebSocket
-- **Frontend**: React + Tailwind + Phosphor Icons
+- **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
+- **Frontend**: React + Tailwind + Phosphor Icons + Service Worker
 - **Auth**: JWT with httpOnly cookies
 - **Encryption**: Fernet symmetric encryption for sensitive data
 - **Storage**: Local file uploads
+- **Push Notifications**: Web Push API with VAPID keys
 
 ## What's Been Implemented
 - [x] User registration and login with JWT
@@ -32,22 +34,24 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Responsive 3-column layout
 - [x] **Comments on posts** (March 2026) - Full CRUD with encryption, toggle expand/collapse, delete authorization
 - [x] **Location-based matching** (March 2026) - Text-based location matching, Nearby badges, location prioritization in matches, Nearby Homesteaders panel, filter by nearby
+- [x] **Push Notifications** (March 2026) - Browser push notifications for messages, comments, likes. Service Worker, VAPID auth, subscription management UI
 
 ## Prioritized Backlog
 ### P0 (Critical)
 - None remaining for MVP
 
 ### P1 (High Priority)
-- Push notifications
+- None (Push notifications completed!)
 
 ### P2 (Medium Priority)
+- Verified Homesteader badge system
 - Video upload support
 - User blocking/reporting
 - Advanced search filters
-- Verified Homesteader badge system
 
 ### P3 (Enhancement)
 - Reply threading for comments
+- Location radius settings (specify travel/trade distance)
 
 ## Test Credentials
 - Admin: admin@homesteadhub.com / admin123
@@ -71,21 +75,28 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - POST /api/posts
 - GET /api/posts (supports ?nearby_only=true filter)
 - GET /api/posts/matches (location-prioritized with match_score)
-- POST /api/posts/{id}/like
+- POST /api/posts/{id}/like (triggers push notification)
 
 ### Comments
-- POST /api/posts/{post_id}/comments - Create comment (encrypted)
+- POST /api/posts/{post_id}/comments - Create comment (encrypted, triggers push notification)
 - GET /api/posts/{post_id}/comments - Get all comments (decrypted)
 - DELETE /api/posts/{post_id}/comments/{comment_id} - Delete comment (owner or post owner)
 
 ### Messages
 - GET /api/conversations
-- POST /api/messages
+- POST /api/messages (triggers push notification)
 - GET /api/messages/{user_id}
 
 ### Users
 - GET /api/users/nearby - Get users in same location
 - GET /api/users/search
+
+### Push Notifications
+- GET /api/notifications/vapid-public-key - Get VAPID public key (no auth)
+- POST /api/notifications/subscribe - Subscribe to push notifications
+- POST /api/notifications/unsubscribe - Unsubscribe from push notifications
+- GET /api/notifications/status - Get subscription status
+- POST /api/notifications/test - Send test notification
 
 ### Other
 - POST /api/upload
@@ -110,8 +121,27 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 }
 ```
 
+### Push Subscriptions
+```json
+{
+  "_id": "ObjectId",
+  "user_id": "string",
+  "endpoint": "string (push service URL)",
+  "keys": {
+    "p256dh": "string",
+    "auth": "string"
+  },
+  "created_at": "ISO timestamp"
+}
+```
+
 ### Location Matching
 - Text-based matching (same city/state)
 - Partial matching supported ("Austin" matches "Austin, TX")
 - Case-insensitive comparison
 - +100 match_score bonus for nearby users
+
+### Push Notification Events
+- New direct message -> Notifies receiver
+- Comment on post -> Notifies post owner (unless self-comment)
+- Like on post -> Notifies post owner (unless self-like)
