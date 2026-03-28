@@ -1,0 +1,130 @@
+{
+  "theme": "dark",
+  "archetype": "Organic & Earthy / Tactical Survivalist Blend",
+  "colors": {
+    "background": {
+      "main": "#0C0A09",
+      "surface": "#1C1917",
+      "surface_hover": "#292524",
+      "surface_active": "#44403C"
+    },
+    "text": {
+      "primary": "#E7E5E4",
+      "secondary": "#A8A29E",
+      "muted": "#78716C",
+      "inverse": "#0C0A09"
+    },
+    "brand": {
+      "primary": "#B45309",
+      "primary_hover": "#92400E",
+      "accent": "#4D7C0F",
+      "danger": "#991B1B",
+      "success": "#15803D",
+      "border": "#292524"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Cabinet Grotesk, sans-serif",
+      "body": "IBM Plex Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-black",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl tracking-tight font-semibold",
+      "h4": "text-lg sm:text-xl tracking-tight font-medium",
+      "body": "text-base leading-relaxed font-normal",
+      "small": "text-sm leading-normal",
+      "overline": "text-xs uppercase tracking-[0.2em] font-semibold"
+    }
+  },
+  "spacing": {
+    "container_padding": "p-6 md:p-8 lg:p-12",
+    "section_gap": "gap-12 md:gap-24",
+    "item_gap": "gap-4 md:gap-6",
+    "card_padding": "p-6"
+  },
+  "layout": {
+    "app_shell": "grid grid-cols-1 md:grid-cols-12 gap-0 h-screen overflow-hidden bg-[#0C0A09]",
+    "sidebar": "col-span-1 md:col-span-3 lg:col-span-2 border-r border-[#292524] bg-[#0C0A09] flex flex-col h-full",
+    "main_feed": "col-span-1 md:col-span-6 lg:col-span-7 overflow-y-auto px-4 py-8 md:px-8",
+    "right_panel": "hidden md:flex md:col-span-3 lg:col-span-3 border-l border-[#292524] bg-[#0C0A09] flex-col h-full p-6",
+    "card_style": "bg-[#1C1917] border border-[#292524] rounded-none",
+    "input_style": "bg-[#0C0A09] border border-[#44403C] rounded-none focus:ring-1 focus:ring-[#B45309] focus:border-[#B45309] text-[#E7E5E4]"
+  },
+  "motion": {
+    "hover": "transition-colors duration-200 ease-in-out",
+    "click": "active:scale-[0.98] transition-transform duration-100",
+    "fade_in": "animate-in fade-in duration-500",
+    "slide_up": "animate-in slide-in-from-bottom-4 duration-500"
+  },
+  "components": {
+    "button": {
+      "primary": "bg-[#B45309] text-[#E7E5E4] hover:bg-[#92400E] border-none font-semibold rounded-none px-6 py-2",
+      "secondary": "bg-[#1C1917] text-[#E7E5E4] hover:bg-[#292524] border border-[#44403C] rounded-none px-6 py-2",
+      "ghost": "bg-transparent text-[#A8A29E] hover:text-[#E7E5E4] hover:bg-[#1C1917] rounded-none px-4 py-2"
+    },
+    "avatar": "rounded-none border border-[#44403C] object-cover",
+    "badge": "bg-[#292524] text-[#A8A29E] text-xs uppercase tracking-wider px-2 py-1 rounded-none border border-[#44403C]"
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero_background",
+        "url": "https://images.unsplash.com/photo-1604549001484-df28edea610b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxkYXJrJTIwZm9yZXN0JTIwY2FiaW4lMjBvZmYlMjBncmlkfGVufDB8fHx8MTc3NDcyMzM2MXww&ixlib=rb-4.1.0&q=85",
+        "description": "Dark forest cabin, off-grid aesthetic for login/landing page background",
+        "alt_text": "Dark forest cabin"
+      },
+      {
+        "category": "user_avatar_1",
+        "url": "https://images.unsplash.com/photo-1597232211769-73b0355941a3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHwyfHxob21lc3RlYWRlciUyMG5hdHVyZSUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NDcyMzM1NHww&ixlib=rb-4.1.0&q=85",
+        "description": "Profile picture of a homesteader in nature",
+        "alt_text": "Homesteader portrait"
+      },
+      {
+        "category": "user_avatar_2",
+        "url": "https://images.unsplash.com/photo-1622209470866-3692e27d665c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHw0fHxob21lc3RlYWRlciUyMG5hdHVyZSUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NDcyMzM1NHww&ixlib=rb-4.1.0&q=85",
+        "description": "Rustic wooden house avatar/post image",
+        "alt_text": "Wooden house"
+      },
+      {
+        "category": "post_image_goods_1",
+        "url": "https://images.unsplash.com/photo-1744659750204-87034350eec6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwzfHxmcmVzaCUyMG9yZ2FuaWMlMjB2ZWdldGFibGVzJTIwaGFydmVzdHxlbnwwfHx8fDE3NzQ3MjMzNTZ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Fresh organic vegetables harvest for barter post",
+        "alt_text": "Fresh vegetables"
+      },
+      {
+        "category": "post_image_goods_2",
+        "url": "https://images.unsplash.com/photo-1722810767142-6052d3c10d8e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwyfHxmcmVzaCUyMG9yZ2FuaWMlMjB2ZWdldGFibGVzJTIwaGFydmVzdHxlbnwwfHx8fDE3NzQ3MjMzNTZ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Yellow peppers for barter post",
+        "alt_text": "Yellow peppers basket"
+      },
+      {
+        "category": "post_image_services",
+        "url": "https://images.unsplash.com/photo-1722411927625-0e478acf502b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwyfHx3b29kd29ya2luZyUyMHRvb2xzJTIwY3JhZnR8ZW58MHx8fHwxNzc0NzIzMzU2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Woodworking service/tools for barter post",
+        "alt_text": "Woodworking craft"
+      }
+    ]
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "style": "duotone or regular, heavy stroke",
+    "install_command": "yarn add @phosphor-icons/react"
+  },
+  "accessibility": {
+    "contrast_strategy": "High contrast APCA verified for text on background. Primary text (#E7E5E4) on main background (#0C0A09)",
+    "focus_states": "focus:ring-2 focus:ring-[#B45309] focus:outline-none focus:ring-offset-2 focus:ring-offset-[#0C0A09]"
+  },
+  "instructions_to_main_agent": [
+    "This is a dark, tactical, 'rebel homesteader' aesthetic. Do NOT use soft UI, heavy drop shadows, or large border radii. The aesthetic relies on 1px borders, high contrast, and sharp edges (rounded-none or max rounded-sm).",
+    "Use pure HTML/Tailwind for structural app shell and feed layout. Use Shadcn components for complex interactions (Dialog, DropdownMenu, Tabs) but strip their default soft shadows and rounded corners.",
+    "The layout should mimic a social media dashboard: a sticky left navigation sidebar, a central scrollable feed for barter posts, and a right panel for matches/skills.",
+    "In the main feed, barter posts should clearly indicate 'OFFERING' and 'LOOKING FOR' using the defined badge styling.",
+    "Implement 'data-testid' on all interactive elements (buttons, inputs, feed items, navigation links) using kebab-case role-based naming.",
+    "Use Phosphor Icons for all UI iconography to maintain a utilitarian, technical feel.",
+    "Ensure the hero background image has a dark overlay (bg-black/60) so login/registration text remains readable on top of it.",
+    "Do not use generic blue/purple gradients. Any gradients should be subtle, tactical, and use the brand colors (Ochre/Amber and Obsidian)."
+  ]
+}
