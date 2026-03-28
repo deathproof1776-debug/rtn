@@ -11,6 +11,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Rebel homesteader vibe aesthetic with orange accents
 - Push notifications for all activity (messages, comments, likes, matches)
 - Trade Network feature (LinkedIn-style mutual connections)
+- Recommended Traders feature (complementary goods/services matching)
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
@@ -41,16 +42,15 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Rebranding to "Rebel Trade Network" - Updated all branding
 - [x] Orange Borders/Trim - Added orange accent borders throughout
 - [x] Verified Trader Badge System - Admin verification with badges
-- [x] **Trade Network Feature** (March 28, 2026) - LinkedIn-style mutual connections:
-  - Send/receive network requests
-  - Accept/decline incoming requests
-  - View connected traders
-  - Remove connections
-  - Network members get +200 priority in feed algorithm
-  - "My Trade Network" section in sidebar + profile panel
-  - User profile modal with "Add to Trade Network" button
-  - Network badge counts in navigation
-  - Push notifications for network requests
+- [x] **Trade Network Feature** (March 28, 2026) - LinkedIn-style mutual connections
+- [x] **Recommended Traders Feature** (March 28, 2026) - Smart trader suggestions:
+  - Recommends traders based on complementary goods/services
+  - Shows match reasons (e.g., "Offers Fresh Eggs, Honey • Wants Seeds")
+  - Displays what they offer that you want (green tags)
+  - Displays what they want that you offer (orange tags)
+  - One-click "Connect" button to send network request
+  - Excludes already connected users and pending requests
+  - Match scoring: +15 per offer match, +10 per want match
 
 ## Trade Network Feature Details
 ### Backend Endpoints
@@ -61,11 +61,18 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - `DELETE /api/network/connections/{user_id}` - Remove connection
 - `GET /api/network/status/{user_id}` - Check status with user
 - `POST /api/network/cancel/{request_id}` - Cancel pending request
+- `GET /api/network/recommended` - Get recommended traders based on matching
 
 ### Feed Algorithm Priority
 - Network members: +200 score
 - Nearby users: +100 score
 - Goods/services match: +10 per match
+
+### Recommended Traders Algorithm
+- +15 points for each item they offer that you want
+- +10 points for each item they want that you offer
+- Excludes: already connected, pending requests, self
+- Returns human-readable match reason
 
 ### MongoDB Collections
 - `network_connections` - Stores established connections
@@ -110,6 +117,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - DELETE /api/network/connections/{user_id}
 - GET /api/network/status/{user_id}
 - POST /api/network/cancel/{request_id}
+- GET /api/network/recommended
 
 ### Profile
 - PUT /api/profile
@@ -171,8 +179,25 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 }
 ```
 
+### Recommended Trader Response
+```json
+{
+  "id": "string",
+  "name": "string",
+  "avatar": "string",
+  "location": "string",
+  "is_verified": "boolean",
+  "skills": ["array (max 3)"],
+  "match_score": "number",
+  "offers_you_want": ["array (max 5)"],
+  "wants_you_offer": ["array (max 5)"],
+  "reason": "string (human-readable)"
+}
+```
+
 ## Design System
 - **Primary Color**: #B45309 (Orange)
+- **Recommended/Match**: #F59E0B (Yellow/Amber)
 - **Background**: #0C0A09 (Near black)
 - **Surface**: #1C1917 (Dark gray)
 - **Text Primary**: #E7E5E4
@@ -181,3 +206,4 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - **Border Accent**: 2-3px solid #B45309 on key elements
 - **Verified Badge**: Gradient from #B45309 to #92400E with glow effect
 - **Network Badge**: Orange background with handshake icon
+- **Recommendation Card**: Yellow left border with sparkle accents
