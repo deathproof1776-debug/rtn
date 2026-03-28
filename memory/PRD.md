@@ -31,13 +31,13 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Rebel homesteader dark theme UI
 - [x] Responsive 3-column layout
 - [x] **Comments on posts** (March 2026) - Full CRUD with encryption, toggle expand/collapse, delete authorization
+- [x] **Location-based matching** (March 2026) - Text-based location matching, Nearby badges, location prioritization in matches, Nearby Homesteaders panel, filter by nearby
 
 ## Prioritized Backlog
 ### P0 (Critical)
 - None remaining for MVP
 
 ### P1 (High Priority)
-- Location-based matching
 - Push notifications
 
 ### P2 (Medium Priority)
@@ -46,8 +46,14 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Advanced search filters
 - Verified Homesteader badge system
 
+### P3 (Enhancement)
+- Reply threading for comments
+
 ## Test Credentials
 - Admin: admin@homesteadhub.com / admin123
+- Test User 1: TEST_location_user1@test.com / testpass123 (Austin, TX)
+- Test User 2: TEST_location_user2@test.com / testpass123 (Austin, TX)
+- Test User 3: TEST_location_user3@test.com / testpass123 (Denver, CO)
 
 ## API Endpoints
 ### Auth
@@ -63,8 +69,8 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ### Posts
 - POST /api/posts
-- GET /api/posts
-- GET /api/posts/matches
+- GET /api/posts (supports ?nearby_only=true filter)
+- GET /api/posts/matches (location-prioritized with match_score)
 - POST /api/posts/{id}/like
 
 ### Comments
@@ -77,20 +83,35 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - POST /api/messages
 - GET /api/messages/{user_id}
 
+### Users
+- GET /api/users/nearby - Get users in same location
+- GET /api/users/search
+
 ### Other
 - POST /api/upload
-- GET /api/users/search
 - WebSocket: /ws/{user_id}
 
 ## Data Models
-### Comments (embedded in posts)
+### Posts (with location)
 ```json
 {
-  "id": "ObjectId string",
+  "_id": "ObjectId string",
   "user_id": "string",
   "user_name": "string",
-  "user_avatar": "string",
-  "content": "encrypted string",
+  "user_location": "string (decrypted)",
+  "is_nearby": "boolean",
+  "match_score": "number (for /api/posts/matches)",
+  "title": "string",
+  "description": "encrypted string",
+  "category": "string",
+  "offering": ["array"],
+  "looking_for": ["array"],
   "created_at": "ISO timestamp"
 }
 ```
+
+### Location Matching
+- Text-based matching (same city/state)
+- Partial matching supported ("Austin" matches "Austin, TX")
+- Case-insensitive comparison
+- +100 match_score bonus for nearby users
