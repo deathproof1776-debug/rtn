@@ -1365,6 +1365,135 @@ async def cancel_network_request(request_id: str, request: Request):
     
     return {"message": "Network request cancelled"}
 
+@api_router.get("/network/recommended")
+async def get_recommended_traders(request: Request, limit: int = 10):
+    """Get recommended traders based on complementary goods/services matching"""
+    user = await get_current_user(request)
+    user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
+    
+    # Get user's wants and offerings
+    user_goods_wanted = set(user_doc.get("goods_wanted", []))
+    user_services_wanted = set(user_doc.get("services_wanted", []))
+    user_goods_offering = set(user_doc.get("goods_offering", []))
+    user_services_offering = set(user_doc.get("services_offering", []))
+    
+    all_user_wants = user_goods_wanted | user_services_wanted
+    all_user_offerings = user_goods_offering | user_services_offering
+    
+    # If user has no preferences, return empty
+    if not all_user_wants and not all_user_offerings:
+        return {
+            "recommendations": [],
+            "message": "Update your profile with goods/services you're offering and looking for to get recommendations"
+        }
+    
+    # Get existing connections to exclude
+    connections = await db.network_connections.find({
+        "$or": [
+            {"user_id": user["_id"]},
+            {"connected_user_id": user["_id"]}
+        ]
+    }).to_list(500)
+    
+    connected_ids = set()
+    for conn in connections:
+        if conn["user_id"] == user["_id"]:
+            connected_ids.add(conn["connected_user_id"])
+        else:
+            connected_ids.add(conn["user_id"])
+    
+    # Get pending requests to exclude
+    pending_requests = await db.network_requests.find({
+        "$or": [
+            {"from_user_id": user["_id"], "status": "pending"},
+            {"to_user_id": user["_id"], "status": "pending"}
+        ]
+    }).to_list(100)
+    
+    pending_ids = set()
+    for req in pending_requests:
+        if req["from_user_id"] == user["_id"]:
+            pending_ids.add(req["to_user_id"])
+        else:
+            pending_ids.add(req["from_user_id"])
+    
+    # Get all other users
+    exclude_ids = connected_ids | pending_ids | {user["_id"]}
+    all_users = await db.users.find(
+        {"_id": {"$nin": [ObjectId(uid) for uid in exclude_ids]}},
+        {"password_hash": 0}
+    ).limit(100).to_list(100)
+    
+    # Score and rank users
+    recommendations = []
+    for u in all_users:
+        u_id = str(u["_id"])
+        u_goods_offering = set(u.get("goods_offering", []))
+        u_services_offering = set(u.get("services_offering", []))
+        u_goods_wanted = set(u.get("goods_wanted", []))
+        u_services_wanted = set(u.get("services_wanted", []))
+        
+        all_u_offerings = u_goods_offering | u_services_offering
+        all_u_wants = u_goods_wanted | u_services_wanted
+        
+        # Calculate matches
+        # They offer what you want
+        offers_match = all_user_wants & all_u_offerings
+        # They want what you offer
+        wants_match = all_user_offerings & all_u_wants
+        
+        if not offers_match and not wants_match:
+            continue
+        
+        # Calculate match score
+        score = len(offers_match) * 15 + len(wants_match) * 10
+        
+        # Decrypt location if present
+        location = ""
+        if u.get("location"):
+            try:
+                location = decrypt_data(u["location"])
+            except Exception:
+                location = u.get("location", "")
+        
+        recommendations.append({
+            "id": u_id,
+            "name": u.get("name", "Unknown"),
+            "avatar": u.get("avatar", ""),
+            "location": location,
+            "is_verified": u.get("is_verified", False),
+            "skills": u.get("skills", [])[:3],
+            "match_score": score,
+            "offers_you_want": list(offers_match)[:5],
+            "wants_you_offer": list(wants_match)[:5],
+            "reason": _build_match_reason(offers_match, wants_match)
+        })
+    
+    # Sort by score descending
+    recommendations.sort(key=lambda x: -x["match_score"])
+    
+    return {
+        "recommendations": recommendations[:limit],
+        "total_matches": len(recommendations)
+    }
+
+def _build_match_reason(offers_match: set, wants_match: set) -> str:
+    """Build a human-readable match reason"""
+    reasons = []
+    if offers_match:
+        items = list(offers_match)[:2]
+        if len(items) == 1:
+            reasons.append(f"Offers {items[0]}")
+        else:
+            reasons.append(f"Offers {items[0]}, {items[1]}")
+    if wants_match:
+        items = list(wants_match)[:2]
+        if len(items) == 1:
+            reasons.append(f"Wants {items[0]}")
+        else:
+            reasons.append(f"Wants {items[0]}, {items[1]}")
+    return " • ".join(reasons) if reasons else "Potential match"
+
 # WebSocket endpoint
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
