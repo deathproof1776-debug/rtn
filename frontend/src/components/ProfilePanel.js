@@ -4,16 +4,15 @@ import axios from 'axios';
 import { 
   User, 
   MapPin, 
-  Tag, 
-  ArrowsLeftRight,
   FloppyDisk,
-  Plus,
-  X,
   Camera,
   SealCheck,
   Handshake,
-  UsersThree
+  Carrot,
+  Wrench,
+  Briefcase
 } from '@phosphor-icons/react';
+import CategorySelector from './CategorySelector';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -34,11 +33,6 @@ export default function ProfilePanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [skillInput, setSkillInput] = useState('');
-  const [goodsOfferingInput, setGoodsOfferingInput] = useState('');
-  const [goodsWantedInput, setGoodsWantedInput] = useState('');
-  const [servicesOfferingInput, setServicesOfferingInput] = useState('');
-  const [servicesWantedInput, setServicesWantedInput] = useState('');
   const [networkConnections, setNetworkConnections] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -117,17 +111,6 @@ export default function ProfilePanel() {
     } catch (error) {
       console.error('Error uploading avatar:', error);
     }
-  };
-
-  const addToArray = (field, value, setValue) => {
-    if (value.trim() && !profile[field].includes(value.trim())) {
-      setProfile({ ...profile, [field]: [...profile[field], value.trim()] });
-      setValue('');
-    }
-  };
-
-  const removeFromArray = (field, value) => {
-    setProfile({ ...profile, [field]: profile[field].filter(v => v !== value) });
   };
 
   if (loading) {
@@ -231,145 +214,74 @@ export default function ProfilePanel() {
           />
         </div>
 
-        {/* Skills */}
-        <div>
-          <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">
-            <Tag size={12} className="inline mr-1" />
-            Skills
-          </label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('skills', skillInput, setSkillInput))}
-              className="input-field flex-1"
-              placeholder="e.g., Woodworking"
-              data-testid="skills-input"
+        {/* Skills Section */}
+        <div className="border-t border-[#292524] pt-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Wrench size={18} className="text-[#B45309]" />
+            <h3 className="text-base font-semibold text-[#E7E5E4]">Skills</h3>
+          </div>
+          <CategorySelector
+            type="skills"
+            selectedItems={profile.skills}
+            onItemsChange={(items) => setProfile({ ...profile, skills: items })}
+            label="Your Skills & Expertise"
+            placeholder="Search skills..."
+          />
+        </div>
+
+        {/* Goods Section */}
+        <div className="border-t border-[#292524] pt-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Carrot size={18} className="text-[#B45309]" />
+            <h3 className="text-base font-semibold text-[#E7E5E4]">Goods</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <CategorySelector
+              type="goods"
+              mode="offering"
+              selectedItems={profile.goods_offering}
+              onItemsChange={(items) => setProfile({ ...profile, goods_offering: items })}
+              label="Goods You're Offering"
+              placeholder="Search goods to offer..."
             />
-            <button 
-              type="button" 
-              onClick={() => addToArray('skills', skillInput, setSkillInput)} 
-              className="btn-secondary px-3"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
-            {profile.skills.map((skill, i) => (
-              <span key={i} className="tag text-xs md:text-sm">
-                {skill}
-                <button onClick={() => removeFromArray('skills', skill)}><X size={12} /></button>
-              </span>
-            ))}
+            
+            <CategorySelector
+              type="goods"
+              mode="wanted"
+              selectedItems={profile.goods_wanted}
+              onItemsChange={(items) => setProfile({ ...profile, goods_wanted: items })}
+              label="Goods You Want"
+              placeholder="Search goods you need..."
+            />
           </div>
         </div>
 
-        {/* Goods */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs md:text-sm text-[#4D7C0F] mb-1.5 md:mb-2">Goods You're Offering</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={goodsOfferingInput}
-                onChange={(e) => setGoodsOfferingInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('goods_offering', goodsOfferingInput, setGoodsOfferingInput))}
-                className="input-field flex-1"
-                placeholder="e.g., Eggs, Honey"
-                data-testid="goods-offering-input"
-              />
-              <button type="button" onClick={() => addToArray('goods_offering', goodsOfferingInput, setGoodsOfferingInput)} className="btn-secondary px-3">
-                <Plus size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {profile.goods_offering.map((item, i) => (
-                <span key={i} className="badge badge-offering text-[10px] md:text-xs">
-                  {item}
-                  <button onClick={() => removeFromArray('goods_offering', item)} className="ml-1"><X size={10} /></button>
-                </span>
-              ))}
-            </div>
+        {/* Services Section */}
+        <div className="border-t border-[#292524] pt-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Briefcase size={18} className="text-[#B45309]" />
+            <h3 className="text-base font-semibold text-[#E7E5E4]">Services</h3>
           </div>
-          <div>
-            <label className="block text-xs md:text-sm text-[#B45309] mb-1.5 md:mb-2">Goods You Want</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={goodsWantedInput}
-                onChange={(e) => setGoodsWantedInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('goods_wanted', goodsWantedInput, setGoodsWantedInput))}
-                className="input-field flex-1"
-                placeholder="e.g., Seeds, Lumber"
-                data-testid="goods-wanted-input"
-              />
-              <button type="button" onClick={() => addToArray('goods_wanted', goodsWantedInput, setGoodsWantedInput)} className="btn-secondary px-3">
-                <Plus size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {profile.goods_wanted.map((item, i) => (
-                <span key={i} className="badge badge-looking text-[10px] md:text-xs">
-                  {item}
-                  <button onClick={() => removeFromArray('goods_wanted', item)} className="ml-1"><X size={10} /></button>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Services */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs md:text-sm text-[#4D7C0F] mb-1.5 md:mb-2">Services You Offer</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={servicesOfferingInput}
-                onChange={(e) => setServicesOfferingInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('services_offering', servicesOfferingInput, setServicesOfferingInput))}
-                className="input-field flex-1"
-                placeholder="e.g., Carpentry"
-                data-testid="services-offering-input"
-              />
-              <button type="button" onClick={() => addToArray('services_offering', servicesOfferingInput, setServicesOfferingInput)} className="btn-secondary px-3">
-                <Plus size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {profile.services_offering.map((item, i) => (
-                <span key={i} className="badge badge-offering text-[10px] md:text-xs">
-                  {item}
-                  <button onClick={() => removeFromArray('services_offering', item)} className="ml-1"><X size={10} /></button>
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs md:text-sm text-[#B45309] mb-1.5 md:mb-2">Services You Need</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={servicesWantedInput}
-                onChange={(e) => setServicesWantedInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('services_wanted', servicesWantedInput, setServicesWantedInput))}
-                className="input-field flex-1"
-                placeholder="e.g., Plumbing"
-                data-testid="services-wanted-input"
-              />
-              <button type="button" onClick={() => addToArray('services_wanted', servicesWantedInput, setServicesWantedInput)} className="btn-secondary px-3">
-                <Plus size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {profile.services_wanted.map((item, i) => (
-                <span key={i} className="badge badge-looking text-[10px] md:text-xs">
-                  {item}
-                  <button onClick={() => removeFromArray('services_wanted', item)} className="ml-1"><X size={10} /></button>
-                </span>
-              ))}
-            </div>
+          
+          <div className="space-y-4">
+            <CategorySelector
+              type="services"
+              mode="offering"
+              selectedItems={profile.services_offering}
+              onItemsChange={(items) => setProfile({ ...profile, services_offering: items })}
+              label="Services You Offer"
+              placeholder="Search services to offer..."
+            />
+            
+            <CategorySelector
+              type="services"
+              mode="wanted"
+              selectedItems={profile.services_wanted}
+              onItemsChange={(items) => setProfile({ ...profile, services_wanted: items })}
+              label="Services You Need"
+              placeholder="Search services you need..."
+            />
           </div>
         </div>
 
