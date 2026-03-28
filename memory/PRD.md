@@ -12,6 +12,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Push notifications for all activity (messages, comments, likes, matches)
 - Trade Network feature (LinkedIn-style mutual connections)
 - Recommended Traders feature (complementary goods/services matching)
+- **Categorized Goods/Skills/Services** with predefined options + custom entries
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
@@ -42,62 +43,56 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Rebranding to "Rebel Trade Network" - Updated all branding
 - [x] Orange Borders/Trim - Added orange accent borders throughout
 - [x] Verified Trader Badge System - Admin verification with badges
-- [x] **Trade Network Feature** (March 28, 2026) - LinkedIn-style mutual connections
-- [x] **Recommended Traders Feature** (March 28, 2026) - Smart trader suggestions:
-  - Recommends traders based on complementary goods/services
-  - Shows match reasons (e.g., "Offers Fresh Eggs, Honey • Wants Seeds")
-  - Displays what they offer that you want (green tags)
-  - Displays what they want that you offer (orange tags)
-  - One-click "Connect" button to send network request
-  - Excludes already connected users and pending requests
-  - Match scoring: +15 per offer match, +10 per want match
+- [x] **Trade Network Feature** - LinkedIn-style mutual connections
+- [x] **Recommended Traders Feature** - Smart trader suggestions
+- [x] **Categorized Goods/Skills/Services** (March 28, 2026) - NEW:
+  - 5 Goods categories: Food, Tools, Crafts, Livestock, Miscellaneous
+  - 5 Skills categories: Homestead, Landscape, Trade/Technical, Creative, Life/Survival
+  - 7 Services categories: Labor, Equipment, Animal, Professional, Education, Health, Custom
+  - Searchable dropdowns with category accordions
+  - Multi-select from predefined items
+  - Custom item addition support
+  - CategorySelector component with search, expand/collapse, badges
 
-## Trade Network Feature Details
-### Backend Endpoints
-- `POST /api/network/request` - Send network request
-- `POST /api/network/respond` - Accept/decline request
-- `GET /api/network/requests/pending` - Get incoming/outgoing requests
-- `GET /api/network/connections` - Get all connections
-- `DELETE /api/network/connections/{user_id}` - Remove connection
-- `GET /api/network/status/{user_id}` - Check status with user
-- `POST /api/network/cancel/{request_id}` - Cancel pending request
-- `GET /api/network/recommended` - Get recommended traders based on matching
+## Categorized Selection System (NEW)
 
-### Feed Algorithm Priority
-- Network members: +200 score
-- Nearby users: +100 score
-- Goods/services match: +10 per match
+### Goods Categories
+| Category | Sample Items |
+|----------|-------------|
+| **Food** | Fresh Eggs, Honey, Raw Milk, Cheese, Vegetables, Meats, Canned Goods, Maple Syrup, Grains, Fermented Foods |
+| **Tools** | Hand Saws, Axes, Power Drills, Canning Equipment, Beekeeping Equipment, Fencing Tools, Blacksmithing Tools |
+| **Crafts** | Handmade Furniture, Quilts, Clothing, Pottery, Candles, Soaps, Jewelry, Art, Knives, Musical Instruments |
+| **Livestock** | Laying Hens, Dairy Goats, Cattle, Pigs, Sheep, Rabbits, Bees, Horses, Guard Dogs |
+| **Miscellaneous** | Seeds, Plant Starts, Firewood, Lumber, Building Materials, Hay, Compost, Solar Panels, Wool, Hides |
 
-### Recommended Traders Algorithm
-- +15 points for each item they offer that you want
-- +10 points for each item they want that you offer
-- Excludes: already connected, pending requests, self
-- Returns human-readable match reason
+### Skills Categories
+| Category | Sample Items |
+|----------|-------------|
+| **Homestead** | Canning & Preserving, Fermenting, Cheese Making, Soap Making, Butchering, Beekeeping, Seed Saving, Foraging, Herbalism |
+| **Landscape** | Permaculture Design, Irrigation Systems, Fencing, Pond Building, Tree Grafting, Composting, Greenhouse Construction |
+| **Trade/Technical** | Carpentry, Welding, Plumbing, Electrical, Masonry, Solar Installation, Mechanic, Gunsmithing, Blacksmithing |
+| **Creative** | Woodworking, Pottery, Sewing, Knitting, Jewelry Making, Leathercraft, Photography, Writing |
+| **Life/Survival** | First Aid, Midwifery, Veterinary Care, Hunting, Fishing, Wilderness Survival, Radio Communications, Teaching |
 
-### MongoDB Collections
-- `network_connections` - Stores established connections
-- `network_requests` - Stores pending/responded requests
-
-## Prioritized Backlog
-### P0 (Critical)
-- None remaining for MVP
-
-### P1 (High Priority)
-- None
-
-### P2 (Medium Priority)
-- Video upload support
-- User blocking/reporting
-- Advanced search filters
-
-### P3 (Enhancement)
-- Reply threading for comments
-- Location radius settings (specify travel/trade distance)
-
-## Test Credentials
-- Admin: admin@homesteadhub.com / admin123 (role: admin, is_verified: true)
+### Services Categories
+| Category | Sample Items |
+|----------|-------------|
+| **Labor** | Farm Labor, Fence Building, Firewood Cutting, Construction Labor, Landscaping, Snow Removal |
+| **Equipment** | Tractor Rental, Truck/Trailer Rental, Chainsaw Services, Tilling, Hay Baling, Excavation |
+| **Animal** | Stud Services, Animal Training, Farrier Services, Shearing, Butchering Services, Pet Sitting |
+| **Professional** | Consulting, Land Survey, Legal Services, Accounting, Marketing, Photography |
+| **Education** | Workshops, One-on-One Training, Homesteading Classes, Survival Skills Training, First Aid Training |
+| **Health** | Midwifery, Massage Therapy, Herbal Consultations, Childcare, Eldercare, Meal Prep |
+| **Custom** | Custom Furniture, Custom Clothing, Custom Knives, Custom Leatherwork, Commissioned Art |
 
 ## API Endpoints
+
+### Categories (NEW)
+- GET /api/categories/all - Returns all goods, skills, services categories
+- GET /api/categories/goods - Returns 5 goods categories with items
+- GET /api/categories/skills - Returns 5 skills categories with items
+- GET /api/categories/services - Returns 7 services categories with items
+
 ### Auth
 - POST /api/auth/register
 - POST /api/auth/login
@@ -154,46 +149,21 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - POST /api/upload
 - WebSocket: /ws/{user_id}
 
-## Data Models
-### Network Connections
-```json
-{
-  "_id": "ObjectId",
-  "user_id": "string",
-  "connected_user_id": "string",
-  "created_at": "ISO timestamp"
-}
-```
+## Prioritized Backlog
 
-### Network Requests
-```json
-{
-  "_id": "ObjectId",
-  "from_user_id": "string",
-  "from_user_name": "string",
-  "from_user_avatar": "string",
-  "to_user_id": "string",
-  "status": "pending | accepted | declined",
-  "created_at": "ISO timestamp",
-  "responded_at": "ISO timestamp (optional)"
-}
-```
+### P1 (High Priority)
+- Trade Deals Feature - Formal trade offers/proposals system
 
-### Recommended Trader Response
-```json
-{
-  "id": "string",
-  "name": "string",
-  "avatar": "string",
-  "location": "string",
-  "is_verified": "boolean",
-  "skills": ["array (max 3)"],
-  "match_score": "number",
-  "offers_you_want": ["array (max 5)"],
-  "wants_you_offer": ["array (max 5)"],
-  "reason": "string (human-readable)"
-}
-```
+### P2 (Medium Priority)
+- Video upload support
+- User blocking/reporting
+
+### P3 (Enhancement)
+- Reply threading for comments
+- Location radius settings (specify travel/trade distance)
+
+## Test Credentials
+- Admin: admin@homesteadhub.com / admin123 (role: admin, is_verified: true)
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)
@@ -204,6 +174,3 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - **Text Secondary**: #A8A29E
 - **Accent Green**: #4D7C0F (for "offering" badges)
 - **Border Accent**: 2-3px solid #B45309 on key elements
-- **Verified Badge**: Gradient from #B45309 to #92400E with glow effect
-- **Network Badge**: Orange background with handshake icon
-- **Recommendation Card**: Yellow left border with sparkle accents
