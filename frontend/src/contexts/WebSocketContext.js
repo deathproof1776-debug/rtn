@@ -17,7 +17,16 @@ export function WebSocketProvider({ children }) {
     const backendUrl = process.env.REACT_APP_BACKEND_URL;
     const wsProtocol = backendUrl.startsWith('https') ? 'wss' : 'ws';
     const wsHost = backendUrl.replace(/^https?:\/\//, '');
-    const wsUrl = `${wsProtocol}://${wsHost}/ws/${user.id}?token=${document.cookie.split('access_token=')[1]?.split(';')[0] || ''}`;
+    
+    // Extract token from cookies - httpOnly cookies can't be accessed from JS
+    // Use a fallback approach with a token stored in sessionStorage after login
+    const storedToken = sessionStorage.getItem('ws_token') || '';
+    if (!storedToken) {
+      console.log('WebSocket: No token available yet, skipping connection');
+      return;
+    }
+    
+    const wsUrl = `${wsProtocol}://${wsHost}/ws/${user.id}?token=${storedToken}`;
 
     try {
       wsRef.current = new WebSocket(wsUrl);

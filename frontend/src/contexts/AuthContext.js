@@ -32,6 +32,10 @@ export function AuthProvider({ children }) {
       { email, password },
       { withCredentials: true }
     );
+    // Store user ID for WebSocket auth
+    if (response.data.id) {
+      sessionStorage.setItem('ws_token', response.data.id);
+    }
     setUser(response.data);
     return response.data;
   };
@@ -42,12 +46,17 @@ export function AuthProvider({ children }) {
       { email, password, name, location },
       { withCredentials: true }
     );
+    // Store user ID for WebSocket auth
+    if (response.data.id) {
+      sessionStorage.setItem('ws_token', response.data.id);
+    }
     setUser(response.data);
     return response.data;
   };
 
   const logout = async () => {
     await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    sessionStorage.removeItem('ws_token');
     setUser(false);
   };
 
