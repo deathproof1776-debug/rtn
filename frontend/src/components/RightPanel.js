@@ -147,7 +147,7 @@ function NearbyUserCard({ user }) {
             {user.is_verified && (
               <span className="verified-badge">
                 <SealCheck size={10} weight="fill" />
-                Verified
+                Verified Trader
               </span>
             )}
           </div>
@@ -181,7 +181,7 @@ function MatchCard({ match }) {
             {match.is_verified && (
               <span className="verified-badge">
                 <SealCheck size={10} weight="fill" />
-                Verified
+                Verified Trader
               </span>
             )}
             {match.is_nearby && (

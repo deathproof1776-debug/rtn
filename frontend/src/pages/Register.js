@@ -65,7 +65,7 @@ export default function Register() {
             <Shield size={40} weight="duotone" className="text-[#B45309]" />
             <div>
               <h1 className="text-2xl font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
-                REBEL TRADE
+                REBEL TRADE NETWORK
               </h1>
               <p className="text-xs uppercase tracking-[0.2em] text-[#78716C]">Exit the Matrix</p>
             </div>

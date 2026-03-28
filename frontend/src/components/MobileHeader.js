@@ -19,7 +19,7 @@ export default function MobileHeader({ onMenuClick, onCreatePost }) {
           className="text-sm font-black tracking-tight text-[#E7E5E4]" 
           style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}
         >
-          REBEL TRADE
+          REBEL TRADE NETWORK
         </span>
       </div>
 

@@ -276,7 +276,7 @@ function PostCard({ post, onLike, currentUserId }) {
               {post.is_verified && (
                 <span className="verified-badge" data-testid={`verified-badge-${post._id}`}>
                   <SealCheck size={10} weight="fill" />
-                  Verified
+                  Verified Trader
                 </span>
               )}
               {post.is_nearby && (
