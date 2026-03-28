@@ -172,6 +172,10 @@ class UserProfile(BaseModel):
     services_wanted: Optional[List[str]] = None
     avatar: Optional[str] = None
 
+class VerifyTraderRequest(BaseModel):
+    user_id: str
+    is_verified: bool
+
 class BarterPost(BaseModel):
     title: str
     description: str
@@ -237,6 +241,7 @@ async def register(user_data: UserRegister):
         "services_wanted": [],
         "avatar": "",
         "role": "user",
+        "is_verified": False,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     result = await db.users.insert_one(user_doc)
@@ -283,6 +288,8 @@ async def login(user_data: UserLogin):
         "name": user.get("name", ""),
         "location": location,
         "avatar": user.get("avatar", ""),
+        "is_verified": user.get("is_verified", False),
+        "role": user.get("role", "user"),
         "message": "Login successful"
     })
     response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
@@ -417,11 +424,11 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
     
     posts = await db.posts.find({}, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit).to_list(100 if nearby_only else limit)
     
-    # Get user locations
+    # Get user locations and verification status
     user_ids = list(set([p["user_id"] for p in posts]))
     users_map = {}
     if user_ids:
-        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1})
+        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1})
         async for u in users_cursor:
             uid = str(u["_id"])
             loc = ""
@@ -430,7 +437,7 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
                     loc = decrypt_data(u["location"])
                 except Exception:
                     loc = u.get("location", "")
-            users_map[uid] = loc
+            users_map[uid] = {"location": loc, "is_verified": u.get("is_verified", False)}
     
     result_posts = []
     for post in posts:
@@ -449,10 +456,12 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
                     except Exception:
                         pass
         
-        # Add location info
-        poster_location = users_map.get(post["user_id"], "")
+        # Add location and verification info
+        user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False})
+        poster_location = user_data["location"]
         post["user_location"] = poster_location
         post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
+        post["is_verified"] = user_data["is_verified"]
         
         # Filter if nearby_only
         if nearby_only:
@@ -525,11 +534,11 @@ async def get_matched_posts(request: Request):
     
     posts = await db.posts.find(query, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1}).sort("created_at", -1).limit(50).to_list(50)
     
-    # Get user locations for sorting and add location info
+    # Get user locations and verification status for sorting and add location info
     user_ids = list(set([p["user_id"] for p in posts]))
     users_map = {}
     if user_ids:
-        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1})
+        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1})
         async for u in users_cursor:
             uid = str(u["_id"])
             loc = ""
@@ -538,7 +547,7 @@ async def get_matched_posts(request: Request):
                     loc = decrypt_data(u["location"])
                 except Exception:
                     loc = u.get("location", "")
-            users_map[uid] = loc
+            users_map[uid] = {"location": loc, "is_verified": u.get("is_verified", False)}
     
     # Add location and match score to posts
     for post in posts:
@@ -549,10 +558,12 @@ async def get_matched_posts(request: Request):
             except Exception:
                 pass
         
-        # Add location info
-        poster_location = users_map.get(post["user_id"], "")
+        # Add location and verification info
+        user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False})
+        poster_location = user_data["location"]
         post["user_location"] = poster_location
         post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
+        post["is_verified"] = user_data["is_verified"]
         
         # Calculate match score (higher = better)
         score = 0
@@ -911,6 +922,55 @@ async def search_users(request: Request, q: str = "", skill: str = "", good: str
     
     return users
 
+# Admin: Verify/Unverify Trader
+@api_router.post("/admin/verify-trader")
+async def verify_trader(data: VerifyTraderRequest, request: Request):
+    """Admin endpoint to verify/unverify a trader"""
+    admin_user = await get_current_user(request)
+    
+    # Check if current user is admin
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find user to verify
+    target_user = await db.users.find_one({"_id": ObjectId(data.user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update verification status
+    await db.users.update_one(
+        {"_id": ObjectId(data.user_id)},
+        {"$set": {"is_verified": data.is_verified, "verified_at": datetime.now(timezone.utc).isoformat() if data.is_verified else None}}
+    )
+    
+    return {
+        "message": f"Trader {'verified' if data.is_verified else 'unverified'} successfully",
+        "user_id": data.user_id,
+        "is_verified": data.is_verified
+    }
+
+# Admin: Get all users for admin panel
+@api_router.get("/admin/users")
+async def get_all_users(request: Request, skip: int = 0, limit: int = 50):
+    """Admin endpoint to get all users"""
+    admin_user = await get_current_user(request)
+    
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find({}, {"password_hash": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    for user in users:
+        user["_id"] = str(user["_id"])
+        if user.get("location"):
+            try:
+                user["location"] = decrypt_data(user["location"])
+            except Exception:
+                pass
+    
+    total = await db.users.count_documents({})
+    return {"users": users, "total": total}
+
 # Push Notification endpoints
 @api_router.get("/notifications/vapid-public-key")
 async def get_vapid_public_key():
@@ -971,7 +1031,7 @@ async def test_push_notification(request: Request):
     
     await send_push_notification(
         user_id=user["_id"],
-        title="HomesteadHub Test",
+        title="Rebel Trade Network Test",
         body="Push notifications are working! You'll receive alerts for messages, comments, and matches.",
         data={"type": "test", "url": "/"}
     )
@@ -1044,7 +1104,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 # Health check
 @api_router.get("/")
 async def root():
-    return {"message": "HomesteadHub API", "status": "running"}
+    return {"message": "Rebel Trade Network API", "status": "running"}
 
 # Include router
 app.include_router(api_router)
@@ -1068,7 +1128,7 @@ async def startup():
     await db.push_subscriptions.create_index([("user_id", 1), ("endpoint", 1)], unique=True)
     
     # Seed admin
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@homesteadhub.com")
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
     existing = await db.users.find_one({"email": admin_email})
     
@@ -1080,13 +1140,14 @@ async def startup():
             "name": "Admin",
             "location": "",
             "bio": "",
-            "skills": ["Community Management", "Homesteading"],
+            "skills": ["Community Management", "Trading"],
             "goods_offering": [],
             "goods_wanted": [],
             "services_offering": [],
             "services_wanted": [],
             "avatar": "",
             "role": "admin",
+            "is_verified": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         })
         logger.info(f"Admin user created: {admin_email}")

@@ -60,12 +60,12 @@ export default function Register() {
       <div className="absolute inset-0 bg-black/70"></div>
       
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
-        <div className="bg-[#1C1917] border border-[#292524] p-8">
+        <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#B45309] p-8">
           <div className="flex items-center gap-3 mb-8">
             <Shield size={40} weight="duotone" className="text-[#B45309]" />
             <div>
               <h1 className="text-2xl font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
-                HOMESTEAD HUB
+                REBEL TRADE
               </h1>
               <p className="text-xs uppercase tracking-[0.2em] text-[#78716C]">Exit the Matrix</p>
             </div>

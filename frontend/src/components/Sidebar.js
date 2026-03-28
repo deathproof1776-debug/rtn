@@ -31,9 +31,9 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
             <Shield size={32} weight="duotone" className="text-[#B45309]" />
             <div>
               <h1 className="text-lg font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
-                HOMESTEAD
+                REBEL TRADE
               </h1>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#78716C]">Barter Network</p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-[#78716C]">Network</p>
             </div>
           </div>
           {isMobile ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ArrowsLeftRight, Lightning, Users, MapPin, NavigationArrow } from '@phosphor-icons/react';
+import { ArrowsLeftRight, Lightning, Users, MapPin, NavigationArrow, SealCheck } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -136,13 +136,21 @@ export default function RightPanel({ matches }) {
 
 function NearbyUserCard({ user }) {
   return (
-    <div className="bg-[#1C1917] border border-[#292524] p-3 card-hover" data-testid={`nearby-user-${user._id}`}>
+    <div className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#84CC16] p-3 card-hover" data-testid={`nearby-user-${user._id}`}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#84CC16] font-semibold shrink-0">
           {user.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="font-medium text-[#E7E5E4] text-sm truncate">{user.name}</h4>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="font-medium text-[#E7E5E4] text-sm truncate">{user.name}</h4>
+            {user.is_verified && (
+              <span className="verified-badge">
+                <SealCheck size={10} weight="fill" />
+                Verified
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1 text-xs text-[#78716C]">
             <MapPin size={10} />
             <span className="truncate">{user.location}</span>
@@ -162,14 +170,20 @@ function NearbyUserCard({ user }) {
 
 function MatchCard({ match }) {
   return (
-    <div className="bg-[#1C1917] border border-[#292524] p-3 card-hover" data-testid={`match-${match._id}`}>
+    <div className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#B45309] p-3 card-hover" data-testid={`match-${match._id}`}>
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold shrink-0">
           {match.user_name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-medium text-[#E7E5E4] text-sm truncate">{match.user_name}</h4>
+            {match.is_verified && (
+              <span className="verified-badge">
+                <SealCheck size={10} weight="fill" />
+                Verified
+              </span>
+            )}
             {match.is_nearby && (
               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#4D7C0F]/20 text-[#84CC16] text-[10px] rounded-full">
                 <MapPin size={8} weight="fill" />

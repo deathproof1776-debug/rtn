@@ -9,7 +9,8 @@ import {
   FloppyDisk,
   Plus,
   X,
-  Camera
+  Camera,
+  SealCheck
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -25,7 +26,8 @@ export default function ProfilePanel() {
     goods_wanted: [],
     services_offering: [],
     services_wanted: [],
-    avatar: ''
+    avatar: '',
+    is_verified: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,7 +58,8 @@ export default function ProfilePanel() {
         goods_wanted: response.data.goods_wanted || [],
         services_offering: response.data.services_offering || [],
         services_wanted: response.data.services_wanted || [],
-        avatar: response.data.avatar || ''
+        avatar: response.data.avatar || '',
+        is_verified: response.data.is_verified || false
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -161,7 +164,15 @@ export default function ProfilePanel() {
             />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] truncate">{profile.name || 'Your Name'}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] truncate">{profile.name || 'Your Name'}</h3>
+              {profile.is_verified && (
+                <span className="verified-badge verified-badge-lg" data-testid="profile-verified-badge">
+                  <SealCheck size={12} weight="fill" />
+                  Verified Trader
+                </span>
+              )}
+            </div>
             <p className="text-xs md:text-sm text-[#78716C]">Tap the camera to change avatar</p>
           </div>
         </div>
