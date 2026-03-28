@@ -13,6 +13,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Trade Network feature (LinkedIn-style mutual connections)
 - Recommended Traders feature (complementary goods/services matching)
 - **Categorized Goods/Skills/Services** with predefined options + custom entries
+- **Light/Dark Mode** with soft earth tones in light mode
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
@@ -21,6 +22,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - **Encryption**: Fernet symmetric encryption for sensitive data
 - **Storage**: Local file uploads
 - **Push Notifications**: Web Push API with VAPID keys
+- **Theming**: CSS Variables for Light/Dark mode support
 
 ## What's Been Implemented
 - [x] User registration and login with JWT
@@ -45,7 +47,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Verified Trader Badge System - Admin verification with badges
 - [x] **Trade Network Feature** - LinkedIn-style mutual connections
 - [x] **Recommended Traders Feature** - Smart trader suggestions
-- [x] **Categorized Goods/Skills/Services** (March 28, 2026) - NEW:
+- [x] **Categorized Goods/Skills/Services** (March 28, 2026):
   - 5 Goods categories: Food, Tools, Crafts, Livestock, Miscellaneous
   - 5 Skills categories: Homestead, Landscape, Trade/Technical, Creative, Life/Survival
   - 7 Services categories: Labor, Equipment, Animal, Professional, Education, Health, Custom
@@ -53,6 +55,13 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Multi-select from predefined items
   - Custom item addition support
   - CategorySelector component with search, expand/collapse, badges
+- [x] **Light/Dark Mode Theme Toggle** (March 28, 2026):
+  - Theme toggle button (sun/moon icon) in sidebar header
+  - Dark mode: Original rebel aesthetic with dark backgrounds
+  - Light mode: Soft earth tones (warm beige, soft browns, muted greens)
+  - CSS variables for all color values
+  - Smooth transitions between themes
+  - Persisted theme preference in localStorage
 
 ## Categorized Selection System (NEW)
 

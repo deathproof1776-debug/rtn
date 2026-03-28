@@ -10,6 +10,7 @@ import {
   Handshake
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose, networkRequestCount = 0 }) {
   const { user, logout } = useAuth();
@@ -27,12 +28,12 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
 
   return (
     <aside className={isMobile ? '' : 'sidebar'} data-testid="sidebar">
-      <div className="p-6 border-b border-[#292524]">
+      <div className="p-6 border-b border-[var(--border-color)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield size={32} weight="duotone" className="text-[#B45309]" />
+            <Shield size={32} weight="duotone" className="text-[var(--brand-primary)]" />
             <div>
-              <h1 className="text-lg font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+              <h1 className="text-lg font-black tracking-tight text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
                 REBEL TRADE NETWORK
               </h1>
             </div>
@@ -40,13 +41,16 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
           {isMobile ? (
             <button 
               onClick={onClose}
-              className="p-2 text-[#78716C] hover:text-[#E7E5E4] transition-colors"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               aria-label="Close menu"
             >
               <X size={24} weight="bold" />
             </button>
           ) : (
-            <NotificationBell />
+            <div className="flex items-center gap-1">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
           )}
         </div>
       </div>
@@ -72,7 +76,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
             <item.icon size={22} weight={activeView === item.id ? 'fill' : 'regular'} />
             <span>{item.label}</span>
             {item.badge > 0 && (
-              <span className="ml-auto bg-[#B45309] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+              <span className="ml-auto bg-[var(--brand-primary)] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                 {item.badge}
               </span>
             )}
@@ -80,20 +84,20 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
         ))}
       </nav>
 
-      <div className="p-4 border-t border-[#292524]">
+      <div className="p-4 border-t border-[var(--border-color)]">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold">
+          <div className="w-10 h-10 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[#E7E5E4] truncate">{user?.name || 'User'}</p>
-            <p className="text-xs text-[#78716C] truncate">{user?.location || 'Location not set'}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] truncate">{user?.name || 'User'}</p>
+            <p className="text-xs text-[var(--text-muted)] truncate">{user?.location || 'Location not set'}</p>
           </div>
         </div>
         
         <button
           onClick={handleLogout}
-          className="nav-link w-full text-[#991B1B] hover:bg-[#991B1B]/10"
+          className="nav-link w-full text-[var(--brand-danger)] hover:bg-[var(--brand-danger)]/10"
           data-testid="logout-button"
         >
           <SignOut size={20} />

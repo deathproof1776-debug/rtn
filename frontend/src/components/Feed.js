@@ -93,9 +93,9 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="post-card animate-pulse">
-            <div className="h-4 bg-[#292524] w-1/3 mb-4"></div>
-            <div className="h-3 bg-[#292524] w-full mb-2"></div>
-            <div className="h-3 bg-[#292524] w-2/3"></div>
+            <div className="h-4 bg-[var(--bg-surface-hover)] w-1/3 mb-4"></div>
+            <div className="h-3 bg-[var(--bg-surface-hover)] w-full mb-2"></div>
+            <div className="h-3 bg-[var(--bg-surface-hover)] w-2/3"></div>
           </div>
         ))}
       </div>
@@ -138,18 +138,18 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
 
       <div className="flex items-center justify-between mb-4 md:mb-8">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+          <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Barter Feed
           </h2>
-          <p className="text-xs md:text-sm text-[#78716C] mt-0.5 md:mt-1">Connect. Trade. Thrive.</p>
+          <p className="text-xs md:text-sm text-[var(--text-muted)] mt-0.5 md:mt-1">Connect. Trade. Thrive.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleFilterToggle}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border transition-all ${
               filterNearby 
-                ? 'bg-[#B45309] border-[#B45309] text-white' 
-                : 'bg-transparent border-[#44403C] text-[#A8A29E] hover:border-[#B45309] hover:text-[#B45309]'
+                ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' 
+                : 'bg-transparent border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
             }`}
             data-testid="filter-nearby-btn"
           >
@@ -163,20 +163,20 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
         <div className="post-card text-center py-12">
           {filterNearby ? (
             <>
-              <MapPin size={48} className="mx-auto text-[#44403C] mb-4" />
-              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No nearby posts found</h3>
-              <p className="text-sm text-[#78716C] mb-4">
+              <MapPin size={48} className="mx-auto text-[var(--bg-surface-active)] mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No nearby posts found</h3>
+              <p className="text-sm text-[var(--text-muted)] mb-4">
                 Try expanding your search or update your location in your profile
               </p>
-              <button onClick={handleFilterToggle} className="btn-ghost text-[#B45309]" data-testid="show-all-posts-btn">
+              <button onClick={handleFilterToggle} className="btn-ghost text-[var(--brand-primary)]" data-testid="show-all-posts-btn">
                 Show All Posts
               </button>
             </>
           ) : (
             <>
-              <ArrowsLeftRight size={48} className="mx-auto text-[#44403C] mb-4" />
-              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No barter posts yet</h3>
-              <p className="text-sm text-[#78716C] mb-4">Be the first to share what you can offer or need</p>
+              <ArrowsLeftRight size={48} className="mx-auto text-[var(--bg-surface-active)] mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No barter posts yet</h3>
+              <p className="text-sm text-[var(--text-muted)] mb-4">Be the first to share what you can offer or need</p>
               <button onClick={onCreatePost} className="btn-primary" data-testid="create-first-post">
                 Create Your First Post
               </button>
@@ -268,12 +268,12 @@ function PostCard({ post, onLike, currentUserId }) {
     <article className="post-card animate-slide-up" data-testid={`post-${post._id}`}>
       <header className="flex items-start justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold text-base md:text-lg flex-shrink-0">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0">
             {post.user_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-              <h4 className="font-medium text-[#E7E5E4] text-sm md:text-base truncate">{post.user_name || 'Anonymous'}</h4>
+              <h4 className="font-medium text-[var(--text-primary)] text-sm md:text-base truncate">{post.user_name || 'Anonymous'}</h4>
               {post.is_verified && (
                 <span className="verified-badge" data-testid={`verified-badge-${post._id}`}>
                   <SealCheck size={10} weight="fill" />
@@ -281,19 +281,19 @@ function PostCard({ post, onLike, currentUserId }) {
                 </span>
               )}
               {post.is_network && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#B45309]/20 text-[#F59E0B] text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`network-badge-${post._id}`}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`network-badge-${post._id}`}>
                   <Handshake size={10} weight="fill" />
                   Network
                 </span>
               )}
               {post.is_nearby && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#4D7C0F]/20 text-[#84CC16] text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`nearby-badge-${post._id}`}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[var(--brand-accent)]/20 text-[var(--brand-accent)] text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`nearby-badge-${post._id}`}>
                   <MapPin size={8} weight="fill" />
                   Nearby
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs text-[#78716C]">
+            <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs text-[var(--text-muted)]">
               <span>{timeAgo}</span>
               {post.user_location && (
                 <>
@@ -312,21 +312,21 @@ function PostCard({ post, onLike, currentUserId }) {
         </button>
       </header>
 
-      <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] mb-2" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+      <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
         {post.title}
       </h3>
       
-      <p className="text-sm md:text-base text-[#A8A29E] mb-3 md:mb-4 leading-relaxed line-clamp-3">{post.description}</p>
+      <p className="text-sm md:text-base text-[var(--text-secondary)] mb-3 md:mb-4 leading-relaxed line-clamp-3">{post.description}</p>
 
       <div className="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
         <span className="badge text-[10px] md:text-xs">{post.category?.toUpperCase()}</span>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 mb-3 md:mb-4">
-        <div className="bg-[#0C0A09] p-2.5 md:p-3 border border-[#292524]">
+        <div className="bg-[var(--bg-main)] p-2.5 md:p-3 border border-[var(--border-color)]">
           <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-            <Tag size={14} className="text-[#4D7C0F]" />
-            <span className="text-[10px] md:text-xs uppercase tracking-wider text-[#4D7C0F] font-semibold">Offering</span>
+            <Tag size={14} className="text-[var(--brand-accent)]" />
+            <span className="text-[10px] md:text-xs uppercase tracking-wider text-[var(--brand-accent)] font-semibold">Offering</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {post.offering?.map((item, i) => (
@@ -334,10 +334,10 @@ function PostCard({ post, onLike, currentUserId }) {
             ))}
           </div>
         </div>
-        <div className="bg-[#0C0A09] p-2.5 md:p-3 border border-[#292524]">
+        <div className="bg-[var(--bg-main)] p-2.5 md:p-3 border border-[var(--border-color)]">
           <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
-            <ArrowsLeftRight size={14} className="text-[#B45309]" />
-            <span className="text-[10px] md:text-xs uppercase tracking-wider text-[#B45309] font-semibold">Looking For</span>
+            <ArrowsLeftRight size={14} className="text-[var(--brand-primary)]" />
+            <span className="text-[10px] md:text-xs uppercase tracking-wider text-[var(--brand-primary)] font-semibold">Looking For</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {post.looking_for?.map((item, i) => (
@@ -354,16 +354,16 @@ function PostCard({ post, onLike, currentUserId }) {
               key={i} 
               src={img} 
               alt={`Post image ${i + 1}`}
-              className="w-full h-24 md:h-32 object-cover border border-[#292524]"
+              className="w-full h-24 md:h-32 object-cover border border-[var(--border-color)]"
             />
           ))}
         </div>
       )}
 
-      <footer className="flex items-center gap-3 md:gap-4 pt-3 md:pt-4 border-t border-[#292524]">
+      <footer className="flex items-center gap-3 md:gap-4 pt-3 md:pt-4 border-t border-[var(--border-color)]">
         <button 
           onClick={handleLikeClick}
-          className={`btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3 ${liked ? 'text-[#B45309]' : ''}`}
+          className={`btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3 ${liked ? 'text-[var(--brand-primary)]' : ''}`}
           data-testid={`like-post-${post._id}`}
         >
           <Heart size={18} weight={liked ? 'fill' : 'regular'} />
@@ -382,7 +382,7 @@ function PostCard({ post, onLike, currentUserId }) {
 
       {/* Comments Section */}
       {showComments && (
-        <div className="mt-4 pt-4 border-t border-[#292524]" data-testid={`comments-section-${post._id}`}>
+        <div className="mt-4 pt-4 border-t border-[var(--border-color)]" data-testid={`comments-section-${post._id}`}>
           {/* Comment Input */}
           <form onSubmit={handleSubmitComment} className="flex gap-2 mb-4">
             <input
@@ -390,7 +390,7 @@ function PostCard({ post, onLike, currentUserId }) {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 bg-[#0C0A09] border border-[#44403C] text-[#E7E5E4] px-3 py-2 text-sm focus:ring-1 focus:ring-[#B45309] focus:border-[#B45309] outline-none"
+              className="flex-1 bg-[var(--bg-main)] border border-[var(--bg-surface-active)] text-[var(--text-primary)] px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] outline-none"
               data-testid={`comment-input-${post._id}`}
             />
             <button 
@@ -406,10 +406,10 @@ function PostCard({ post, onLike, currentUserId }) {
           {/* Comments List */}
           {loadingComments ? (
             <div className="flex items-center justify-center py-4">
-              <div className="w-5 h-5 border-2 border-[#B45309] border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-[#78716C] text-sm text-center py-4">No comments yet. Be the first to comment!</p>
+            <p className="text-[var(--text-muted)] text-sm text-center py-4">No comments yet. Be the first to comment!</p>
           ) : (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {comments.map((comment) => (
@@ -438,24 +438,24 @@ function CommentItem({ comment, currentUserId, postUserId, onDelete }) {
 
   return (
     <div className="flex gap-3 group" data-testid={`comment-${comment.id}`}>
-      <div className="w-8 h-8 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold text-xs flex-shrink-0">
+      <div className="w-8 h-8 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-xs flex-shrink-0">
         {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-[#E7E5E4]">{comment.user_name}</span>
-          <span className="text-xs text-[#78716C]">{timeAgo}</span>
+          <span className="text-sm font-medium text-[var(--text-primary)]">{comment.user_name}</span>
+          <span className="text-xs text-[var(--text-muted)]">{timeAgo}</span>
           {canDelete && (
             <button 
               onClick={() => onDelete(comment.id)}
-              className="ml-auto opacity-0 group-hover:opacity-100 text-[#991B1B] hover:text-red-400 transition-opacity"
+              className="ml-auto opacity-0 group-hover:opacity-100 text-[var(--brand-danger)] hover:text-red-400 transition-opacity"
               data-testid={`delete-comment-${comment.id}`}
             >
               <Trash size={14} />
             </button>
           )}
         </div>
-        <p className="text-sm text-[#A8A29E] break-words">{comment.content}</p>
+        <p className="text-sm text-[var(--text-secondary)] break-words">{comment.content}</p>
       </div>
     </div>
   );

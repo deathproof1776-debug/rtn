@@ -1,12 +1,13 @@
 import { Shield, List, Plus } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 export default function MobileHeader({ onMenuClick, onCreatePost }) {
   return (
     <header className="mobile-header" data-testid="mobile-header">
       <button 
         onClick={onMenuClick}
-        className="p-2 -ml-2 text-[#A8A29E] hover:text-[#E7E5E4] transition-colors"
+        className="p-2 -ml-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         data-testid="mobile-menu-button"
         aria-label="Open menu"
       >
@@ -14,9 +15,9 @@ export default function MobileHeader({ onMenuClick, onCreatePost }) {
       </button>
 
       <div className="flex items-center gap-2">
-        <Shield size={24} weight="duotone" className="text-[#B45309]" />
+        <Shield size={24} weight="duotone" className="text-[var(--brand-primary)]" />
         <span 
-          className="text-sm font-black tracking-tight text-[#E7E5E4]" 
+          className="text-sm font-black tracking-tight text-[var(--text-primary)]" 
           style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}
         >
           REBEL TRADE NETWORK
@@ -24,10 +25,11 @@ export default function MobileHeader({ onMenuClick, onCreatePost }) {
       </div>
 
       <div className="flex items-center gap-1">
+        <ThemeToggle />
         <NotificationBell />
         <button 
           onClick={onCreatePost}
-          className="p-2 text-[#B45309] hover:text-[#92400E] transition-colors"
+          className="p-2 text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] transition-colors"
           data-testid="mobile-create-post"
           aria-label="Create post"
         >

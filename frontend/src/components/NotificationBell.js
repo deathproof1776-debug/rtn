@@ -51,7 +51,7 @@ export default function NotificationBell() {
     return (
       <div className="relative">
         <button
-          className="p-2 rounded-lg text-stone-500 cursor-not-allowed"
+          className="p-2 rounded-lg text-[var(--text-muted)] cursor-not-allowed"
           title="Push notifications not supported in this browser"
           disabled
         >
@@ -67,14 +67,14 @@ export default function NotificationBell() {
         onClick={() => setShowDropdown(!showDropdown)}
         className={`p-2 rounded-lg transition-all duration-200 ${
           isSubscribed 
-            ? 'text-amber-500 hover:bg-amber-500/10' 
-            : 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'
+            ? 'text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10' 
+            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]'
         }`}
         data-testid="notification-bell"
         title={isSubscribed ? 'Notifications enabled' : 'Enable notifications'}
       >
         {loading ? (
-          <div className="w-[22px] h-[22px] border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+          <div className="w-[22px] h-[22px] border-2 border-[var(--brand-primary)]/30 border-t-[var(--brand-primary)] rounded-full animate-spin" />
         ) : isSubscribed ? (
           <BellRinging size={22} weight="fill" className="animate-pulse" />
         ) : (
@@ -89,23 +89,23 @@ export default function NotificationBell() {
             onClick={() => setShowDropdown(false)}
           />
           <div 
-            className="absolute right-0 mt-2 w-72 bg-stone-900 border border-stone-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-72 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-2xl z-50 overflow-hidden"
             data-testid="notification-dropdown"
           >
-            <div className="p-4 border-b border-stone-700">
-              <h3 className="text-stone-200 font-semibold flex items-center gap-2">
-                <Bell size={18} weight="bold" className="text-amber-500" />
+            <div className="p-4 border-b border-[var(--border-color)]">
+              <h3 className="text-[var(--text-primary)] font-semibold flex items-center gap-2">
+                <Bell size={18} weight="bold" className="text-[var(--brand-primary)]" />
                 Push Notifications
               </h3>
-              <p className="text-stone-500 text-sm mt-1">
+              <p className="text-[var(--text-muted)] text-sm mt-1">
                 Get alerts for messages, comments, matches & likes
               </p>
             </div>
 
             <div className="p-3 space-y-2">
               {permission === 'denied' ? (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-red-400 text-sm">
+                <div className="p-3 bg-[var(--brand-danger)]/10 border border-[var(--brand-danger)]/20 rounded-lg">
+                  <p className="text-[var(--brand-danger)] text-sm">
                     Notifications are blocked. Please enable them in your browser settings.
                   </p>
                 </div>
@@ -116,20 +116,20 @@ export default function NotificationBell() {
                     disabled={loading}
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                       isSubscribed
-                        ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                        : 'bg-stone-800 border border-stone-700 text-stone-300 hover:bg-stone-700'
+                        ? 'bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/20'
+                        : 'bg-[var(--bg-surface-hover)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-active)]'
                     }`}
                     data-testid="notification-toggle"
                   >
                     <span className="flex items-center gap-2">
                       {isSubscribed ? (
                         <>
-                          <Check size={18} weight="bold" className="text-green-500" />
+                          <Check size={18} weight="bold" className="text-[var(--brand-success)]" />
                           Notifications On
                         </>
                       ) : (
                         <>
-                          <X size={18} weight="bold" className="text-stone-500" />
+                          <X size={18} weight="bold" className="text-[var(--text-muted)]" />
                           Notifications Off
                         </>
                       )}
@@ -143,7 +143,7 @@ export default function NotificationBell() {
                     <button
                       onClick={handleTest}
                       disabled={loading}
-                      className="w-full p-3 bg-stone-800 border border-stone-700 rounded-lg text-stone-400 hover:bg-stone-700 hover:text-stone-200 transition-all text-sm"
+                      className="w-full p-3 bg-[var(--bg-surface-hover)] border border-[var(--border-color)] rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-surface-active)] hover:text-[var(--text-primary)] transition-all text-sm"
                       data-testid="notification-test"
                     >
                       Send Test Notification
@@ -153,8 +153,8 @@ export default function NotificationBell() {
               )}
             </div>
 
-            <div className="px-4 py-3 bg-stone-800/50 border-t border-stone-700">
-              <p className="text-stone-500 text-xs">
+            <div className="px-4 py-3 bg-[var(--bg-surface-hover)]/50 border-t border-[var(--border-color)]">
+              <p className="text-[var(--text-muted)] text-xs">
                 You'll receive notifications even when the app is closed
               </p>
             </div>

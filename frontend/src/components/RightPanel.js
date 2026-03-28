@@ -50,34 +50,34 @@ export default function RightPanel({ matches, onViewProfile }) {
       {/* Nearby Homesteaders Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
-          <MapPin size={20} weight="fill" className="text-[#84CC16]" />
-          <h3 className="text-lg font-semibold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+          <MapPin size={20} weight="fill" className="text-[var(--brand-accent)]" />
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Nearby Homesteaders
           </h3>
         </div>
         
         {userLocation && (
-          <div className="flex items-center gap-2 mb-3 px-2 py-1 bg-[#1C1917] border border-[#292524] text-xs text-[#78716C]">
-            <NavigationArrow size={12} className="text-[#B45309]" />
-            <span>Your location: <span className="text-[#A8A29E]">{userLocation}</span></span>
+          <div className="flex items-center gap-2 mb-3 px-2 py-1 bg-[var(--bg-surface)] border border-[var(--border-color)] text-xs text-[var(--text-muted)]">
+            <NavigationArrow size={12} className="text-[var(--brand-primary)]" />
+            <span>Your location: <span className="text-[var(--text-secondary)]">{userLocation}</span></span>
           </div>
         )}
         
         {loadingNearby ? (
-          <div className="bg-[#1C1917] border border-[#292524] p-4 text-center">
-            <div className="w-5 h-5 border-2 border-[#B45309] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 text-center">
+            <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         ) : !userLocation ? (
-          <div className="bg-[#1C1917] border border-[#292524] p-4 text-center">
-            <MapPin size={32} className="mx-auto text-[#44403C] mb-2" />
-            <p className="text-sm text-[#78716C]">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 text-center">
+            <MapPin size={32} className="mx-auto text-[var(--bg-surface-active)] mb-2" />
+            <p className="text-sm text-[var(--text-muted)]">
               Add your location to find nearby homesteaders
             </p>
           </div>
         ) : nearbyUsers.length === 0 ? (
-          <div className="bg-[#1C1917] border border-[#292524] p-4 text-center">
-            <Users size={32} className="mx-auto text-[#44403C] mb-2" />
-            <p className="text-sm text-[#78716C]">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 text-center">
+            <Users size={32} className="mx-auto text-[var(--bg-surface-active)] mb-2" />
+            <p className="text-sm text-[var(--text-muted)]">
               No homesteaders found in your area yet
             </p>
           </div>
@@ -93,16 +93,16 @@ export default function RightPanel({ matches, onViewProfile }) {
       {/* Potential Matches Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
-          <Lightning size={20} weight="fill" className="text-[#B45309]" />
-          <h3 className="text-lg font-semibold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+          <Lightning size={20} weight="fill" className="text-[var(--brand-primary)]" />
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Potential Matches
           </h3>
         </div>
         
         {sortedMatches.length === 0 ? (
-          <div className="bg-[#1C1917] border border-[#292524] p-4 text-center">
-            <ArrowsLeftRight size={32} className="mx-auto text-[#44403C] mb-2" />
-            <p className="text-sm text-[#78716C]">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 text-center">
+            <ArrowsLeftRight size={32} className="mx-auto text-[var(--bg-surface-active)] mb-2" />
+            <p className="text-sm text-[var(--text-muted)]">
               Update your profile with what you're offering and looking for to see matches
             </p>
           </div>
@@ -117,32 +117,32 @@ export default function RightPanel({ matches, onViewProfile }) {
 
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Users size={20} weight="fill" className="text-[#4D7C0F]" />
-          <h3 className="text-lg font-semibold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+          <Users size={20} weight="fill" className="text-[var(--brand-accent)]" />
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Network Stats
           </h3>
         </div>
         
-        <div className="bg-[#1C1917] border border-[#292524] p-4">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-2xl font-bold text-[#B45309]">{networkCount}</p>
-              <p className="text-xs text-[#78716C] uppercase tracking-wider">Network</p>
+              <p className="text-2xl font-bold text-[var(--brand-primary)]">{networkCount}</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Network</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#B45309]">{matches.length}</p>
-              <p className="text-xs text-[#78716C] uppercase tracking-wider">Matches</p>
+              <p className="text-2xl font-bold text-[var(--brand-primary)]">{matches.length}</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Matches</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#84CC16]">{nearbyUsers.length}</p>
-              <p className="text-xs text-[#78716C] uppercase tracking-wider">Nearby</p>
+              <p className="text-2xl font-bold text-[var(--brand-accent)]">{nearbyUsers.length}</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Nearby</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-[#1C1917] border border-[#292524]">
-          <p className="text-xs text-[#78716C] uppercase tracking-wider mb-2">Encrypted Network</p>
-          <p className="text-sm text-[#A8A29E]">
+        <div className="mt-6 p-4 bg-[var(--bg-surface)] border border-[var(--border-color)]">
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-2">Encrypted Network</p>
+          <p className="text-sm text-[var(--text-secondary)]">
             All messages and sensitive data are encrypted end-to-end for your security.
           </p>
         </div>
@@ -154,17 +154,17 @@ export default function RightPanel({ matches, onViewProfile }) {
 function NearbyUserCard({ user, onClick }) {
   return (
     <div 
-      className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#84CC16] p-3 card-hover cursor-pointer" 
+      className="bg-[var(--bg-surface)] border border-[var(--border-color)] border-l-2 border-l-[var(--brand-accent)] p-3 card-hover cursor-pointer" 
       data-testid={`nearby-user-${user._id}`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#84CC16] font-semibold shrink-0">
+        <div className="w-10 h-10 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-accent)] font-semibold shrink-0">
           {user.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-[#E7E5E4] text-sm truncate hover:text-[#B45309]">{user.name}</h4>
+            <h4 className="font-medium text-[var(--text-primary)] text-sm truncate hover:text-[var(--brand-primary)]">{user.name}</h4>
             {user.is_verified && (
               <span className="verified-badge">
                 <SealCheck size={10} weight="fill" />
@@ -172,7 +172,7 @@ function NearbyUserCard({ user, onClick }) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-[#78716C]">
+          <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
             <MapPin size={10} />
             <span className="truncate">{user.location}</span>
           </div>
@@ -192,17 +192,17 @@ function NearbyUserCard({ user, onClick }) {
 function MatchCard({ match, onClick }) {
   return (
     <div 
-      className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#B45309] p-3 card-hover cursor-pointer" 
+      className="bg-[var(--bg-surface)] border border-[var(--border-color)] border-l-2 border-l-[var(--brand-primary)] p-3 card-hover cursor-pointer" 
       data-testid={`match-${match._id}`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold shrink-0">
+        <div className="w-10 h-10 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold shrink-0">
           {match.user_name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-[#E7E5E4] text-sm truncate">{match.user_name}</h4>
+            <h4 className="font-medium text-[var(--text-primary)] text-sm truncate">{match.user_name}</h4>
             {match.is_verified && (
               <span className="verified-badge">
                 <SealCheck size={10} weight="fill" />
@@ -210,15 +210,15 @@ function MatchCard({ match, onClick }) {
               </span>
             )}
             {match.is_nearby && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#4D7C0F]/20 text-[#84CC16] text-[10px] rounded-full">
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[var(--brand-accent)]/20 text-[var(--brand-accent)] text-[10px] rounded-full">
                 <MapPin size={8} weight="fill" />
                 Nearby
               </span>
             )}
           </div>
-          <p className="text-xs text-[#78716C] truncate">{match.title}</p>
+          <p className="text-xs text-[var(--text-muted)] truncate">{match.title}</p>
           {match.user_location && (
-            <div className="flex items-center gap-1 text-[10px] text-[#57534E] mt-1">
+            <div className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] mt-1">
               <MapPin size={8} />
               <span className="truncate">{match.user_location}</span>
             </div>
