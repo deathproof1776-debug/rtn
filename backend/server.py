@@ -422,6 +422,11 @@ async def like_post(post_id: str, request: Request):
 @api_router.post("/posts/{post_id}/comments", status_code=201)
 async def create_comment(post_id: str, comment: CommentCreate, request: Request):
     user = await get_current_user(request)
+    
+    # Validate comment content
+    if not comment.content or not comment.content.strip():
+        raise HTTPException(status_code=400, detail="Comment content cannot be empty")
+    
     post = await db.posts.find_one({"_id": ObjectId(post_id)})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
