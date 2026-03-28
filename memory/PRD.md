@@ -10,6 +10,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - WebSocket-based real-time chat
 - Rebel homesteader vibe aesthetic with orange accents
 - Push notifications for all activity (messages, comments, likes, matches)
+- Trade Network feature (LinkedIn-style mutual connections)
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
@@ -32,29 +33,43 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Data encryption (location, bio, messages, post descriptions)
 - [x] Rebel homesteader dark theme UI
 - [x] Responsive 3-column layout
-- [x] **Comments on posts** (March 2026) - Full CRUD with encryption, toggle expand/collapse, delete authorization
-- [x] **Location-based matching** (March 2026) - Text-based location matching, Nearby badges, location prioritization in matches, Nearby Homesteaders panel, filter by nearby
-- [x] **Push Notifications** (March 2026) - Browser push notifications for messages, comments, likes. Service Worker, VAPID auth, subscription management UI
-- [x] **Mobile UI Optimization** (March 2026) - Mobile-first responsive design with bottom navigation, mobile header, slide-out sidebar drawer, optimized feed and profile layouts
-- [x] **Pull-to-Refresh** (March 2026) - Native-feeling pull-down refresh on mobile feed
-- [x] **Profile Loading Bug Fix** (March 2026) - Fixed /api/auth/me returning `_id` instead of `id`
-- [x] **Rebranding to "Rebel Trade Network"** (March 28, 2026) - Changed app name from HomesteadHub, updated all branding locations
-- [x] **Orange Borders/Trim** (March 28, 2026) - Added orange accent borders to sidebar, right panel, mobile header, mobile nav, post cards
-- [x] **Verified Trader Badge System** (March 28, 2026) - Admin can verify traders, verified badge displays on posts and profiles
+- [x] Comments on posts - Full CRUD with encryption
+- [x] Location-based matching - Nearby badges, location prioritization
+- [x] Push Notifications - Browser push for messages, comments, likes
+- [x] Mobile UI Optimization - Bottom nav, mobile header, slide-out sidebar
+- [x] Pull-to-Refresh - Native-feeling pull-down refresh on mobile feed
+- [x] Rebranding to "Rebel Trade Network" - Updated all branding
+- [x] Orange Borders/Trim - Added orange accent borders throughout
+- [x] Verified Trader Badge System - Admin verification with badges
+- [x] **Trade Network Feature** (March 28, 2026) - LinkedIn-style mutual connections:
+  - Send/receive network requests
+  - Accept/decline incoming requests
+  - View connected traders
+  - Remove connections
+  - Network members get +200 priority in feed algorithm
+  - "My Trade Network" section in sidebar + profile panel
+  - User profile modal with "Add to Trade Network" button
+  - Network badge counts in navigation
+  - Push notifications for network requests
 
-## Mobile UI Components
-- **MobileHeader.js** - Hamburger menu, branding, notification bell, create post button
-- **MobileNav.js** - Bottom navigation with Feed, Post (prominent), Messages, Profile
-- **Sidebar drawer** - Slide-out drawer for mobile navigation with overlay
-- **Responsive CSS** - Mobile-first approach with breakpoints at 768px (tablet) and 1024px (desktop)
-- **Pull-to-Refresh** - Native-feeling pull-to-refresh on mobile feed with visual indicator
+## Trade Network Feature Details
+### Backend Endpoints
+- `POST /api/network/request` - Send network request
+- `POST /api/network/respond` - Accept/decline request
+- `GET /api/network/requests/pending` - Get incoming/outgoing requests
+- `GET /api/network/connections` - Get all connections
+- `DELETE /api/network/connections/{user_id}` - Remove connection
+- `GET /api/network/status/{user_id}` - Check status with user
+- `POST /api/network/cancel/{request_id}` - Cancel pending request
 
-## Verified Trader Badge System
-- Admin users can verify/unverify traders via POST /api/admin/verify-trader
-- Verified badge displays on posts in feed (orange gradient badge with checkmark)
-- Verified badge displays on profile panel for verified users
-- Login and auth endpoints return `is_verified` and `role` fields
-- Admin can view all users via GET /api/admin/users
+### Feed Algorithm Priority
+- Network members: +200 score
+- Nearby users: +100 score
+- Goods/services match: +10 per match
+
+### MongoDB Collections
+- `network_connections` - Stores established connections
+- `network_requests` - Stores pending/responded requests
 
 ## Prioritized Backlog
 ### P0 (Critical)
@@ -87,93 +102,72 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - POST /api/admin/verify-trader (requires admin role)
 - GET /api/admin/users (requires admin role)
 
+### Trade Network
+- POST /api/network/request
+- POST /api/network/respond
+- GET /api/network/requests/pending
+- GET /api/network/connections
+- DELETE /api/network/connections/{user_id}
+- GET /api/network/status/{user_id}
+- POST /api/network/cancel/{request_id}
+
 ### Profile
 - PUT /api/profile
 - GET /api/profile/{user_id}
 
 ### Posts
 - POST /api/posts
-- GET /api/posts (supports ?nearby_only=true filter)
-- GET /api/posts/matches (location-prioritized with match_score)
-- POST /api/posts/{id}/like (triggers push notification)
+- GET /api/posts (returns is_network, feed_score for priority)
+- GET /api/posts/matches
+- POST /api/posts/{id}/like
 
 ### Comments
-- POST /api/posts/{post_id}/comments - Create comment (encrypted, triggers push notification)
-- GET /api/posts/{post_id}/comments - Get all comments (decrypted)
-- DELETE /api/posts/{post_id}/comments/{comment_id} - Delete comment (owner or post owner)
+- POST /api/posts/{post_id}/comments
+- GET /api/posts/{post_id}/comments
+- DELETE /api/posts/{post_id}/comments/{comment_id}
 
 ### Messages
 - GET /api/conversations
-- POST /api/messages (triggers push notification)
+- POST /api/messages
 - GET /api/messages/{user_id}
 
 ### Users
-- GET /api/users/nearby - Get users in same location
+- GET /api/users/nearby
 - GET /api/users/search
 
 ### Push Notifications
-- GET /api/notifications/vapid-public-key - Get VAPID public key (no auth)
-- POST /api/notifications/subscribe - Subscribe to push notifications
-- POST /api/notifications/unsubscribe - Unsubscribe from push notifications
-- GET /api/notifications/status - Get subscription status
-- POST /api/notifications/test - Send test notification
+- GET /api/notifications/vapid-public-key
+- POST /api/notifications/subscribe
+- POST /api/notifications/unsubscribe
+- GET /api/notifications/status
+- POST /api/notifications/test
 
 ### Other
 - POST /api/upload
 - WebSocket: /ws/{user_id}
 
 ## Data Models
-### Users (with verification)
-```json
-{
-  "_id": "ObjectId",
-  "email": "string",
-  "name": "string",
-  "location": "encrypted string",
-  "bio": "encrypted string",
-  "skills": ["array"],
-  "goods_offering": ["array"],
-  "goods_wanted": ["array"],
-  "services_offering": ["array"],
-  "services_wanted": ["array"],
-  "avatar": "string (URL)",
-  "role": "user | admin",
-  "is_verified": "boolean",
-  "verified_at": "ISO timestamp (if verified)",
-  "created_at": "ISO timestamp"
-}
-```
-
-### Posts (with verification status)
-```json
-{
-  "_id": "ObjectId string",
-  "user_id": "string",
-  "user_name": "string",
-  "user_location": "string (decrypted)",
-  "is_nearby": "boolean",
-  "is_verified": "boolean",
-  "match_score": "number (for /api/posts/matches)",
-  "title": "string",
-  "description": "encrypted string",
-  "category": "string",
-  "offering": ["array"],
-  "looking_for": ["array"],
-  "created_at": "ISO timestamp"
-}
-```
-
-### Push Subscriptions
+### Network Connections
 ```json
 {
   "_id": "ObjectId",
   "user_id": "string",
-  "endpoint": "string (push service URL)",
-  "keys": {
-    "p256dh": "string",
-    "auth": "string"
-  },
+  "connected_user_id": "string",
   "created_at": "ISO timestamp"
+}
+```
+
+### Network Requests
+```json
+{
+  "_id": "ObjectId",
+  "from_user_id": "string",
+  "from_user_name": "string",
+  "from_user_avatar": "string",
+  "to_user_id": "string",
+  "status": "pending | accepted | declined",
+  "created_at": "ISO timestamp",
+  "responded_at": "ISO timestamp (optional)"
 }
 ```
 
@@ -186,3 +180,4 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - **Accent Green**: #4D7C0F (for "offering" badges)
 - **Border Accent**: 2-3px solid #B45309 on key elements
 - **Verified Badge**: Gradient from #B45309 to #92400E with glow effect
+- **Network Badge**: Orange background with handshake icon
