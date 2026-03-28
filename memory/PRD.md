@@ -36,6 +36,8 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] **Location-based matching** (March 2026) - Text-based location matching, Nearby badges, location prioritization in matches, Nearby Homesteaders panel, filter by nearby
 - [x] **Push Notifications** (March 2026) - Browser push notifications for messages, comments, likes. Service Worker, VAPID auth, subscription management UI
 - [x] **Mobile UI Optimization** (March 2026) - Mobile-first responsive design with bottom navigation, mobile header, slide-out sidebar drawer, optimized feed and profile layouts
+- [x] **Pull-to-Refresh** (March 2026) - Native-feeling pull-down refresh on mobile feed
+- [x] **Profile Loading Bug Fix** (March 2026) - Fixed /api/auth/me returning `_id` instead of `id`, causing profile panel to fail loading after page refresh
 
 ## Mobile UI Components (New)
 - **MobileHeader.js** - Hamburger menu, branding, notification bell, create post button

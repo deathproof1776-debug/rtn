@@ -305,6 +305,9 @@ async def get_me(request: Request):
             user["location"] = decrypt_data(user["location"])
         except Exception:
             pass
+    # Normalize _id to id for frontend consistency
+    if "_id" in user:
+        user["id"] = user.pop("_id")
     return user
 
 @api_router.post("/auth/refresh")
