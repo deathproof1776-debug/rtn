@@ -1,0 +1,108 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
+import Sidebar from '../components/Sidebar';
+import Feed from '../components/Feed';
+import RightPanel from '../components/RightPanel';
+import CreatePostModal from '../components/CreatePostModal';
+import MessagesPanel from '../components/MessagesPanel';
+import ProfilePanel from '../components/ProfilePanel';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+export default function Dashboard() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [activeView, setActiveView] = useState('feed');
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPosts();
+      fetchMatches();
+    }
+  }, [user]);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/posts`, {
+        withCredentials: true
+      });
+      setPosts(response.data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
+  const fetchMatches = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/posts/matches`, {
+        withCredentials: true
+      });
+      setMatches(response.data);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    }
+  };
+
+  const handlePostCreated = (newPost) => {
+    setPosts([newPost, ...posts]);
+    setShowCreatePost(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
+        <div className="text-[#A8A29E]">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="app-shell" data-testid="dashboard">
+      <Sidebar 
+        activeView={activeView} 
+        setActiveView={setActiveView}
+        onCreatePost={() => setShowCreatePost(true)}
+      />
+      
+      <main className="main-feed">
+        {activeView === 'feed' && (
+          <Feed 
+            posts={posts} 
+            loading={postsLoading}
+            onPostCreated={handlePostCreated}
+            onCreatePost={() => setShowCreatePost(true)}
+          />
+        )}
+        {activeView === 'messages' && <MessagesPanel />}
+        {activeView === 'profile' && <ProfilePanel />}
+      </main>
+
+      <RightPanel matches={matches} />
+
+      {showCreatePost && (
+        <CreatePostModal 
+          onClose={() => setShowCreatePost(false)}
+          onPostCreated={handlePostCreated}
+        />
+      )}
+    </div>
+  );
+}
