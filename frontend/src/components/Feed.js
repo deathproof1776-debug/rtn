@@ -12,14 +12,17 @@ import {
   PaperPlaneTilt,
   Trash,
   CaretDown,
-  CaretUp
+  CaretUp,
+  NavigationArrow,
+  FunnelSimple
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Feed({ posts, loading, onCreatePost }) {
+export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false }) {
   const { user } = useAuth();
+  const [filterNearby, setFilterNearby] = useState(nearbyOnly);
 
   const handleLike = async (postId) => {
     try {
@@ -30,6 +33,19 @@ export default function Feed({ posts, loading, onCreatePost }) {
       console.error('Error liking post:', error);
     }
   };
+
+  const handleFilterToggle = () => {
+    const newValue = !filterNearby;
+    setFilterNearby(newValue);
+    if (onFilterChange) {
+      onFilterChange(newValue);
+    }
+  };
+
+  // Filter posts if nearby filter is active
+  const displayPosts = filterNearby 
+    ? posts.filter(post => post.is_nearby)
+    : posts;
 
   if (loading) {
     return (
@@ -54,28 +70,57 @@ export default function Feed({ posts, loading, onCreatePost }) {
           </h2>
           <p className="text-sm text-[#78716C] mt-1">Connect. Trade. Thrive.</p>
         </div>
-        <button
-          onClick={onCreatePost}
-          className="btn-primary flex items-center gap-2 md:hidden"
-          data-testid="create-post-mobile"
-        >
-          <Plus size={18} weight="bold" />
-          Post
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleFilterToggle}
+            className={`flex items-center gap-2 px-3 py-2 text-sm border transition-all ${
+              filterNearby 
+                ? 'bg-[#B45309] border-[#B45309] text-white' 
+                : 'bg-transparent border-[#44403C] text-[#A8A29E] hover:border-[#B45309] hover:text-[#B45309]'
+            }`}
+            data-testid="filter-nearby-btn"
+          >
+            <MapPin size={16} weight={filterNearby ? 'fill' : 'regular'} />
+            <span className="hidden sm:inline">Nearby</span>
+          </button>
+          <button
+            onClick={onCreatePost}
+            className="btn-primary flex items-center gap-2 md:hidden"
+            data-testid="create-post-mobile"
+          >
+            <Plus size={18} weight="bold" />
+            Post
+          </button>
+        </div>
       </div>
 
-      {posts.length === 0 ? (
+      {displayPosts.length === 0 ? (
         <div className="post-card text-center py-12">
-          <ArrowsLeftRight size={48} className="mx-auto text-[#44403C] mb-4" />
-          <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No barter posts yet</h3>
-          <p className="text-sm text-[#78716C] mb-4">Be the first to share what you can offer or need</p>
-          <button onClick={onCreatePost} className="btn-primary" data-testid="create-first-post">
-            Create Your First Post
-          </button>
+          {filterNearby ? (
+            <>
+              <MapPin size={48} className="mx-auto text-[#44403C] mb-4" />
+              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No nearby posts found</h3>
+              <p className="text-sm text-[#78716C] mb-4">
+                Try expanding your search or update your location in your profile
+              </p>
+              <button onClick={handleFilterToggle} className="btn-ghost text-[#B45309]" data-testid="show-all-posts-btn">
+                Show All Posts
+              </button>
+            </>
+          ) : (
+            <>
+              <ArrowsLeftRight size={48} className="mx-auto text-[#44403C] mb-4" />
+              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No barter posts yet</h3>
+              <p className="text-sm text-[#78716C] mb-4">Be the first to share what you can offer or need</p>
+              <button onClick={onCreatePost} className="btn-primary" data-testid="create-first-post">
+                Create Your First Post
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {displayPosts.map((post) => (
             <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} />
           ))}
         </div>
@@ -162,8 +207,27 @@ function PostCard({ post, onLike, currentUserId }) {
             {post.user_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div>
-            <h4 className="font-medium text-[#E7E5E4]">{post.user_name || 'Anonymous'}</h4>
-            <p className="text-xs text-[#78716C]">{timeAgo}</p>
+            <div className="flex items-center gap-2">
+              <h4 className="font-medium text-[#E7E5E4]">{post.user_name || 'Anonymous'}</h4>
+              {post.is_nearby && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#4D7C0F]/20 text-[#84CC16] text-xs rounded-full" data-testid={`nearby-badge-${post._id}`}>
+                  <MapPin size={10} weight="fill" />
+                  Nearby
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[#78716C]">
+              <span>{timeAgo}</span>
+              {post.user_location && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin size={10} />
+                    {post.user_location}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <button className="btn-ghost p-2">

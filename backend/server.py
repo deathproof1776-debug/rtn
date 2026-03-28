@@ -351,10 +351,36 @@ async def create_post(post: BarterPost, request: Request):
     return {"id": str(result.inserted_id), "message": "Post created successfully"}
 
 @api_router.get("/posts")
-async def get_posts(request: Request, skip: int = 0, limit: int = 20):
-    await get_current_user(request)  # Verify auth
-    posts = await db.posts.find({}, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_only: bool = False):
+    user = await get_current_user(request)  # Verify auth
+    user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
     
+    # Decrypt user's location for nearby filtering
+    user_location = ""
+    if user_doc.get("location"):
+        try:
+            user_location = decrypt_data(user_doc["location"])
+        except Exception:
+            user_location = user_doc.get("location", "")
+    
+    posts = await db.posts.find({}, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit).to_list(100 if nearby_only else limit)
+    
+    # Get user locations
+    user_ids = list(set([p["user_id"] for p in posts]))
+    users_map = {}
+    if user_ids:
+        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1})
+        async for u in users_cursor:
+            uid = str(u["_id"])
+            loc = ""
+            if u.get("location"):
+                try:
+                    loc = decrypt_data(u["location"])
+                except Exception:
+                    loc = u.get("location", "")
+            users_map[uid] = loc
+    
+    result_posts = []
     for post in posts:
         post["_id"] = str(post["_id"])
         if post.get("description"):
@@ -370,31 +396,99 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20):
                         comment["content"] = decrypt_data(comment["content"])
                     except Exception:
                         pass
-    return posts
+        
+        # Add location info
+        poster_location = users_map.get(post["user_id"], "")
+        post["user_location"] = poster_location
+        post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
+        
+        # Filter if nearby_only
+        if nearby_only:
+            if post["is_nearby"]:
+                result_posts.append(post)
+        else:
+            result_posts.append(post)
+    
+    return result_posts[:limit]
+
+def normalize_location(location: str) -> str:
+    """Normalize location string for comparison (lowercase, strip whitespace)"""
+    if not location:
+        return ""
+    return location.lower().strip()
+
+def locations_match(loc1: str, loc2: str) -> bool:
+    """Check if two locations match (same city/state/region)"""
+    if not loc1 or not loc2:
+        return False
+    norm1 = normalize_location(loc1)
+    norm2 = normalize_location(loc2)
+    if not norm1 or not norm2:
+        return False
+    # Exact match
+    if norm1 == norm2:
+        return True
+    # Check if one contains the other (e.g., "Austin" matches "Austin, TX")
+    if norm1 in norm2 or norm2 in norm1:
+        return True
+    # Split by comma and check city/state parts
+    parts1 = [p.strip() for p in norm1.split(',')]
+    parts2 = [p.strip() for p in norm2.split(',')]
+    # Check if any part matches
+    for p1 in parts1:
+        for p2 in parts2:
+            if p1 and p2 and (p1 == p2 or p1 in p2 or p2 in p1):
+                return True
+    return False
 
 @api_router.get("/posts/matches")
 async def get_matched_posts(request: Request):
-    """Get posts that match user's wants with others' offerings"""
+    """Get posts that match user's wants with others' offerings, prioritized by location"""
     user = await get_current_user(request)
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
     
+    # Decrypt user's location
+    user_location = ""
+    if user_doc.get("location"):
+        try:
+            user_location = decrypt_data(user_doc["location"])
+        except Exception:
+            user_location = user_doc.get("location", "")
+    
     user_wants = (user_doc.get("goods_wanted", []) + 
                   user_doc.get("services_wanted", []))
+    user_offerings = (user_doc.get("goods_offering", []) + 
+                      user_doc.get("services_offering", []))
     
-    if not user_wants:
-        return []
+    # Find posts where offering matches user's wants OR looking_for matches user's offerings
+    query = {"user_id": {"$ne": user["_id"]}}
+    if user_wants or user_offerings:
+        or_conditions = []
+        if user_wants:
+            or_conditions.append({"offering": {"$in": user_wants}})
+        if user_offerings:
+            or_conditions.append({"looking_for": {"$in": user_offerings}})
+        if or_conditions:
+            query["$or"] = or_conditions
     
-    # Find posts where offering matches user's wants
-    query = {
-        "user_id": {"$ne": user["_id"]},
-        "$or": [
-            {"offering": {"$in": user_wants}},
-            {"looking_for": {"$in": user_doc.get("goods_offering", []) + user_doc.get("services_offering", [])}}
-        ]
-    }
+    posts = await db.posts.find(query, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1}).sort("created_at", -1).limit(50).to_list(50)
     
-    posts = await db.posts.find(query, {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1, "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1}).sort("created_at", -1).limit(20).to_list(20)
+    # Get user locations for sorting and add location info
+    user_ids = list(set([p["user_id"] for p in posts]))
+    users_map = {}
+    if user_ids:
+        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1})
+        async for u in users_cursor:
+            uid = str(u["_id"])
+            loc = ""
+            if u.get("location"):
+                try:
+                    loc = decrypt_data(u["location"])
+                except Exception:
+                    loc = u.get("location", "")
+            users_map[uid] = loc
     
+    # Add location and match score to posts
     for post in posts:
         post["_id"] = str(post["_id"])
         if post.get("description"):
@@ -402,7 +496,32 @@ async def get_matched_posts(request: Request):
                 post["description"] = decrypt_data(post["description"])
             except Exception:
                 pass
-    return posts
+        
+        # Add location info
+        poster_location = users_map.get(post["user_id"], "")
+        post["user_location"] = poster_location
+        post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
+        
+        # Calculate match score (higher = better)
+        score = 0
+        if post.get("is_nearby"):
+            score += 100  # Location match bonus
+        # Check goods/services match
+        post_offerings = post.get("offering", [])
+        post_looking = post.get("looking_for", [])
+        for item in post_offerings:
+            if item in user_wants:
+                score += 10
+        for item in post_looking:
+            if item in user_offerings:
+                score += 10
+        post["match_score"] = score
+    
+    # Sort by match_score (nearby + relevant first), then by date
+    posts.sort(key=lambda x: (-x.get("match_score", 0), x.get("created_at", "")), reverse=False)
+    posts.sort(key=lambda x: -x.get("match_score", 0))
+    
+    return posts[:20]
 
 @api_router.post("/posts/{post_id}/like")
 async def like_post(post_id: str, request: Request):
@@ -631,6 +750,52 @@ async def get_upload(filename: str):
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(filepath)
+
+# Get nearby users (location-based user matching)
+@api_router.get("/users/nearby")
+async def get_nearby_users(request: Request, limit: int = 20):
+    """Get users in the same location as the current user"""
+    user = await get_current_user(request)
+    user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
+    
+    # Decrypt user's location
+    user_location = ""
+    if user_doc.get("location"):
+        try:
+            user_location = decrypt_data(user_doc["location"])
+        except Exception:
+            user_location = user_doc.get("location", "")
+    
+    if not user_location:
+        return {"nearby_users": [], "message": "Set your location to find nearby homesteaders"}
+    
+    # Get all users except current user
+    all_users = await db.users.find(
+        {"_id": {"$ne": ObjectId(user["_id"])}},
+        {"password_hash": 0}
+    ).limit(100).to_list(100)
+    
+    nearby_users = []
+    for u in all_users:
+        u["_id"] = str(u["_id"])
+        u_location = ""
+        if u.get("location"):
+            try:
+                u_location = decrypt_data(u["location"])
+            except Exception:
+                u_location = u.get("location", "")
+        
+        if locations_match(user_location, u_location):
+            u["location"] = u_location
+            # Decrypt bio if present
+            if u.get("bio"):
+                try:
+                    u["bio"] = decrypt_data(u["bio"])
+                except Exception:
+                    pass
+            nearby_users.append(u)
+    
+    return {"nearby_users": nearby_users[:limit], "user_location": user_location, "count": len(nearby_users)}
 
 # Search users
 @api_router.get("/users/search")
