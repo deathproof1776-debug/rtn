@@ -122,6 +122,7 @@ export default function Dashboard() {
             loading={postsLoading}
             onPostCreated={handlePostCreated}
             onCreatePost={() => setShowCreatePost(true)}
+            onRefresh={fetchPosts}
           />
         )}
         {activeView === 'messages' && <MessagesPanel />}

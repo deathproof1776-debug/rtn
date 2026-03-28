@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
   Heart, 
   ChatCircle, 
   DotsThree,
-  Plus,
   MapPin,
   Tag,
   ArrowsLeftRight,
@@ -13,16 +12,56 @@ import {
   Trash,
   CaretDown,
   CaretUp,
-  NavigationArrow,
-  FunnelSimple
+  ArrowClockwise
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false }) {
+export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh }) {
   const { user } = useAuth();
   const [filterNearby, setFilterNearby] = useState(nearbyOnly);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const containerRef = useRef(null);
+  const startY = useRef(0);
+  const isPulling = useRef(false);
+
+  const PULL_THRESHOLD = 80;
+
+  const handleTouchStart = useCallback((e) => {
+    const container = containerRef.current;
+    if (container && container.scrollTop === 0) {
+      startY.current = e.touches[0].clientY;
+      isPulling.current = true;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isPulling.current) return;
+    
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+    
+    if (diff > 0) {
+      // Apply resistance to the pull
+      const resistance = 0.4;
+      setPullDistance(Math.min(diff * resistance, PULL_THRESHOLD * 1.5));
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDistance >= PULL_THRESHOLD && onRefresh && !refreshing) {
+      setRefreshing(true);
+      try {
+        await onRefresh();
+      } finally {
+        setRefreshing(false);
+      }
+    }
+    setPullDistance(0);
+    isPulling.current = false;
+  }, [pullDistance, onRefresh, refreshing]);
 
   const handleLike = async (postId) => {
     try {
@@ -62,7 +101,39 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
   }
 
   return (
-    <div data-testid="feed">
+    <div 
+      ref={containerRef}
+      data-testid="feed"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative"
+    >
+      {/* Pull to refresh indicator */}
+      <div 
+        className="pull-to-refresh-indicator md:hidden"
+        style={{ 
+          height: pullDistance,
+          opacity: Math.min(pullDistance / PULL_THRESHOLD, 1)
+        }}
+        data-testid="pull-to-refresh-indicator"
+      >
+        <div className={`pull-to-refresh-content ${refreshing ? 'refreshing' : ''} ${pullDistance >= PULL_THRESHOLD ? 'ready' : ''}`}>
+          <ArrowClockwise 
+            size={24} 
+            weight="bold"
+            className={refreshing ? 'animate-spin' : ''}
+            style={{ 
+              transform: refreshing ? 'none' : `rotate(${Math.min(pullDistance / PULL_THRESHOLD * 180, 180)}deg)`,
+              transition: refreshing ? 'none' : 'transform 0.1s ease-out'
+            }}
+          />
+          <span className="text-xs mt-1">
+            {refreshing ? 'Refreshing...' : pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
+          </span>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-4 md:mb-8">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>

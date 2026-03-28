@@ -42,6 +42,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - **MobileNav.js** - Bottom navigation with Feed, Post (prominent), Messages, Profile
 - **Sidebar drawer** - Slide-out drawer for mobile navigation with overlay
 - **Responsive CSS** - Mobile-first approach with breakpoints at 768px (tablet) and 1024px (desktop)
+- **Pull-to-Refresh** - Native-feeling pull-to-refresh on mobile feed with visual indicator
 
 ## Prioritized Backlog
 ### P0 (Critical)
