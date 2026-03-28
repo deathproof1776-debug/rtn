@@ -6,11 +6,11 @@ import {
   Plus, 
   SignOut, 
   Shield,
-  MagnifyingGlass
+  X
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 
-export default function Sidebar({ activeView, setActiveView, onCreatePost }) {
+export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose }) {
   const { user, logout } = useAuth();
 
   const navItems = [
@@ -24,7 +24,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost }) {
   };
 
   return (
-    <aside className="sidebar" data-testid="sidebar">
+    <aside className={isMobile ? '' : 'sidebar'} data-testid="sidebar">
       <div className="p-6 border-b border-[#292524]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -36,7 +36,17 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost }) {
               <p className="text-[10px] uppercase tracking-[0.15em] text-[#78716C]">Barter Network</p>
             </div>
           </div>
-          <NotificationBell />
+          {isMobile ? (
+            <button 
+              onClick={onClose}
+              className="p-2 text-[#78716C] hover:text-[#E7E5E4] transition-colors"
+              aria-label="Close menu"
+            >
+              <X size={24} weight="bold" />
+            </button>
+          ) : (
+            <NotificationBell />
+          )}
         </div>
       </div>
 

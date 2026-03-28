@@ -8,6 +8,8 @@ import RightPanel from '../components/RightPanel';
 import CreatePostModal from '../components/CreatePostModal';
 import MessagesPanel from '../components/MessagesPanel';
 import ProfilePanel from '../components/ProfilePanel';
+import MobileNav from '../components/MobileNav';
+import MobileHeader from '../components/MobileHeader';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -19,6 +21,7 @@ export default function Dashboard() {
   const [posts, setPosts] = useState([]);
   const [matches, setMatches] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -76,6 +79,36 @@ export default function Dashboard() {
 
   return (
     <div className="app-shell" data-testid="dashboard">
+      {/* Mobile Header */}
+      <MobileHeader 
+        onMenuClick={() => setSidebarOpen(true)}
+        onCreatePost={() => setShowCreatePost(true)}
+      />
+
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`sidebar-mobile-overlay ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* Mobile Sidebar Drawer */}
+      <div className={`sidebar-mobile ${sidebarOpen ? 'open' : ''}`}>
+        <Sidebar 
+          activeView={activeView} 
+          setActiveView={(view) => {
+            setActiveView(view);
+            setSidebarOpen(false);
+          }}
+          onCreatePost={() => {
+            setShowCreatePost(true);
+            setSidebarOpen(false);
+          }}
+          isMobile={true}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Desktop Sidebar */}
       <Sidebar 
         activeView={activeView} 
         setActiveView={setActiveView}
@@ -96,6 +129,13 @@ export default function Dashboard() {
       </main>
 
       <RightPanel matches={matches} />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileNav 
+        activeView={activeView}
+        setActiveView={setActiveView}
+        onCreatePost={() => setShowCreatePost(true)}
+      />
 
       {showCreatePost && (
         <CreatePostModal 

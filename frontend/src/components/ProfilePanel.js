@@ -122,24 +122,24 @@ export default function ProfilePanel() {
 
   return (
     <div className="max-w-2xl mx-auto" data-testid="profile-panel">
-      <div className="flex items-center gap-2 mb-6">
-        <User size={24} weight="duotone" className="text-[#B45309]" />
-        <h2 className="text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <User size={22} weight="duotone" className="text-[#B45309]" />
+        <h2 className="text-xl md:text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
           Your Profile
         </h2>
       </div>
 
       {message && (
-        <div className={`mb-4 px-4 py-3 ${message.includes('Error') ? 'bg-[#991B1B]/20 border border-[#991B1B]' : 'bg-[#15803D]/20 border border-[#15803D]'} text-[#E7E5E4]`}>
+        <div className={`mb-4 px-3 md:px-4 py-2.5 md:py-3 text-sm ${message.includes('Error') ? 'bg-[#991B1B]/20 border border-[#991B1B]' : 'bg-[#15803D]/20 border border-[#15803D]'} text-[#E7E5E4]`}>
           {message}
         </div>
       )}
 
-      <div className="bg-[#1C1917] border border-[#292524] p-6 space-y-6">
+      <div className="bg-[#1C1917] border border-[#292524] p-4 md:p-6 space-y-5 md:space-y-6">
         {/* Avatar */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <div className="relative">
-            <div className="w-20 h-20 bg-[#292524] flex items-center justify-center text-[#B45309] text-2xl font-bold overflow-hidden">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-[#292524] flex items-center justify-center text-[#B45309] text-xl md:text-2xl font-bold overflow-hidden flex-shrink-0">
               {profile.avatar ? (
                 <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -148,9 +148,9 @@ export default function ProfilePanel() {
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#B45309] flex items-center justify-center"
+              className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-8 md:h-8 bg-[#B45309] flex items-center justify-center"
             >
-              <Camera size={16} />
+              <Camera size={14} />
             </button>
             <input
               ref={fileInputRef}
@@ -160,16 +160,16 @@ export default function ProfilePanel() {
               className="hidden"
             />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-[#E7E5E4]">{profile.name || 'Your Name'}</h3>
-            <p className="text-sm text-[#78716C]">Click the camera to change your avatar</p>
+          <div className="min-w-0">
+            <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] truncate">{profile.name || 'Your Name'}</h3>
+            <p className="text-xs md:text-sm text-[#78716C]">Tap the camera to change avatar</p>
           </div>
         </div>
 
         {/* Basic Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm text-[#A8A29E] mb-2">Name</label>
+            <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">Name</label>
             <input
               type="text"
               value={profile.name}
@@ -179,8 +179,8 @@ export default function ProfilePanel() {
             />
           </div>
           <div>
-            <label className="block text-sm text-[#A8A29E] mb-2">
-              <MapPin size={14} className="inline mr-1" />
+            <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">
+              <MapPin size={12} className="inline mr-1" />
               Location
             </label>
             <input
@@ -195,20 +195,20 @@ export default function ProfilePanel() {
         </div>
 
         <div>
-          <label className="block text-sm text-[#A8A29E] mb-2">Bio</label>
+          <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">Bio</label>
           <textarea
             value={profile.bio}
             onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-            className="input-field w-full h-24 resize-none"
-            placeholder="Tell others about yourself, your homestead, and what you're about..."
+            className="input-field w-full h-20 md:h-24 resize-none"
+            placeholder="Tell others about yourself..."
             data-testid="profile-bio-input"
           />
         </div>
 
         {/* Skills */}
         <div>
-          <label className="block text-sm text-[#A8A29E] mb-2">
-            <Tag size={14} className="inline mr-1" />
+          <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">
+            <Tag size={12} className="inline mr-1" />
             Skills
           </label>
           <div className="flex gap-2 mb-2">
@@ -218,7 +218,7 @@ export default function ProfilePanel() {
               onChange={(e) => setSkillInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('skills', skillInput, setSkillInput))}
               className="input-field flex-1"
-              placeholder="e.g., Woodworking, Gardening"
+              placeholder="e.g., Woodworking"
               data-testid="skills-input"
             />
             <button 
@@ -226,23 +226,23 @@ export default function ProfilePanel() {
               onClick={() => addToArray('skills', skillInput, setSkillInput)} 
               className="btn-secondary px-3"
             >
-              <Plus size={20} />
+              <Plus size={18} />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 md:gap-2">
             {profile.skills.map((skill, i) => (
-              <span key={i} className="tag">
+              <span key={i} className="tag text-xs md:text-sm">
                 {skill}
-                <button onClick={() => removeFromArray('skills', skill)}><X size={14} /></button>
+                <button onClick={() => removeFromArray('skills', skill)}><X size={12} /></button>
               </span>
             ))}
           </div>
         </div>
 
         {/* Goods */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[#4D7C0F] mb-2">Goods You're Offering</label>
+            <label className="block text-xs md:text-sm text-[#4D7C0F] mb-1.5 md:mb-2">Goods You're Offering</label>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -259,15 +259,15 @@ export default function ProfilePanel() {
             </div>
             <div className="flex flex-wrap gap-1">
               {profile.goods_offering.map((item, i) => (
-                <span key={i} className="badge badge-offering text-xs">
+                <span key={i} className="badge badge-offering text-[10px] md:text-xs">
                   {item}
-                  <button onClick={() => removeFromArray('goods_offering', item)} className="ml-1"><X size={12} /></button>
+                  <button onClick={() => removeFromArray('goods_offering', item)} className="ml-1"><X size={10} /></button>
                 </span>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-sm text-[#B45309] mb-2">Goods You Want</label>
+            <label className="block text-xs md:text-sm text-[#B45309] mb-1.5 md:mb-2">Goods You Want</label>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -284,9 +284,9 @@ export default function ProfilePanel() {
             </div>
             <div className="flex flex-wrap gap-1">
               {profile.goods_wanted.map((item, i) => (
-                <span key={i} className="badge badge-looking text-xs">
+                <span key={i} className="badge badge-looking text-[10px] md:text-xs">
                   {item}
-                  <button onClick={() => removeFromArray('goods_wanted', item)} className="ml-1"><X size={12} /></button>
+                  <button onClick={() => removeFromArray('goods_wanted', item)} className="ml-1"><X size={10} /></button>
                 </span>
               ))}
             </div>
@@ -294,9 +294,9 @@ export default function ProfilePanel() {
         </div>
 
         {/* Services */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[#4D7C0F] mb-2">Services You Offer</label>
+            <label className="block text-xs md:text-sm text-[#4D7C0F] mb-1.5 md:mb-2">Services You Offer</label>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -304,7 +304,7 @@ export default function ProfilePanel() {
                 onChange={(e) => setServicesOfferingInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('services_offering', servicesOfferingInput, setServicesOfferingInput))}
                 className="input-field flex-1"
-                placeholder="e.g., Carpentry, Tutoring"
+                placeholder="e.g., Carpentry"
                 data-testid="services-offering-input"
               />
               <button type="button" onClick={() => addToArray('services_offering', servicesOfferingInput, setServicesOfferingInput)} className="btn-secondary px-3">
@@ -313,15 +313,15 @@ export default function ProfilePanel() {
             </div>
             <div className="flex flex-wrap gap-1">
               {profile.services_offering.map((item, i) => (
-                <span key={i} className="badge badge-offering text-xs">
+                <span key={i} className="badge badge-offering text-[10px] md:text-xs">
                   {item}
-                  <button onClick={() => removeFromArray('services_offering', item)} className="ml-1"><X size={12} /></button>
+                  <button onClick={() => removeFromArray('services_offering', item)} className="ml-1"><X size={10} /></button>
                 </span>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-sm text-[#B45309] mb-2">Services You Need</label>
+            <label className="block text-xs md:text-sm text-[#B45309] mb-1.5 md:mb-2">Services You Need</label>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
@@ -329,7 +329,7 @@ export default function ProfilePanel() {
                 onChange={(e) => setServicesWantedInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addToArray('services_wanted', servicesWantedInput, setServicesWantedInput))}
                 className="input-field flex-1"
-                placeholder="e.g., Plumbing, Welding"
+                placeholder="e.g., Plumbing"
                 data-testid="services-wanted-input"
               />
               <button type="button" onClick={() => addToArray('services_wanted', servicesWantedInput, setServicesWantedInput)} className="btn-secondary px-3">
@@ -338,9 +338,9 @@ export default function ProfilePanel() {
             </div>
             <div className="flex flex-wrap gap-1">
               {profile.services_wanted.map((item, i) => (
-                <span key={i} className="badge badge-looking text-xs">
+                <span key={i} className="badge badge-looking text-[10px] md:text-xs">
                   {item}
-                  <button onClick={() => removeFromArray('services_wanted', item)} className="ml-1"><X size={12} /></button>
+                  <button onClick={() => removeFromArray('services_wanted', item)} className="ml-1"><X size={10} /></button>
                 </span>
               ))}
             </div>
@@ -353,7 +353,7 @@ export default function ProfilePanel() {
           className="btn-primary w-full flex items-center justify-center gap-2"
           data-testid="save-profile-button"
         >
-          <FloppyDisk size={20} weight="fill" />
+          <FloppyDisk size={18} weight="fill" />
           {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </div>
