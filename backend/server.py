@@ -139,6 +139,9 @@ class MessageCreate(BaseModel):
     receiver_id: str
     content: str
 
+class CommentCreate(BaseModel):
+    content: str
+
 # Auth helper
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get("access_token")
@@ -359,6 +362,14 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20):
                 post["description"] = decrypt_data(post["description"])
             except Exception:
                 pass
+        # Decrypt comment content
+        if post.get("comments"):
+            for comment in post["comments"]:
+                if comment.get("content"):
+                    try:
+                        comment["content"] = decrypt_data(comment["content"])
+                    except Exception:
+                        pass
     return posts
 
 @api_router.get("/posts/matches")
@@ -406,6 +417,84 @@ async def like_post(post_id: str, request: Request):
     else:
         await db.posts.update_one({"_id": ObjectId(post_id)}, {"$addToSet": {"likes": user["_id"]}})
         return {"message": "Post liked"}
+
+# Comments routes
+@api_router.post("/posts/{post_id}/comments", status_code=201)
+async def create_comment(post_id: str, comment: CommentCreate, request: Request):
+    user = await get_current_user(request)
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    comment_doc = {
+        "id": str(ObjectId()),
+        "user_id": user["_id"],
+        "user_name": user.get("name", "Anonymous"),
+        "user_avatar": user.get("avatar", ""),
+        "content": encrypt_data(comment.content),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.posts.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$push": {"comments": comment_doc}}
+    )
+    
+    # Return decrypted content for frontend
+    return {
+        "id": comment_doc["id"],
+        "user_id": comment_doc["user_id"],
+        "user_name": comment_doc["user_name"],
+        "user_avatar": comment_doc["user_avatar"],
+        "content": comment.content,
+        "created_at": comment_doc["created_at"]
+    }
+
+@api_router.get("/posts/{post_id}/comments")
+async def get_comments(post_id: str, request: Request):
+    await get_current_user(request)
+    post = await db.posts.find_one({"_id": ObjectId(post_id)}, {"comments": 1})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    comments = post.get("comments", [])
+    # Decrypt comment content
+    for comment in comments:
+        if comment.get("content"):
+            try:
+                comment["content"] = decrypt_data(comment["content"])
+            except Exception:
+                pass
+    
+    return comments
+
+@api_router.delete("/posts/{post_id}/comments/{comment_id}")
+async def delete_comment(post_id: str, comment_id: str, request: Request):
+    user = await get_current_user(request)
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Find the comment and verify ownership
+    comment_to_delete = None
+    for comment in post.get("comments", []):
+        if comment.get("id") == comment_id:
+            comment_to_delete = comment
+            break
+    
+    if not comment_to_delete:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Allow deletion if user owns the comment or the post
+    if comment_to_delete["user_id"] != user["_id"] and post["user_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+    
+    await db.posts.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$pull": {"comments": {"id": comment_id}}}
+    )
+    
+    return {"message": "Comment deleted"}
 
 # Messaging routes
 @api_router.get("/conversations")
