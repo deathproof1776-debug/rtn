@@ -8,6 +8,7 @@ import {
   Shield,
   MagnifyingGlass
 } from '@phosphor-icons/react';
+import NotificationBell from './NotificationBell';
 
 export default function Sidebar({ activeView, setActiveView, onCreatePost }) {
   const { user, logout } = useAuth();
@@ -25,14 +26,17 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost }) {
   return (
     <aside className="sidebar" data-testid="sidebar">
       <div className="p-6 border-b border-[#292524]">
-        <div className="flex items-center gap-3">
-          <Shield size={32} weight="duotone" className="text-[#B45309]" />
-          <div>
-            <h1 className="text-lg font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
-              HOMESTEAD
-            </h1>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#78716C]">Barter Network</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield size={32} weight="duotone" className="text-[#B45309]" />
+            <div>
+              <h1 className="text-lg font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+                HOMESTEAD
+              </h1>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-[#78716C]">Barter Network</p>
+            </div>
           </div>
+          <NotificationBell />
         </div>
       </div>
 

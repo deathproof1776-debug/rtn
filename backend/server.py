@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, WebSocket, WebSocketDisconnect, UploadFile, File, Form
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, WebSocket, WebSocketDisconnect, UploadFile, File, Form, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -21,6 +21,7 @@ from datetime import datetime, timezone, timedelta
 from cryptography.fernet import Fernet
 import base64
 import hashlib
+from pywebpush import webpush, WebPushException
 
 ROOT_DIR = Path(__file__).parent
 
@@ -48,6 +49,50 @@ def encrypt_data(data: str) -> str:
 
 def decrypt_data(encrypted_data: str) -> str:
     return fernet.decrypt(encrypted_data.encode()).decode()
+
+# VAPID Configuration for Push Notifications
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "admin@homesteadhub.com")
+
+# Push Notification Helper
+async def send_push_notification(user_id: str, title: str, body: str, data: dict = None, icon: str = "/logo192.png"):
+    """Send push notification to all subscribed devices of a user"""
+    if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
+        logger.warning("VAPID keys not configured, skipping push notification")
+        return
+    
+    subscriptions = await db.push_subscriptions.find({"user_id": user_id}).to_list(100)
+    
+    notification_payload = json.dumps({
+        "title": title,
+        "body": body,
+        "icon": icon,
+        "data": data or {},
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    for sub in subscriptions:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub["endpoint"],
+                    "keys": {
+                        "p256dh": sub["keys"]["p256dh"],
+                        "auth": sub["keys"]["auth"]
+                    }
+                },
+                data=notification_payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": f"mailto:{VAPID_CLAIMS_EMAIL}"}
+            )
+            logger.info(f"Push notification sent to user {user_id}")
+        except WebPushException as e:
+            logger.error(f"Push notification failed: {e}")
+            # Remove invalid subscription (410 Gone or 404 Not Found)
+            if e.response and e.response.status_code in [404, 410]:
+                await db.push_subscriptions.delete_one({"_id": sub["_id"]})
+                logger.info(f"Removed invalid subscription for user {user_id}")
 
 # Password hashing
 def hash_password(password: str) -> str:
@@ -141,6 +186,10 @@ class MessageCreate(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str
+
+class PushSubscription(BaseModel):
+    endpoint: str
+    keys: Dict[str, str]  # Contains 'p256dh' and 'auth'
 
 # Auth helper
 async def get_current_user(request: Request) -> dict:
@@ -524,7 +573,7 @@ async def get_matched_posts(request: Request):
     return posts[:20]
 
 @api_router.post("/posts/{post_id}/like")
-async def like_post(post_id: str, request: Request):
+async def like_post(post_id: str, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
     post = await db.posts.find_one({"_id": ObjectId(post_id)})
     if not post:
@@ -535,11 +584,22 @@ async def like_post(post_id: str, request: Request):
         return {"message": "Post unliked"}
     else:
         await db.posts.update_one({"_id": ObjectId(post_id)}, {"$addToSet": {"likes": user["_id"]}})
+        
+        # Send push notification to post owner (if not self-like)
+        if post["user_id"] != user["_id"]:
+            background_tasks.add_task(
+                send_push_notification,
+                user_id=post["user_id"],
+                title=f"{user.get('name', 'Someone')} liked your post",
+                body=post.get("title", "Your barter post")[:50],
+                data={"type": "like", "post_id": post_id, "url": "/"}
+            )
+        
         return {"message": "Post liked"}
 
 # Comments routes
 @api_router.post("/posts/{post_id}/comments", status_code=201)
-async def create_comment(post_id: str, comment: CommentCreate, request: Request):
+async def create_comment(post_id: str, comment: CommentCreate, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
     
     # Validate comment content
@@ -563,6 +623,16 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request)
         {"_id": ObjectId(post_id)},
         {"$push": {"comments": comment_doc}}
     )
+    
+    # Send push notification to post owner (if not self-comment)
+    if post["user_id"] != user["_id"]:
+        background_tasks.add_task(
+            send_push_notification,
+            user_id=post["user_id"],
+            title=f"{user.get('name', 'Someone')} commented on your post",
+            body=comment.content[:100] + ("..." if len(comment.content) > 100 else ""),
+            data={"type": "comment", "post_id": post_id, "url": "/"}
+        )
     
     # Return decrypted content for frontend
     return {
@@ -700,7 +770,7 @@ async def get_messages(other_user_id: str, request: Request, skip: int = 0, limi
     return result
 
 @api_router.post("/messages")
-async def send_message(message: MessageCreate, request: Request):
+async def send_message(message: MessageCreate, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
     
     msg_doc = {
@@ -721,6 +791,15 @@ async def send_message(message: MessageCreate, request: Request):
         "content": message.content,
         "created_at": msg_doc["created_at"]
     }, message.receiver_id)
+    
+    # Send push notification to receiver
+    background_tasks.add_task(
+        send_push_notification,
+        user_id=message.receiver_id,
+        title=f"New message from {user.get('name', 'Someone')}",
+        body=message.content[:100] + ("..." if len(message.content) > 100 else ""),
+        data={"type": "message", "sender_id": user["_id"], "url": "/messages"}
+    )
     
     return {"id": str(result.inserted_id), "message": "Message sent"}
 
@@ -829,6 +908,73 @@ async def search_users(request: Request, q: str = "", skill: str = "", good: str
     
     return users
 
+# Push Notification endpoints
+@api_router.get("/notifications/vapid-public-key")
+async def get_vapid_public_key():
+    """Get VAPID public key for frontend push subscription"""
+    return {"publicKey": VAPID_PUBLIC_KEY}
+
+@api_router.post("/notifications/subscribe")
+async def subscribe_push(subscription: PushSubscription, request: Request):
+    """Subscribe to push notifications"""
+    user = await get_current_user(request)
+    
+    # Check if subscription already exists
+    existing = await db.push_subscriptions.find_one({
+        "user_id": user["_id"],
+        "endpoint": subscription.endpoint
+    })
+    
+    if existing:
+        return {"message": "Already subscribed", "subscribed": True}
+    
+    # Save subscription
+    sub_doc = {
+        "user_id": user["_id"],
+        "endpoint": subscription.endpoint,
+        "keys": subscription.keys,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.push_subscriptions.insert_one(sub_doc)
+    
+    return {"message": "Subscribed to push notifications", "subscribed": True}
+
+@api_router.post("/notifications/unsubscribe")
+async def unsubscribe_push(subscription: PushSubscription, request: Request):
+    """Unsubscribe from push notifications"""
+    user = await get_current_user(request)
+    
+    result = await db.push_subscriptions.delete_one({
+        "user_id": user["_id"],
+        "endpoint": subscription.endpoint
+    })
+    
+    if result.deleted_count > 0:
+        return {"message": "Unsubscribed from push notifications", "subscribed": False}
+    return {"message": "Subscription not found", "subscribed": False}
+
+@api_router.get("/notifications/status")
+async def get_notification_status(request: Request):
+    """Get user's push notification subscription status"""
+    user = await get_current_user(request)
+    
+    count = await db.push_subscriptions.count_documents({"user_id": user["_id"]})
+    return {"subscribed": count > 0, "subscription_count": count}
+
+@api_router.post("/notifications/test")
+async def test_push_notification(request: Request):
+    """Send a test push notification to the current user"""
+    user = await get_current_user(request)
+    
+    await send_push_notification(
+        user_id=user["_id"],
+        title="HomesteadHub Test",
+        body="Push notifications are working! You'll receive alerts for messages, comments, and matches.",
+        data={"type": "test", "url": "/"}
+    )
+    
+    return {"message": "Test notification sent"}
+
 # WebSocket endpoint
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
@@ -916,6 +1062,7 @@ async def startup():
     await db.users.create_index("email", unique=True)
     await db.messages.create_index([("sender_id", 1), ("receiver_id", 1)])
     await db.posts.create_index("created_at")
+    await db.push_subscriptions.create_index([("user_id", 1), ("endpoint", 1)], unique=True)
     
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@homesteadhub.com")

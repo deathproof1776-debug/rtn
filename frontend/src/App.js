@@ -2,6 +2,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { Toaster } from "./components/ui/sonner";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,7 +23,13 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <WebSocketProvider>{children}</WebSocketProvider>;
+  return (
+    <WebSocketProvider>
+      <NotificationProvider>
+        {children}
+      </NotificationProvider>
+    </WebSocketProvider>
+  );
 }
 
 function PublicRoute({ children }) {
