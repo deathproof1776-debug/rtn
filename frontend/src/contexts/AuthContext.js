@@ -40,10 +40,10 @@ export function AuthProvider({ children }) {
     return response.data;
   };
 
-  const register = async (email, password, name, location) => {
+  const register = async (email, password, name, location, invite_token) => {
     const response = await axios.post(
       `${API_URL}/api/auth/register`,
-      { email, password, name, location },
+      { email, password, name, location, invite_token },
       { withCredentials: true }
     );
     // Store user ID for WebSocket auth

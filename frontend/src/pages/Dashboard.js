@@ -12,6 +12,7 @@ import TradeNetworkPanel from '../components/TradeNetworkPanel';
 import UserProfileView from '../components/UserProfileView';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
+import InvitePanel from '../components/InvitePanel';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -159,6 +160,7 @@ export default function Dashboard() {
           />
         )}
         {activeView === 'messages' && <MessagesPanel />}
+        {activeView === 'invites' && <InvitePanel />}
         {activeView === 'profile' && <ProfilePanel />}
       </main>
 

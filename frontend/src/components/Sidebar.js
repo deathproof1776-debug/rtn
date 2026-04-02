@@ -7,7 +7,8 @@ import {
   SignOut, 
   Shield,
   X,
-  Handshake
+  Handshake,
+  UserPlus
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
@@ -19,6 +20,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
     { id: 'feed', label: 'Feed', icon: House },
     { id: 'network', label: 'My Trade Network', icon: Handshake, badge: networkRequestCount },
     { id: 'messages', label: 'Messages', icon: ChatCircle },
+    { id: 'invites', label: 'Invite Members', icon: UserPlus },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 

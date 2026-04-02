@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Eye, EyeSlash, ArrowRight, MapPin } from '@phosphor-icons/react';
+import { Shield, Eye, EyeSlash, ArrowRight, MapPin, WarningCircle } from '@phosphor-icons/react';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function formatApiErrorDetail(detail) {
   if (detail == null) return "Something went wrong. Please try again.";
@@ -12,7 +15,42 @@ function formatApiErrorDetail(detail) {
   return String(detail);
 }
 
+function InviteGate() {
+  return (
+    <div className="min-h-screen flex items-center justify-center relative"
+         style={{ 
+           backgroundImage: 'url(https://images.unsplash.com/photo-1604549001484-df28edea610b?crop=entropy&cs=srgb&fm=jpg&q=85)',
+           backgroundSize: 'cover',
+           backgroundPosition: 'center'
+         }}>
+      <div className="absolute inset-0 bg-black/70"></div>
+      <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
+        <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#991B1B] p-8 text-center" data-testid="invite-gate">
+          <WarningCircle size={48} weight="duotone" className="text-[#991B1B] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#E7E5E4] mb-3">Invite Required</h2>
+          <p className="text-[#A8A29E] mb-6">
+            Rebel Trade Network is invite-only. You need a valid invitation link from an existing member to join.
+          </p>
+          <p className="text-[#78716C] text-sm mb-6">
+            Know someone in the network? Ask them to send you an invite link.
+          </p>
+          <Link to="/login" className="btn-primary inline-flex items-center gap-2" data-testid="back-to-login-link">
+            Already a member? Sign In
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Register() {
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
+  
+  const [inviteValid, setInviteValid] = useState(null); // null=loading, true=valid, false=invalid
+  const [invitedBy, setInvitedBy] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +61,29 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!inviteToken) {
+      setInviteValid(false);
+      return;
+    }
+    validateInvite();
+  }, [inviteToken]);
+
+  const validateInvite = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/invites/validate/${inviteToken}`);
+      setInviteValid(true);
+      setInvitedBy(res.data.invited_by || '');
+    } catch (err) {
+      setInviteValid(false);
+      setInviteError(
+        err.response?.status === 410
+          ? 'This invite link has expired. Please request a new one.'
+          : 'This invite link is invalid or has already been used.'
+      );
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +102,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(email, password, name, location);
+      await register(email, password, name, location, inviteToken);
       navigate('/');
     } catch (err) {
       setError(formatApiErrorDetail(err.response?.data?.detail) || err.message);
@@ -49,6 +110,41 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  // No invite token or invalid token — show gate
+  if (inviteValid === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0C0A09]">
+        <div className="text-[#A8A29E]">Validating invite...</div>
+      </div>
+    );
+  }
+
+  if (inviteValid === false) {
+    if (inviteError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center relative"
+             style={{ 
+               backgroundImage: 'url(https://images.unsplash.com/photo-1604549001484-df28edea610b?crop=entropy&cs=srgb&fm=jpg&q=85)',
+               backgroundSize: 'cover',
+               backgroundPosition: 'center'
+             }}>
+          <div className="absolute inset-0 bg-black/70"></div>
+          <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
+            <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#991B1B] p-8 text-center" data-testid="invite-expired">
+              <WarningCircle size={48} weight="duotone" className="text-[#991B1B] mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-[#E7E5E4] mb-3">Invalid Invite</h2>
+              <p className="text-[#A8A29E] mb-6">{inviteError}</p>
+              <Link to="/login" className="btn-primary inline-flex items-center gap-2" data-testid="back-to-login-link">
+                Back to Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return <InviteGate />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center relative py-8" 
@@ -70,6 +166,12 @@ export default function Register() {
               <p className="text-xs uppercase tracking-[0.2em] text-[#78716C]">Exit the Matrix</p>
             </div>
           </div>
+
+          {invitedBy && (
+            <div className="bg-[#B45309]/10 border border-[#B45309]/30 text-[#E7E5E4] px-4 py-3 mb-6 text-sm" data-testid="invite-info">
+              You've been invited by <span className="font-semibold text-[#B45309]">{invitedBy}</span>
+            </div>
+          )}
 
           <h2 className="text-xl font-semibold text-[#E7E5E4] mb-6">Join the Network</h2>
 

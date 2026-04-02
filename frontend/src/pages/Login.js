@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Eye, EyeSlash, ArrowRight } from '@phosphor-icons/react';
 
@@ -116,11 +116,10 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[#78716C]">
-            New to the network?{' '}
-            <Link to="/register" className="text-[#B45309] hover:text-[#92400E]" data-testid="register-link">
-              Join Now
-            </Link>
+          <p className="mt-6 text-center text-[#78716C] text-sm">
+            Rebel Trade Network is invite-only.
+            <br />
+            Ask an existing member for an invite link to join.
           </p>
         </div>
       </div>
