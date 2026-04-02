@@ -12,8 +12,78 @@ import {
   Clock,
   X,
   ChatCircle,
-  Handshake
+  Handshake,
+  CaretDown,
+  CaretUp
 } from '@phosphor-icons/react';
+
+// Expandable Bio component for long descriptions
+function ExpandableBio({ bio, charLimit = 150 }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!bio) return null;
+  
+  const needsTruncation = bio.length > charLimit;
+  const displayText = expanded || !needsTruncation ? bio : bio.slice(0, charLimit) + '...';
+  
+  return (
+    <div>
+      <p className="text-sm text-[#A8A29E]">{displayText}</p>
+      {needsTruncation && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs text-[#B45309] hover:text-[#D97706] mt-1 transition-colors"
+          data-testid="expand-bio"
+        >
+          {expanded ? (
+            <>Show less <CaretUp size={12} /></>
+          ) : (
+            <>Read more <CaretDown size={12} /></>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Expandable section component for profile items
+function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, initialLimit = 4 }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!items || items.length === 0) return null;
+  
+  const hasMore = items.length > initialLimit;
+  const displayItems = expanded ? items : items.slice(0, initialLimit);
+  const hiddenCount = items.length - initialLimit;
+  
+  return (
+    <div className="bg-[#0C0A09] p-3 border border-[#292524]">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-xs uppercase tracking-wider font-semibold" style={{ color: iconColor }}>
+          {title}
+        </div>
+        {hasMore && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-xs text-[#78716C] hover:text-[#B45309] transition-colors"
+            data-testid={`expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
+          >
+            {expanded ? (
+              <>Show less <CaretUp size={12} /></>
+            ) : (
+              <>+{hiddenCount} more <CaretDown size={12} /></>
+            )}
+          </button>
+        )}
+      </div>
+      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-[60px] overflow-hidden'}`}>
+        {displayItems.map((item, i) => (
+          <span key={i} className={`badge ${badgeClass} text-[10px]`}>{item}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -254,75 +324,54 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
 
           {/* Bio */}
           {profile.bio && (
-            <div>
-              <p className="text-sm text-[#A8A29E]">{profile.bio}</p>
-            </div>
+            <ExpandableBio bio={profile.bio} charLimit={150} />
           )}
 
           {/* Skills */}
           {profile.skills?.length > 0 && (
-            <div>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Tag size={14} className="text-[#B45309]" />
-                <span className="text-xs uppercase tracking-wider text-[#78716C] font-semibold">Skills</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {profile.skills.map((skill, i) => (
-                  <span key={i} className="tag text-xs">{skill}</span>
-                ))}
-              </div>
-            </div>
+            <ExpandableSection
+              title="Skills"
+              items={profile.skills}
+              badgeClass="tag"
+              icon={Tag}
+              iconColor="#B45309"
+              initialLimit={6}
+            />
           )}
 
           {/* Offerings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Goods Offering */}
-            {profile.goods_offering?.length > 0 && (
-              <div className="bg-[#0C0A09] p-3 border border-[#292524]">
-                <div className="text-xs uppercase tracking-wider text-[#4D7C0F] font-semibold mb-2">Goods Offering</div>
-                <div className="flex flex-wrap gap-1">
-                  {profile.goods_offering.map((item, i) => (
-                    <span key={i} className="badge badge-offering text-[10px]">{item}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ExpandableSection
+              title="Goods Offering"
+              items={profile.goods_offering}
+              badgeClass="badge-offering"
+              iconColor="#4D7C0F"
+              initialLimit={5}
+            />
 
-            {/* Goods Wanted */}
-            {profile.goods_wanted?.length > 0 && (
-              <div className="bg-[#0C0A09] p-3 border border-[#292524]">
-                <div className="text-xs uppercase tracking-wider text-[#B45309] font-semibold mb-2">Goods Wanted</div>
-                <div className="flex flex-wrap gap-1">
-                  {profile.goods_wanted.map((item, i) => (
-                    <span key={i} className="badge badge-looking text-[10px]">{item}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ExpandableSection
+              title="Goods Wanted"
+              items={profile.goods_wanted}
+              badgeClass="badge-looking"
+              iconColor="#B45309"
+              initialLimit={5}
+            />
 
-            {/* Services Offering */}
-            {profile.services_offering?.length > 0 && (
-              <div className="bg-[#0C0A09] p-3 border border-[#292524]">
-                <div className="text-xs uppercase tracking-wider text-[#4D7C0F] font-semibold mb-2">Services Offering</div>
-                <div className="flex flex-wrap gap-1">
-                  {profile.services_offering.map((item, i) => (
-                    <span key={i} className="badge badge-offering text-[10px]">{item}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ExpandableSection
+              title="Services Offering"
+              items={profile.services_offering}
+              badgeClass="badge-offering"
+              iconColor="#4D7C0F"
+              initialLimit={5}
+            />
 
-            {/* Services Wanted */}
-            {profile.services_wanted?.length > 0 && (
-              <div className="bg-[#0C0A09] p-3 border border-[#292524]">
-                <div className="text-xs uppercase tracking-wider text-[#B45309] font-semibold mb-2">Services Wanted</div>
-                <div className="flex flex-wrap gap-1">
-                  {profile.services_wanted.map((item, i) => (
-                    <span key={i} className="badge badge-looking text-[10px]">{item}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <ExpandableSection
+              title="Services Wanted"
+              items={profile.services_wanted}
+              badgeClass="badge-looking"
+              iconColor="#B45309"
+              initialLimit={5}
+            />
           </div>
         </div>
       </div>
