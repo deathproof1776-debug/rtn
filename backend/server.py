@@ -1446,6 +1446,34 @@ async def search_users(request: Request, q: str = "", skill: str = "", good: str
     
     return users
 
+# ========================
+# Admin Audit Log Helper
+# ========================
+async def log_admin_action(admin_id: str, admin_name: str, action: str, target_type: str, target_id: str, target_name: str, details: str = ""):
+    """Record an admin action to the audit log"""
+    await db.audit_log.insert_one({
+        "admin_id": admin_id,
+        "admin_name": admin_name,
+        "action": action,
+        "target_type": target_type,
+        "target_id": target_id,
+        "target_name": target_name,
+        "details": details,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+
+# Admin: Get audit log
+@api_router.get("/admin/audit-log")
+async def get_audit_log(request: Request, skip: int = 0, limit: int = 50):
+    """Admin endpoint to get the audit trail"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    logs = await db.audit_log.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.audit_log.count_documents({})
+    return {"logs": logs, "total": total}
+
 # Admin: Verify/Unverify Trader
 @api_router.post("/admin/verify-trader")
 async def verify_trader(data: VerifyTraderRequest, request: Request):
@@ -1465,6 +1493,14 @@ async def verify_trader(data: VerifyTraderRequest, request: Request):
     await db.users.update_one(
         {"_id": ObjectId(data.user_id)},
         {"$set": {"is_verified": data.is_verified, "verified_at": datetime.now(timezone.utc).isoformat() if data.is_verified else None}}
+    )
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"], admin_name=admin_user.get("name", "Admin"),
+        action="verified" if data.is_verified else "unverified",
+        target_type="user", target_id=data.user_id,
+        target_name=target_user.get("name", "Unknown"),
+        details=f"Trader {'verified' if data.is_verified else 'unverified'}"
     )
     
     return {
@@ -1565,9 +1601,19 @@ async def admin_delete_post(post_id: str, request: Request):
     if admin_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    result = await db.posts.delete_one({"_id": ObjectId(post_id)})
-    if result.deleted_count == 0:
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+    
+    await db.posts.delete_one({"_id": ObjectId(post_id)})
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"], admin_name=admin_user.get("name", "Admin"),
+        action="deleted_post", target_type="post", target_id=post_id,
+        target_name=post.get("title", "Unknown Post"),
+        details=f"Post by {post.get('user_name', 'Unknown')} deleted"
+    )
+    
     return {"message": "Post deleted successfully"}
 
 class UpdateUserRole(BaseModel):
@@ -1589,6 +1635,14 @@ async def update_user_role(user_id: str, data: UpdateUserRole, request: Request)
         raise HTTPException(status_code=404, detail="User not found")
     
     await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": data.role}})
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"], admin_name=admin_user.get("name", "Admin"),
+        action="role_changed", target_type="user", target_id=user_id,
+        target_name=target.get("name", "Unknown"),
+        details=f"Role changed from {target.get('role', 'user')} to {data.role}"
+    )
+    
     return {"message": f"User role updated to {data.role}", "user_id": user_id, "role": data.role}
 
 # Admin: Delete user
@@ -1614,6 +1668,13 @@ async def admin_delete_user(user_id: str, request: Request):
     await db.network_connections.delete_many({"$or": [{"user_id": user_id}, {"connected_user_id": user_id}]})
     await db.network_requests.delete_many({"$or": [{"from_user_id": user_id}, {"to_user_id": user_id}]})
     await db.push_subscriptions.delete_many({"user_id": user_id})
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"], admin_name=admin_user.get("name", "Admin"),
+        action="deleted_user", target_type="user", target_id=user_id,
+        target_name=target.get("name", "Unknown"),
+        details=f"User {target.get('email', '')} and all associated data deleted"
+    )
     
     return {"message": "User and all associated data deleted"}
 
@@ -2207,6 +2268,7 @@ async def startup():
     await db.network_connections.create_index([("user_id", 1), ("connected_user_id", 1)], unique=True)
     await db.network_requests.create_index([("from_user_id", 1), ("to_user_id", 1)])
     await db.network_requests.create_index("status")
+    await db.audit_log.create_index("created_at")
     
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")

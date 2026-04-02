@@ -18,7 +18,10 @@ import {
   Crown,
   ArrowLeft,
   Warning,
-  Eye
+  Eye,
+  ClockCounterClockwise,
+  UserMinus,
+  Notepad
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -159,6 +162,8 @@ export default function AdminDashboard({ onBack }) {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditTotal, setAuditTotal] = useState(0);
   const [usersTotal, setUsersTotal] = useState(0);
   const [postsTotal, setPostsTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -169,6 +174,7 @@ export default function AdminDashboard({ onBack }) {
     fetchStats();
     fetchUsers();
     fetchPosts();
+    fetchAuditLogs();
   }, []);
 
   const fetchStats = async () => {
@@ -202,10 +208,21 @@ export default function AdminDashboard({ onBack }) {
     }
   };
 
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/audit-log?limit=100`, { withCredentials: true });
+      setAuditLogs(res.data.logs || []);
+      setAuditTotal(res.data.total || 0);
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+    }
+  };
+
   const handleVerify = async (userId, isVerified) => {
     try {
       await axios.post(`${API_URL}/api/admin/verify-trader`, { user_id: userId, is_verified: isVerified }, { withCredentials: true });
       setUsers(users.map(u => u._id === userId ? { ...u, is_verified: isVerified } : u));
+      fetchAuditLogs();
     } catch (err) {
       console.error('Error updating verification:', err);
     }
@@ -215,6 +232,7 @@ export default function AdminDashboard({ onBack }) {
     try {
       await axios.put(`${API_URL}/api/admin/users/${userId}/role`, { role }, { withCredentials: true });
       setUsers(users.map(u => u._id === userId ? { ...u, role } : u));
+      fetchAuditLogs();
     } catch (err) {
       console.error('Error updating role:', err);
     }
@@ -243,10 +261,12 @@ export default function AdminDashboard({ onBack }) {
         await axios.delete(`${API_URL}/api/admin/users/${confirmAction.id}`, { withCredentials: true });
         setUsers(users.filter(u => u._id !== confirmAction.id));
         fetchStats();
+        fetchAuditLogs();
       } else if (confirmAction.type === 'deletePost') {
         await axios.delete(`${API_URL}/api/admin/posts/${confirmAction.id}`, { withCredentials: true });
         setPosts(posts.filter(p => p._id !== confirmAction.id));
         fetchStats();
+        fetchAuditLogs();
       }
     } catch (err) {
       console.error('Error executing action:', err);
@@ -258,10 +278,25 @@ export default function AdminDashboard({ onBack }) {
     ? users.filter(u => u.name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
     : users;
 
+  const getTimeAgo = (dateStr) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const seconds = Math.floor((now - date) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: ChartBar },
     { id: 'users', label: 'Users', icon: Users, count: usersTotal },
     { id: 'posts', label: 'Posts', icon: Article, count: postsTotal },
+    { id: 'activity', label: 'Activity Log', icon: ClockCounterClockwise, count: auditTotal },
   ];
 
   return (
@@ -378,6 +413,58 @@ export default function AdminDashboard({ onBack }) {
               ))}
               {posts.length === 0 && (
                 <div className="py-8 text-center text-[var(--text-muted)] text-sm">No posts found</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Tab */}
+      {activeTab === 'activity' && (
+        <div data-testid="admin-activity-tab">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
+            <div className="px-3 py-2 border-b border-[var(--border-color)]">
+              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">{auditTotal} actions logged</span>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto">
+              {auditLogs.length === 0 ? (
+                <div className="py-12 text-center">
+                  <ClockCounterClockwise size={32} className="text-[var(--text-muted)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-muted)]">No admin actions recorded yet.</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Actions like verifying traders, changing roles, and deleting content will appear here.</p>
+                </div>
+              ) : (
+                auditLogs.map((log, idx) => {
+                  const actionConfig = {
+                    verified: { icon: SealCheck, color: '#4D7C0F', label: 'Verified trader' },
+                    unverified: { icon: SealCheck, color: '#DC2626', label: 'Removed verification from' },
+                    role_changed: { icon: Crown, color: '#B45309', label: 'Changed role of' },
+                    deleted_post: { icon: Trash, color: '#DC2626', label: 'Deleted post' },
+                    deleted_user: { icon: UserMinus, color: '#DC2626', label: 'Deleted user' },
+                  };
+                  const config = actionConfig[log.action] || { icon: Notepad, color: '#78716C', label: log.action };
+                  const ActionIcon = config.icon;
+                  const timeAgo = getTimeAgo(log.created_at);
+
+                  return (
+                    <div key={idx} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0" data-testid={`audit-log-entry-${idx}`}>
+                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${config.color}20` }}>
+                        <ActionIcon size={16} style={{ color: config.color }} weight="fill" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[var(--text-primary)]">
+                          <span className="font-medium">{log.admin_name}</span>
+                          {' '}<span className="text-[var(--text-secondary)]">{config.label}</span>{' '}
+                          <span className="font-medium">{log.target_name}</span>
+                        </p>
+                        {log.details && (
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5">{log.details}</p>
+                        )}
+                        <p className="text-[10px] text-[var(--text-muted)] mt-1">{timeAgo}</p>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
