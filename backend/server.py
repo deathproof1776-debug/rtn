@@ -681,8 +681,8 @@ async def register(user_data: UserRegister):
         "name": user_data.name,
         "message": "Registration successful"
     })
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
     return response
 
 @api_router.post("/auth/login")
@@ -717,15 +717,15 @@ async def login(user_data: UserLogin):
         "role": user.get("role", "user"),
         "message": "Login successful"
     })
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
     return response
 
 @api_router.post("/auth/logout")
 async def logout():
     response = JSONResponse(content={"message": "Logged out successfully"})
-    response.delete_cookie(key="access_token", path="/")
-    response.delete_cookie(key="refresh_token", path="/")
+    response.delete_cookie(key="access_token", path="/", secure=True, samesite="none")
+    response.delete_cookie(key="refresh_token", path="/", secure=True, samesite="none")
     return response
 
 @api_router.get("/auth/me")
@@ -757,7 +757,7 @@ async def refresh_token(request: Request):
         
         access_token = create_access_token(str(user["_id"]), user["email"])
         response = JSONResponse(content={"message": "Token refreshed"})
-        response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=3600, path="/")
+        response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
         return response
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Refresh token expired")
