@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0C0A09"/>
+  <g transform="translate(96, 96)">
+    <!-- Shield background -->
+    <path d="M160 0L320 48V192C320 288 240 352 160 384C80 352 0 288 0 192V48L160 0Z" fill="#C35E37"/>
+    <!-- Inner shield -->
+    <path d="M160 32L288 72V192C288 268 224 320 160 344C96 320 32 268 32 192V72L160 32Z" fill="#0C0A09"/>
+    <!-- Trade arrows forming R -->
+    <g fill="#C35E37">
+      <!-- Vertical line of R -->
+      <rect x="100" y="100" width="24" height="120" rx="4"/>
+      <!-- Top curve of R -->
+      <path d="M100 100H160C187 100 208 121 208 148C208 175 187 196 160 196H124V172H156C172 172 184 160 184 148C184 136 172 124 156 124H124V100Z"/>
+      <!-- Diagonal leg of R -->
+      <path d="M140 180L200 220L186 240L126 200Z"/>
+      <!-- Arrow head 1 -->
+      <path d="M195 210L220 230L195 250L195 210Z"/>
+      <!-- Arrow head 2 -->
+      <path d="M90 210L115 190L115 230L90 210Z"/>
+    </g>
+  </g>
+</svg>

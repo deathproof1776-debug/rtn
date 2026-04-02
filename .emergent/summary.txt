@@ -3,13 +3,13 @@ PRODUCT REQUIREMENTS: A React/FastAPI/MongoDB app with a Rebel Homesteader dark 
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
-**what currently exists?**: An MVP for Rebel Trade Network (React/FastAPI/MongoDB) featuring JWT custom auth, Fernet data encryption, real-time WebSockets DMs, matching feed algorithm, Push Notifications, Trade Deals, Light/Dark Mode toggle, an invite-only registration system with mandatory Terms of Service acceptance, Admin Dashboard, and an interactive barter feed.
+**what currently exists?**: An MVP for Rebel Trade Network (React/FastAPI/MongoDB) featuring JWT custom auth, Fernet data encryption, real-time WebSockets DMs, algorithm-based feed, Push Notifications, Trade Deals, invite-only registration, and Admin Dashboard. Most recently, the app was upgraded to support expandable profile sections and detailed item listings (including descriptions and quantities) for all skills, goods, and services on both user profiles and barter posts. 
 
 **Last working item**: 
-    - Last item agent was working: Created a production seed script () using the user's provided admin credentials so the user can easily populate the production database after deployment. The agent then asked the user whether to proceed with Video Upload Support or User Blocking/Reporting next.
-    - Status: USER VERIFICATION PENDING
-    - Agent Testing Done: Y
-    - Which testing method agent to use? NA
+    - Last item agent was working: The agent updated the PRD to make **Enhanced PWA Features** the top priority (P0) for the next fork, based on the user's request for mobile app-like behavior (install prompts, splash screens, offline support). Prior to this, the agent completed the implementation of detailed goods/services items and expandable profile sections.
+    - Status: NOT STARTED (for the Enhanced PWA feature implementation)
+    - Agent Testing Done: Y (for previous tasks via ) / NA (for the upcoming PWA task)
+    - Which testing method agent to use? Frontend testing agent (for PWA manifest/offline capabilities verification) or manual browser testing via screenshot tool.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
@@ -20,24 +20,26 @@ PRODUCT REQUIREMENTS: A React/FastAPI/MongoDB app with a Rebel Homesteader dark 
 
 **Upcoming and Future Tasks**
   Upcoming Tasks:
-  - Task 1: Video Upload Support - Extend media upload functionality to include video files (P1)
-  - Task 2: User Blocking/Reporting - Essential safety feature for community moderation (P1)
+  - Task 1: Enhanced PWA Features - Implement Install App prompt for Android/iOS, better offline caching support, splash screen, and optimized Add to Home Screen experience (P0)
+  - Task 2: Video Upload Support - Extend media upload functionality to include video files (P1)
+  - Task 3: User Blocking/Reporting - Essential safety feature for community moderation (P1)
   
   Future Tasks:
-  - Task 3: Add reply threading to comments (Enhancement / P2)
-  - Task 4: Add Location Radius setting where users can specify how far they're willing to travel/trade, expanding matching beyond exact city matches (Enhancement / P2)
-  - Task 5: Trade Ratings/Reviews - After a trade is completed, both parties can rate the trade experience (1-5 stars + optional comment) (Enhancement / P3)
+  - Task 4: Add reply threading to comments (Enhancement / P2)
+  - Task 5: Add Location Radius setting where users can specify how far they're willing to travel/trade, expanding matching beyond exact city matches (Enhancement / P2)
+  - Task 6: Trade Ratings/Reviews - After a trade is completed, both parties can rate the trade experience (1-5 stars + optional comment) (Enhancement / P3)
 
 **Completed work in this session**
-- Added Terms of Service & Community Guidelines modal and mandatory acceptance checkbox to the registration page (, ) (DONE)
-- Fixed Theme Toggle UI regression: Updated  to add CSS variable-based utility classes, replacing hardcoded dark colors (, ) in  and  (DONE)
-- Created  for deployment preparation (DONE)
+- Updated Terms of Service wording in  to put legal responsibility on users (DONE)
+- Added  and  components to  to handle long profiles gracefully (DONE)
+- Refactored , , , and  to support detailed items (name, description, quantity) instead of flat string arrays (DONE)
+- Updated backend Pydantic models and matching logic in  to support the new detailed item dictionary structure while maintaining backward compatibility for old string records (DONE)
 
 **Earlier issues found/mentioned but not fixed**
   None
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Theme toggle UI regression testing.
+  - Issue recurrence in previous fork: None
   - Recurrence count: 0 
   - Status: RESOLVED
 
@@ -45,11 +47,10 @@ PRODUCT REQUIREMENTS: A React/FastAPI/MongoDB app with a Rebel Homesteader dark 
 
 
 **Key Technical Concepts**
-React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encryption (Data Security), JWT Authentication (httpOnly cookies), Web Push Notifications (), CSS Variables (Dynamic Theming).
+React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encryption (Data Security), JWT Authentication (httpOnly cookies), Web Push Notifications (), Progressive Web App (PWA) architecture.
 
 **key DB schema**
   - :  
-  - : 
   - : 
   - : 
 
@@ -57,39 +58,39 @@ React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encry
   - None
 
 **All files of reference** 
-  -  (Updated with TOS checkbox)
-  -  (Created for Terms and Community Guidelines)
-  - , ,  (Fixed light/dark mode UI remnants)
-  -  (Created)
-  - ,  (Updated)
+  -  (Updated ToS)
+  -  (Added Expandable components & detailed items UI)
+  -  (Updated for detailed items input)
+  -  &  (Updated for detailed item display and creation)
+  -  (Added  Pydantic model and backward-compatibility conversion logic)
+  -  (Updated with new PWA priority)
+  -  (Latest test report for the detailed items feature)
 
 **Areas that need refactoring**: 
-  - None
+  - None currently. Ensure PWA enhancements build cleanly on the existing  and .
 
 **key api endpoints**
-  - Auth:  (requires invite_token), 
-  - Invites: 
+  - Profile: 
+  - Posts: , 
 
 **Critical Info for New Agent**
-  - **Auth Cookies:** Cookies are configured to  and  for iframe preview compatibility. Do not revert these.
-  - **Registration is Strictly Gated:** You cannot register a new account without an invite token. Test accounts must be invited first via the  logged in as the admin, or directly via API.
-  - **Encryption is mandatory**: Fields like , message , and comment  are encrypted using Fernet.
-  - **Deployment Ready:** A specific production seed script () is now present exclusively for establishing the root admin during actual deployment. 
+  - **Data Structure Changes:** Goods, skills, and services are now stored as objects () rather than pure strings. The backend logic automatically normalizes legacy string data, but ensure any future UI additions respect this  format.
+  - **Encryption is mandatory**: Fields like  and specific post fields remain encrypted using Fernet.
+  - **PWA Priority:** The user explicitly asked about converting the app to an APK. After consulting the Support Agent, the user chose to prioritize Enhanced PWA features (install prompts, splash screens, offline support) as the immediate next step.
 
 **documents and test reports created in this job** 
-  -  
   - 
   - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. Please use ask_human tool and confirm your plan now. (COMPLETED)
- 2. Does made with emergent logo go away once app is published? Also there should be no GPS usage from the app (COMPLETED - Checked and addressed via Support Agent)
- 3. First set up a notice for new users when they sign up that states no illegal sales, and basic rules about harassment and violence. Also let users know they are responsible for any and all trade deals made on the app... Then proceed with items 1 and 2 (COMPLETED)
- 4. Proceed (Admin login fail check) (COMPLETED)
- 5. Admin password is Peaches1776@ Proceed (COMPLETED)
- 6. When the app is deployed, will the users lose their member status? (COMPLETED - Explained preview vs prod database behavior)
- 7. Yes, email deathproofrebel@protonmail.com Password = Peaches1776@ (COMPLETED - Created seed_production.py)
- *Pending HUMAN message*: Would you like me to proceed with Video Upload Support or User Blocking/Reporting next? (Waiting for the user's choice to start the next task).
+ 1. Change no illegal sales to user is responsible for following laws in terms (COMPLETED)
+ 2. When viewing other profiles, they should be expandable if they have more items or info than what is viewable (COMPLETED)
+ 3. Nice the option to add descriptions and quantities to goods skills and services on posts and profiles (COMPLETED)
+ 4. A (Confirmed to proceed with backend/frontend detailed items implementation) (COMPLETED)
+ 5. Will this app be downloadable as an apk app? (COMPLETED - Explained PWA vs Native via Support Agent)
+ 6. Add option a as top priority for next fork (COMPLETED - Updated PRD for Enhanced PWA features)
+
+*Pending HUMAN message*: None. The agent should immediately start planning and executing Task 1 (Enhanced PWA Features).
 
 **Project Health Check:**
   - Broken: None
@@ -100,7 +101,7 @@ React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encry
   - Web Push Notifications via VAPID
 
 **Testing status**
-  - Testing agent used after significant changes: YES ( for theme toggle UI testing)
+  - Testing agent used after significant changes: YES ()
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
@@ -114,8 +115,13 @@ React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encry
   - Nothing missed.
 
 **Debugging checklist for current issue**
-    Issue: Awaiting user task prioritization (Video Upload vs. User Blocking/Reporting).
+    Issue: Ready to start **Task 1: Enhanced PWA Features**
     
-    Frontend files to check: N/A
+    Frontend files to check: 
+    - 
+    - 
+    -  (For service worker registration)
+    - Create a new component for the Install App prompt.
+    
     Backend files to check: N/A
     Database to check: N/A</analysis>

@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { PWAProvider } from "./contexts/PWAContext";
 import { Toaster } from "./components/ui/sonner";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -87,12 +88,14 @@ function App() {
   return (
     <div className="App">
       <ThemeProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-            <Toaster />
-          </BrowserRouter>
-        </AuthProvider>
+        <PWAProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppRoutes />
+              <Toaster />
+            </BrowserRouter>
+          </AuthProvider>
+        </PWAProvider>
       </ThemeProvider>
     </div>
   );

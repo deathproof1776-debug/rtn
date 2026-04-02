@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
+import InstallAppButton from './InstallAppButton';
 
 export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose, networkRequestCount = 0, tradeDealsCount = 0 }) {
   const { user, logout } = useAuth();
@@ -99,6 +100,8 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
             <p className="text-xs text-[var(--text-muted)] truncate">{user?.location || 'Location not set'}</p>
           </div>
         </div>
+        
+        <InstallAppButton />
         
         <button
           onClick={handleLogout}
