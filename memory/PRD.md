@@ -50,18 +50,30 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Categorized Goods/Skills/Services
 - [x] Light/Dark Mode Theme Toggle
 - [x] Invite-Only Registration System
-- [x] **Search Input Padding Fix** (April 2, 2026) - Fixed text bleeding into magnifying glass icon on CategorySelector search inputs
-- [x] **Admin Dashboard** (April 2, 2026):
-  - Demo account (demo@rebeltrade.net) promoted to admin role
-  - Overview tab: Platform stats (users, verified, posts, messages, connections, invites)
-  - Users tab: Full user management (search, verify/unverify, promote/demote role, delete)
-  - Posts tab: Post moderation (view all, delete posts)
-  - **Activity Log tab**: Audit trail of all admin actions with color-coded icons, details, and timestamps
-  - Confirmation dialog for destructive actions
-  - Admin-only nav item in sidebar (hidden from regular users)
-  - Backend endpoints: stats, posts list, role management, user/post deletion, audit log
+- [x] Search Input Padding Fix
+- [x] Admin Dashboard with Overview, Users, Posts, Activity Log tabs
+- [x] **Trade Deals Feature** (April 2, 2026):
+  - Create formal trade offers/proposals between users
+  - Accept, decline, counter-offer, and cancel trade deals
+  - Incoming/Outgoing/History tabs in Trade Deals panel
+  - Counter-offer chain with full history display
+  - Trade history private to current user only
+  - "Propose Trade" button on feed post cards and user profiles
+  - Real-time WebSocket + push notifications for trade activity
+  - Encrypted trade messages
+  - Badge count for active incoming trades on sidebar nav
 
 ## API Endpoints
+
+### Trade Deals
+- POST /api/trades (create trade offer)
+- GET /api/trades/incoming (incoming offers)
+- GET /api/trades/outgoing (outgoing offers)
+- GET /api/trades/history (completed/declined/cancelled - current user only)
+- GET /api/trades/active-count (badge count)
+- POST /api/trades/{trade_id}/respond (accept/decline)
+- POST /api/trades/{trade_id}/counter (counter-offer)
+- POST /api/trades/{trade_id}/cancel (cancel trade)
 
 ### Admin
 - POST /api/admin/verify-trader (requires admin role)
@@ -138,9 +150,6 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
-### P1 (High Priority)
-- Trade Deals Feature - Formal trade offers/proposals system
-
 ### P2 (Medium Priority)
 - Video upload support
 - User blocking/reporting
@@ -151,9 +160,9 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Theme toggle UI regression testing (audit hardcoded Tailwind vs CSS variables)
 
 ## Test Credentials
-- Admin/Demo: demo@rebeltrade.net / demo123 (role: admin)
-- System Admin: admin@homesteadhub.com / admin123 (role: admin)
-- Seeded users: [name]@example.com / homestead123
+- Sole Admin: williamrhodes764@protonmail.com / (user-set password) (role: admin)
+- Demo User: demo@rebeltrade.net / demo123 (role: user)
+- Seeded Admin: admin@homesteadhub.com / admin123 (role: user)
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)
