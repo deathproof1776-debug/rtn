@@ -55,13 +55,15 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Multi-select from predefined items
   - Custom item addition support
   - CategorySelector component with search, expand/collapse, badges
-- [x] **Light/Dark Mode Theme Toggle** (March 28, 2026):
-  - Theme toggle button (sun/moon icon) in sidebar header
-  - Dark mode: Original rebel aesthetic with dark backgrounds
-  - Light mode: Soft earth tones (warm beige, soft browns, muted greens)
-  - CSS variables for all color values
-  - Smooth transitions between themes
-  - Persisted theme preference in localStorage
+- [x] **Light/Dark Mode Theme Toggle** (March 28, 2026)
+- [x] **Invite-Only Registration System** (April 2, 2026):
+  - Registration requires a valid invite link from existing member
+  - Existing users can generate unique invite links from "Invite Members" panel
+  - Invite tokens expire after 7 days, single-use only
+  - /register without valid invite shows "Invite Required" gate page
+  - Login page updated to show invite-only messaging (no register link)
+  - Invite panel shows ACTIVE/USED/EXPIRED status for each invite
+  - Backend tracks who created and used each invite
 
 ## Categorized Selection System (NEW)
 
@@ -102,8 +104,13 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - GET /api/categories/skills - Returns 5 skills categories with items
 - GET /api/categories/services - Returns 7 services categories with items
 
+### Invites (NEW - April 2, 2026)
+- POST /api/invites/create - Generate invite link (authenticated)
+- GET /api/invites/validate/{token} - Validate invite token (public)
+- GET /api/invites/my-invites - List user's invites (authenticated)
+
 ### Auth
-- POST /api/auth/register
+- POST /api/auth/register (requires invite_token field)
 - POST /api/auth/login
 - POST /api/auth/logout
 - GET /api/auth/me
@@ -159,6 +166,9 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - WebSocket: /ws/{user_id}
 
 ## Prioritized Backlog
+
+### P0 (Bugs)
+- Push Notification Toggle broken (users cannot enable notifications)
 
 ### P1 (High Priority)
 - Trade Deals Feature - Formal trade offers/proposals system
