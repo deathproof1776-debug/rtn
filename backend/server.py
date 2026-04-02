@@ -2629,11 +2629,17 @@ async def root():
 # Include router
 app.include_router(api_router)
 
-# CORS
+# CORS - Allow all origins or use CORS_ORIGINS from env
+cors_origins = os.environ.get("CORS_ORIGINS", "*")
+if cors_origins == "*":
+    allow_origins_list = ["*"]
+else:
+    allow_origins_list = [origin.strip() for origin in cors_origins.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=allow_origins_list,
     allow_methods=["*"],
     allow_headers=["*"],
 )
