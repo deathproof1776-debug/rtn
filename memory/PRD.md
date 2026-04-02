@@ -56,9 +56,10 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Overview tab: Platform stats (users, verified, posts, messages, connections, invites)
   - Users tab: Full user management (search, verify/unverify, promote/demote role, delete)
   - Posts tab: Post moderation (view all, delete posts)
+  - **Activity Log tab**: Audit trail of all admin actions with color-coded icons, details, and timestamps
   - Confirmation dialog for destructive actions
   - Admin-only nav item in sidebar (hidden from regular users)
-  - Backend endpoints: stats, posts list, role management, user/post deletion
+  - Backend endpoints: stats, posts list, role management, user/post deletion, audit log
 
 ## API Endpoints
 
@@ -70,6 +71,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - DELETE /api/admin/posts/{post_id} (requires admin role)
 - PUT /api/admin/users/{user_id}/role (requires admin role)
 - DELETE /api/admin/users/{user_id} (requires admin role)
+- GET /api/admin/audit-log (requires admin role)
 
 ### Categories
 - GET /api/categories/all
