@@ -54,22 +54,20 @@ const getItemDisplay = (item) => {
   return { name: item.name || '', description: item.description || '', quantity: item.quantity || '' };
 };
 
-// Expandable section component for profile items with detailed display
-function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, initialLimit = 4 }) {
+// Expandable section component for profile items with detailed display and scrolling
+function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, initialLimit = 4, maxHeight = 120 }) {
   const [expanded, setExpanded] = useState(false);
   const [showItemDetails, setShowItemDetails] = useState(null);
   
   if (!items || items.length === 0) return null;
   
   const hasMore = items.length > initialLimit;
-  const displayItems = expanded ? items : items.slice(0, initialLimit);
-  const hiddenCount = items.length - initialLimit;
   
   return (
     <div className="bg-[#0C0A09] p-3 border border-[#292524]">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs uppercase tracking-wider font-semibold" style={{ color: iconColor }}>
-          {title}
+          {title} <span className="text-[#78716C] font-normal">({items.length})</span>
         </div>
         {hasMore && (
           <button
@@ -78,15 +76,18 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
             data-testid={`expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
           >
             {expanded ? (
-              <>Show less <CaretUp size={12} /></>
+              <>Collapse <CaretUp size={12} /></>
             ) : (
-              <>+{hiddenCount} more <CaretDown size={12} /></>
+              <>Expand <CaretDown size={12} /></>
             )}
           </button>
         )}
       </div>
-      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-[80px] overflow-hidden'}`}>
-        {displayItems.map((item, i) => {
+      <div 
+        className={`flex flex-wrap gap-1 overflow-y-auto scrollbar-thin pr-1 ${expanded ? '' : ''}`}
+        style={{ maxHeight: expanded ? '200px' : `${maxHeight}px` }}
+      >
+        {items.map((item, i) => {
           const itemData = getItemDisplay(item);
           const hasDetails = itemData.description || itemData.quantity;
           const isShowingDetails = showItemDetails === i;
