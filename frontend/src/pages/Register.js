@@ -350,7 +350,7 @@ export default function Register() {
                   Prohibited Activities
                 </h4>
                 <ul className="space-y-2 text-sm list-disc list-inside">
-                  <li><span className="text-[#991B1B] font-semibold">No illegal sales.</span> The sale, trade, or exchange of any illegal items, controlled substances, stolen goods, or any items prohibited by local, state, or federal law is strictly forbidden.</li>
+                  <li><span className="text-[#991B1B] font-semibold">User is responsible for following all applicable laws.</span> You are solely responsible for ensuring that any items you trade, sell, or exchange comply with all local, state, and federal laws. This includes but is not limited to controlled substances, regulated goods, and any items prohibited in your jurisdiction.</li>
                   <li><span className="text-[#991B1B] font-semibold">No weapons trafficking.</span> Trading of firearms, explosives, or other regulated weapons must comply with all applicable laws and regulations.</li>
                   <li><span className="text-[#991B1B] font-semibold">No counterfeit goods.</span> Fake, fraudulent, or misrepresented items are not allowed.</li>
                 </ul>
