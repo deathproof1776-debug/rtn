@@ -175,7 +175,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 ## What Was Completed (April 2, 2026)
 - [x] Terms of Service / Community Guidelines acceptance on registration
   - Checkbox must be accepted before joining
-  - Modal with full guidelines (no illegal sales, no harassment, no violence, liability disclaimer)
+  - Modal with full guidelines (user responsible for following laws, no harassment, no violence, liability disclaimer)
   - "I Accept" button auto-checks the agreement
 - [x] Theme toggle UI regression fix
   - Updated MessagesPanel.js to use CSS variables instead of hardcoded colors
@@ -184,6 +184,17 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Verified light and dark mode work correctly across all components
 - [x] Verified cookie fix for browser preview authentication
   - Confirmed users and posts display correctly after login
+- [x] **Expandable Profile Sections** - User profiles now have expandable sections when viewing others
+  - Skills, goods, and services sections show "+X more" when items exceed initial limit
+  - Bio text is truncatable with "Read more" link for long descriptions
+  - Clicking on items with details shows tooltip with quantity and description
+- [x] **Detailed Items Feature** - Goods, skills, and services can now include description and quantity
+  - Items stored as {name, description, quantity} objects (all fields optional except name)
+  - Backward compatible with old string-format items
+  - Profile editing: pencil icon to add/edit quantity and description per item
+  - Post creation: edit button on each item to add details
+  - Feed display: quantities shown in parentheses on badges
+  - Profile view: click items to see full details in tooltip
 
 ## Test Credentials
 - Sole Admin: williamrhodes764@protonmail.com / (user-set password) (role: admin)
