@@ -17,7 +17,7 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function UserProfileView({ userId, onClose, onStartChat }) {
+export default function UserProfileView({ userId, onClose, onStartChat, onProposeTrade }) {
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -235,6 +235,19 @@ export default function UserProfileView({ userId, onClose, onStartChat }) {
               >
                 <ChatCircle size={16} />
                 Message
+              </button>
+              <button
+                onClick={() => {
+                  if (onProposeTrade) {
+                    onClose();
+                    onProposeTrade(userId, profile?.name || 'Unknown');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] hover:text-[#B45309]"
+                data-testid="propose-trade-user-btn"
+              >
+                <ArrowsLeftRight size={16} />
+                Propose Trade
               </button>
             </div>
           )}

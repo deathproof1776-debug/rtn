@@ -24,7 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh, onViewProfile }) {
+export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh, onViewProfile, onProposeTrade }) {
   const { user } = useAuth();
   const [filterNearby, setFilterNearby] = useState(nearbyOnly);
   const [refreshing, setRefreshing] = useState(false);
@@ -190,7 +190,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
       ) : (
         <div className="space-y-4">
           {displayPosts.map((post) => (
-            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} onViewProfile={onViewProfile} />
+            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} onViewProfile={onViewProfile} onProposeTrade={onProposeTrade} />
           ))}
         </div>
       )}
@@ -198,7 +198,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
   );
 }
 
-function PostCard({ post, onLike, currentUserId, onViewProfile }) {
+function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }) {
   const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [showComments, setShowComments] = useState(false);
@@ -364,6 +364,19 @@ function PostCard({ post, onLike, currentUserId, onViewProfile }) {
                 </button>
                 <button
                   onClick={() => {
+                    if (onProposeTrade && post.user_id !== currentUserId) {
+                      onProposeTrade(post.user_id, post.user_name);
+                    }
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                  data-testid={`post-menu-trade-${post._id}`}
+                >
+                  <ArrowsLeftRight size={16} />
+                  Propose Trade
+                </button>
+                <button
+                  onClick={() => {
                     // Could open messaging with this user in future
                     setShowMenu(false);
                   }}
@@ -484,6 +497,16 @@ function PostCard({ post, onLike, currentUserId, onViewProfile }) {
           <span className="text-xs md:text-sm">{comments.length}</span>
           {showComments ? <CaretUp size={12} /> : <CaretDown size={12} />}
         </button>
+        {post.user_id !== currentUserId && onProposeTrade && (
+          <button 
+            onClick={() => onProposeTrade(post.user_id, post.user_name)}
+            className="btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3 text-[var(--brand-primary)] ml-auto"
+            data-testid={`propose-trade-${post._id}`}
+          >
+            <ArrowsLeftRight size={18} />
+            <span className="text-xs md:text-sm hidden sm:inline">Propose Trade</span>
+          </button>
+        )}
       </footer>
 
       {/* Comments Section */}

@@ -8,16 +8,18 @@ import {
   Shield,
   X,
   Handshake,
-  UserPlus
+  UserPlus,
+  ArrowsLeftRight
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
 
-export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose, networkRequestCount = 0 }) {
+export default function Sidebar({ activeView, setActiveView, onCreatePost, isMobile = false, onClose, networkRequestCount = 0, tradeDealsCount = 0 }) {
   const { user, logout } = useAuth();
 
   const navItems = [
     { id: 'feed', label: 'Feed', icon: House },
+    { id: 'trades', label: 'Trade Deals', icon: ArrowsLeftRight, badge: tradeDealsCount },
     { id: 'network', label: 'My Trade Network', icon: Handshake, badge: networkRequestCount },
     { id: 'messages', label: 'Messages', icon: ChatCircle },
     { id: 'invites', label: 'Invite Members', icon: UserPlus },

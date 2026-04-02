@@ -9,11 +9,13 @@ import CreatePostModal from '../components/CreatePostModal';
 import MessagesPanel from '../components/MessagesPanel';
 import ProfilePanel from '../components/ProfilePanel';
 import TradeNetworkPanel from '../components/TradeNetworkPanel';
+import TradeDealsPanel from '../components/TradeDealsPanel';
 import UserProfileView from '../components/UserProfileView';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import InvitePanel from '../components/InvitePanel';
 import AdminDashboard from './AdminDashboard';
+import CreateTradeModal from '../components/CreateTradeModal';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -27,7 +29,9 @@ export default function Dashboard() {
   const [postsLoading, setPostsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [networkRequestCount, setNetworkRequestCount] = useState(0);
+  const [tradeDealsCount, setTradeDealsCount] = useState(0);
   const [viewingProfileId, setViewingProfileId] = useState(null);
+  const [tradeTarget, setTradeTarget] = useState(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,6 +44,7 @@ export default function Dashboard() {
       fetchPosts();
       fetchMatches();
       fetchNetworkRequests();
+      fetchTradeDealsCount();
     }
   }, [user]);
 
@@ -78,6 +83,17 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTradeDealsCount = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/trades/active-count`, {
+        withCredentials: true
+      });
+      setTradeDealsCount(response.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching trade deals count:', error);
+    }
+  };
+
   const handlePostCreated = (newPost) => {
     setPosts([newPost, ...posts]);
     setShowCreatePost(false);
@@ -90,7 +106,10 @@ export default function Dashboard() {
   const handleStartChat = (userId) => {
     setViewingProfileId(null);
     setActiveView('messages');
-    // The MessagesPanel will need to handle starting a chat with this user
+  };
+
+  const handleProposeTrade = (userId, userName) => {
+    setTradeTarget({ userId, userName });
   };
 
   if (loading) {
@@ -134,6 +153,7 @@ export default function Dashboard() {
           isMobile={true}
           onClose={() => setSidebarOpen(false)}
           networkRequestCount={networkRequestCount}
+          tradeDealsCount={tradeDealsCount}
         />
       </div>
 
@@ -143,6 +163,7 @@ export default function Dashboard() {
         setActiveView={setActiveView}
         onCreatePost={() => setShowCreatePost(true)}
         networkRequestCount={networkRequestCount}
+        tradeDealsCount={tradeDealsCount}
       />
       
       <main className="main-feed">
@@ -154,8 +175,10 @@ export default function Dashboard() {
             onCreatePost={() => setShowCreatePost(true)}
             onRefresh={fetchPosts}
             onViewProfile={handleViewProfile}
+            onProposeTrade={handleProposeTrade}
           />
         )}
+        {activeView === 'trades' && <TradeDealsPanel />}
         {activeView === 'network' && (
           <TradeNetworkPanel 
             onViewProfile={handleViewProfile}
@@ -191,6 +214,18 @@ export default function Dashboard() {
           userId={viewingProfileId}
           onClose={() => setViewingProfileId(null)}
           onStartChat={handleStartChat}
+          onProposeTrade={handleProposeTrade}
+        />
+      )}
+
+      {tradeTarget && (
+        <CreateTradeModal
+          receiverId={tradeTarget.userId}
+          receiverName={tradeTarget.userName}
+          onClose={() => setTradeTarget(null)}
+          onTradeCreated={() => {
+            fetchTradeDealsCount();
+          }}
         />
       )}
     </div>
