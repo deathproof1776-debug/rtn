@@ -213,9 +213,15 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Profile view: click items to see full details in tooltip
 
 ## Test Credentials
-- Sole Admin: williamrhodes764@protonmail.com / (user-set password) (role: admin)
+- Production Admin: deathproofrebel@protonmail.com / (set via PROD_ADMIN_PASSWORD env var)
+- Preview Admin: williamrhodes764@protonmail.com / Peaches1776@ (role: admin)
 - Demo User: demo@rebeltrade.net / demo123 (role: user)
-- Seeded Admin: admin@homesteadhub.com / admin123 (role: user)
+
+## Code Quality Improvements (April 2, 2026)
+- [x] **Security**: Moved hardcoded credentials in test files to environment variables
+- [x] **React Hooks**: Fixed missing dependencies in useEffect hooks (Dashboard, AdminDashboard)
+- [x] **React Keys**: Fixed array index as key anti-patterns in TradeDealsPanel
+- [x] **Production Seed**: seed_production.py now requires PROD_ADMIN_PASSWORD env variable
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)

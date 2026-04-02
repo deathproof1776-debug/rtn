@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
@@ -39,16 +39,7 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    if (user) {
-      fetchPosts();
-      fetchMatches();
-      fetchNetworkRequests();
-      fetchTradeDealsCount();
-    }
-  }, [user]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/posts`, {
         withCredentials: true
@@ -59,9 +50,9 @@ export default function Dashboard() {
     } finally {
       setPostsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/posts/matches`, {
         withCredentials: true
@@ -70,9 +61,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching matches:', error);
     }
-  };
+  }, []);
 
-  const fetchNetworkRequests = async () => {
+  const fetchNetworkRequests = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/network/requests/pending`, {
         withCredentials: true
@@ -81,9 +72,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching network requests:', error);
     }
-  };
+  }, []);
 
-  const fetchTradeDealsCount = async () => {
+  const fetchTradeDealsCount = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/trades/active-count`, {
         withCredentials: true
@@ -92,7 +83,16 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching trade deals count:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchPosts();
+      fetchMatches();
+      fetchNetworkRequests();
+      fetchTradeDealsCount();
+    }
+  }, [user, fetchPosts, fetchMatches, fetchNetworkRequests, fetchTradeDealsCount]);
 
   const handlePostCreated = (newPost) => {
     setPosts([newPost, ...posts]);

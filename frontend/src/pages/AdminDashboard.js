@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import {
@@ -170,14 +170,7 @@ export default function AdminDashboard({ onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
 
-  useEffect(() => {
-    fetchStats();
-    fetchUsers();
-    fetchPosts();
-    fetchAuditLogs();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/stats`, { withCredentials: true });
       setStats(res.data);
@@ -186,9 +179,9 @@ export default function AdminDashboard({ onBack }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/users?limit=100`, { withCredentials: true });
       setUsers(res.data.users || []);
@@ -196,9 +189,9 @@ export default function AdminDashboard({ onBack }) {
     } catch (err) {
       console.error('Error fetching users:', err);
     }
-  };
+  }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/posts?limit=100`, { withCredentials: true });
       setPosts(res.data.posts || []);
@@ -206,9 +199,9 @@ export default function AdminDashboard({ onBack }) {
     } catch (err) {
       console.error('Error fetching posts:', err);
     }
-  };
+  }, []);
 
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/audit-log?limit=100`, { withCredentials: true });
       setAuditLogs(res.data.logs || []);
@@ -216,7 +209,14 @@ export default function AdminDashboard({ onBack }) {
     } catch (err) {
       console.error('Error fetching audit logs:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+    fetchUsers();
+    fetchPosts();
+    fetchAuditLogs();
+  }, [fetchStats, fetchUsers, fetchPosts, fetchAuditLogs]);
 
   const handleVerify = async (userId, isVerified) => {
     try {

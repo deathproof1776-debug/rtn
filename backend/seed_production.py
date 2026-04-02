@@ -43,8 +43,14 @@ async def seed_production():
     print("REBEL TRADE NETWORK - PRODUCTION SEED")
     print("=" * 50)
     
-    admin_email = "deathproofrebel@protonmail.com"
-    admin_password = "Peaches1776@"
+    # Use environment variables for admin credentials
+    admin_email = os.environ.get('PROD_ADMIN_EMAIL', 'admin@rebeltrade.network')
+    admin_password = os.environ.get('PROD_ADMIN_PASSWORD')
+    
+    if not admin_password:
+        print("ERROR: PROD_ADMIN_PASSWORD environment variable is required")
+        print("Set it before running: export PROD_ADMIN_PASSWORD='your-secure-password'")
+        return
     
     # Check if admin already exists
     existing = await db.users.find_one({"email": admin_email})
