@@ -252,7 +252,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       {rec.offers_you_want?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-1">
                           {rec.offers_you_want.map((item, i) => (
-                            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-[#15803D]/20 text-[#22C55E] border border-[#15803D]/30">
+                            <span key={`offers-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[#15803D]/20 text-[#22C55E] border border-[#15803D]/30">
                               Offers: {item}
                             </span>
                           ))}
@@ -262,7 +262,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       {rec.wants_you_offer?.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {rec.wants_you_offer.map((item, i) => (
-                            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-[#B45309]/20 text-[#F59E0B] border border-[#B45309]/30">
+                            <span key={`wants-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[#B45309]/20 text-[#F59E0B] border border-[#B45309]/30">
                               Wants: {item}
                             </span>
                           ))}
@@ -335,7 +335,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                   {connection.skills?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {connection.skills.slice(0, 3).map((skill, i) => (
-                        <span key={i} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
+                        <span key={`skill-${skill}-${i}`} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
                           {skill}
                         </span>
                       ))}

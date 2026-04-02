@@ -96,7 +96,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="post-card animate-pulse">
+          <div key={`skeleton-${i}`} className="post-card animate-pulse">
             <div className="h-4 bg-[var(--bg-surface-hover)] w-1/3 mb-4"></div>
             <div className="h-3 bg-[var(--bg-surface-hover)] w-full mb-2"></div>
             <div className="h-3 bg-[var(--bg-surface-hover)] w-2/3"></div>
@@ -452,7 +452,7 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
               const itemData = typeof item === 'string' ? { name: item } : item;
               return (
                 <span 
-                  key={i} 
+                  key={`offer-${itemData.name || item}-${i}`} 
                   className="badge badge-offering text-[10px] md:text-xs"
                   title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
                 >
@@ -473,7 +473,7 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
               const itemData = typeof item === 'string' ? { name: item } : item;
               return (
                 <span 
-                  key={i} 
+                  key={`look-${itemData.name || item}-${i}`} 
                   className="badge badge-looking text-[10px] md:text-xs"
                   title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
                 >
@@ -490,7 +490,7 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
         <div className="mb-3 md:mb-4 grid grid-cols-2 gap-1.5 md:gap-2">
           {post.images.slice(0, 4).map((img, i) => (
             <img 
-              key={i} 
+              key={`img-${img.slice(-20)}-${i}`} 
               src={img} 
               alt={`Post image ${i + 1}`}
               className="w-full h-24 md:h-32 object-cover border border-[var(--border-color)]"

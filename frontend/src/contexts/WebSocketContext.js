@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 const WebSocketContext = createContext(null);
@@ -96,8 +96,15 @@ export function WebSocketProvider({ children }) {
     setMessages([]);
   }, []);
 
+  const value = useMemo(() => ({
+    connected,
+    messages,
+    sendMessage,
+    clearMessages
+  }), [connected, messages, sendMessage, clearMessages]);
+
   return (
-    <WebSocketContext.Provider value={{ connected, messages, sendMessage, clearMessages }}>
+    <WebSocketContext.Provider value={value}>
       {children}
     </WebSocketContext.Provider>
   );

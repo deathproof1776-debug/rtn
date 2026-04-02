@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import axios from 'axios';
 
@@ -191,16 +191,18 @@ export function NotificationProvider({ children }) {
     }
   }, [isSubscribed]);
 
+  const value = useMemo(() => ({
+    isSupported,
+    permission,
+    isSubscribed,
+    loading,
+    subscribe,
+    unsubscribe,
+    sendTestNotification
+  }), [isSupported, permission, isSubscribed, loading, subscribe, unsubscribe, sendTestNotification]);
+
   return (
-    <NotificationContext.Provider value={{
-      isSupported,
-      permission,
-      isSubscribed,
-      loading,
-      subscribe,
-      unsubscribe,
-      sendTestNotification
-    }}>
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );

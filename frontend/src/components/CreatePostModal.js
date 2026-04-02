@@ -248,7 +248,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               {offering.map((item, i) => {
                 const isEditing = editingItem?.type === 'offering' && editingItem?.index === i;
                 return (
-                  <div key={i} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
+                  <div key={`offering-${item.name}-${i}`} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="tag m-0">
                         {item.name}
@@ -316,7 +316,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               {lookingFor.map((item, i) => {
                 const isEditing = editingItem?.type === 'lookingFor' && editingItem?.index === i;
                 return (
-                  <div key={i} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
+                  <div key={`lookingFor-${item.name}-${i}`} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="tag m-0">
                         {item.name}
@@ -386,7 +386,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
             {images.length > 0 && (
               <div className="grid grid-cols-4 gap-2 mt-2">
                 {images.map((img, i) => (
-                  <div key={i} className="relative">
+                  <div key={`upload-img-${img.slice(-20)}-${i}`} className="relative">
                     <img src={img} alt="" className="w-full h-20 object-cover border border-[#292524]" />
                     <button
                       type="button"
