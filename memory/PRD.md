@@ -73,6 +73,12 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Fixed hardcoded colors in MessagesPanel.js and TradeNetworkPanel.js
   - Added theme-aware CSS utility classes (theme-surface, theme-surface-hover, etc.)
   - Light mode now displays correctly with soft earth tones across all components
+- [x] **Enhanced PWA Features** (April 2, 2026):
+  - PWA manifest with app metadata, icons, splash screen config
+  - Enhanced Service Worker with caching and offline fallback page
+  - "Install App" button in sidebar (iOS instructions modal included)
+  - PWAContext for install state management
+  - Service Worker registration on page load
 
 ## API Endpoints
 
@@ -161,13 +167,6 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
-### P0 (Top Priority - Next Fork)
-- **Enhanced PWA Features** - Better mobile app-like experience
-  - Add "Install App" prompt for Android/iOS
-  - Improve offline support with better caching
-  - Add splash screen and loading states
-  - Optimize for "Add to Home Screen" experience
-
 ### P1 (High Priority)
 - Video upload support
 - User blocking/reporting
@@ -180,6 +179,16 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Trade ratings/reviews after completed trades
 
 ## What Was Completed (April 2, 2026)
+- [x] **Enhanced PWA Features** - Full Progressive Web App implementation
+  - PWA manifest.json with app metadata, icons, and splash screen config
+  - Enhanced Service Worker with static asset caching and offline fallback
+  - Custom offline.html page with brand styling and retry button
+  - App icons generated at 8 sizes (72, 96, 128, 144, 152, 192, 384, 512)
+  - "Install App" button in sidebar (visible on iOS or when browser supports beforeinstallprompt)
+  - iOS-specific install instructions modal with step-by-step guide
+  - PWAContext for managing install state across the app
+  - Updated index.html with Apple PWA meta tags, theme color, and manifest link
+  - Service Worker registration on page load
 - [x] Terms of Service / Community Guidelines acceptance on registration
   - Checkbox must be accepted before joining
   - Modal with full guidelines (user responsible for following laws, no harassment, no violence, liability disclaimer)
