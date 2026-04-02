@@ -152,6 +152,7 @@ export default function Dashboard() {
             onPostCreated={handlePostCreated}
             onCreatePost={() => setShowCreatePost(true)}
             onRefresh={fetchPosts}
+            onViewProfile={handleViewProfile}
           />
         )}
         {activeView === 'network' && (

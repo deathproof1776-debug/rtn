@@ -17,6 +17,8 @@ export default function NotificationBell() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleToggle = async () => {
+    console.log('[NotificationBell] Toggle clicked, isSubscribed:', isSubscribed);
+    
     if (isSubscribed) {
       const result = await unsubscribe();
       if (result.success) {
@@ -25,13 +27,18 @@ export default function NotificationBell() {
         toast.error('Failed to disable notifications: ' + result.error);
       }
     } else {
+      console.log('[NotificationBell] Attempting to subscribe...');
       const result = await subscribe();
+      console.log('[NotificationBell] Subscribe result:', result);
+      
       if (result.success) {
         toast.success('Notifications enabled! You\'ll be alerted for messages, comments, and likes.');
       } else if (result.error === 'Permission denied') {
         toast.error('Please allow notifications in your browser settings');
+      } else if (result.error?.includes('Service Worker')) {
+        toast.error('Service Worker not ready. Please refresh the page and try again.');
       } else {
-        toast.error('Failed to enable notifications: ' + result.error);
+        toast.error('Failed to enable notifications: ' + (result.error || 'Unknown error'));
       }
     }
     setShowDropdown(false);
@@ -54,6 +61,7 @@ export default function NotificationBell() {
           className="p-2 rounded-lg text-[var(--text-muted)] cursor-not-allowed"
           title="Push notifications not supported in this browser"
           disabled
+          data-testid="notification-bell-unsupported"
         >
           <BellSlash size={22} weight="bold" />
         </button>

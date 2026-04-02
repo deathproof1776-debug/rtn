@@ -14,13 +14,17 @@ import {
   CaretUp,
   ArrowClockwise,
   SealCheck,
-  Handshake
+  Handshake,
+  User,
+  ChatText,
+  Warning,
+  X
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh }) {
+export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh, onViewProfile }) {
   const { user } = useAuth();
   const [filterNearby, setFilterNearby] = useState(nearbyOnly);
   const [refreshing, setRefreshing] = useState(false);
@@ -186,7 +190,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
       ) : (
         <div className="space-y-4">
           {displayPosts.map((post) => (
-            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} />
+            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} onViewProfile={onViewProfile} />
           ))}
         </div>
       )}
@@ -194,7 +198,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
   );
 }
 
-function PostCard({ post, onLike, currentUserId }) {
+function PostCard({ post, onLike, currentUserId, onViewProfile }) {
   const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [showComments, setShowComments] = useState(false);
@@ -202,6 +206,11 @@ function PostCard({ post, onLike, currentUserId }) {
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Check if post content is long enough to need expansion
+  const isLongPost = post.description && post.description.length > 200;
 
   const handleLikeClick = async () => {
     await onLike(post._id);
@@ -260,6 +269,13 @@ function PostCard({ post, onLike, currentUserId }) {
     }
   };
 
+  const handleProfileClick = () => {
+    if (onViewProfile && post.user_id) {
+      onViewProfile(post.user_id);
+    }
+    setShowMenu(false);
+  };
+
   const timeAgo = post.created_at 
     ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
     : 'recently';
@@ -268,12 +284,25 @@ function PostCard({ post, onLike, currentUserId }) {
     <article className="post-card animate-slide-up" data-testid={`post-${post._id}`}>
       <header className="flex items-start justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0">
+          {/* Clickable Avatar */}
+          <button 
+            onClick={handleProfileClick}
+            className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0 hover:ring-2 hover:ring-[var(--brand-primary)] transition-all cursor-pointer"
+            data-testid={`post-avatar-${post._id}`}
+            title={`View ${post.user_name}'s profile`}
+          >
             {post.user_name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
+          </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-              <h4 className="font-medium text-[var(--text-primary)] text-sm md:text-base truncate">{post.user_name || 'Anonymous'}</h4>
+              {/* Clickable Username */}
+              <button 
+                onClick={handleProfileClick}
+                className="font-medium text-[var(--text-primary)] text-sm md:text-base hover:text-[var(--brand-primary)] hover:underline transition-colors cursor-pointer"
+                data-testid={`post-username-${post._id}`}
+              >
+                {post.user_name || 'Anonymous'}
+              </button>
               {post.is_verified && (
                 <span className="verified-badge" data-testid={`verified-badge-${post._id}`}>
                   <SealCheck size={10} weight="fill" />
@@ -307,16 +336,93 @@ function PostCard({ post, onLike, currentUserId }) {
             </div>
           </div>
         </div>
-        <button className="btn-ghost p-1.5 md:p-2 flex-shrink-0">
-          <DotsThree size={18} weight="bold" />
-        </button>
+        
+        {/* 3 Dots Menu */}
+        <div className="relative">
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className="btn-ghost p-1.5 md:p-2 flex-shrink-0 hover:bg-[var(--bg-surface-hover)]"
+            data-testid={`post-menu-btn-${post._id}`}
+          >
+            <DotsThree size={18} weight="bold" />
+          </button>
+          
+          {showMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg shadow-xl z-50 overflow-hidden" data-testid={`post-menu-dropdown-${post._id}`}>
+                <button
+                  onClick={handleProfileClick}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                  data-testid={`post-menu-view-profile-${post._id}`}
+                >
+                  <User size={16} />
+                  View Profile
+                </button>
+                <button
+                  onClick={() => {
+                    // Could open messaging with this user in future
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                  data-testid={`post-menu-message-${post._id}`}
+                >
+                  <ChatText size={16} />
+                  Send Message
+                </button>
+                <button
+                  onClick={() => {
+                    // Report functionality - future feature
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
+                  data-testid={`post-menu-report-${post._id}`}
+                >
+                  <Warning size={16} />
+                  Report Post
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
         {post.title}
       </h3>
       
-      <p className="text-sm md:text-base text-[var(--text-secondary)] mb-3 md:mb-4 leading-relaxed line-clamp-3">{post.description}</p>
+      {/* Expandable/Collapsible Post Content */}
+      <div className="relative">
+        <p 
+          className={`text-sm md:text-base text-[var(--text-secondary)] mb-3 md:mb-4 leading-relaxed ${
+            !expanded && isLongPost ? 'line-clamp-3' : ''
+          }`}
+          data-testid={`post-description-${post._id}`}
+        >
+          {post.description}
+        </p>
+        
+        {isLongPost && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-sm text-[var(--brand-primary)] hover:underline font-medium flex items-center gap-1 -mt-2 mb-3"
+            data-testid={`post-expand-btn-${post._id}`}
+          >
+            {expanded ? (
+              <>
+                Show less <CaretUp size={14} />
+              </>
+            ) : (
+              <>
+                Read more <CaretDown size={14} />
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
         <span className="badge text-[10px] md:text-xs">{post.category?.toUpperCase()}</span>

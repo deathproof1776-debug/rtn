@@ -65,15 +65,29 @@ export function NotificationProvider({ children }) {
 
   // Subscribe to push notifications
   const subscribe = useCallback(async () => {
-    if (!isSupported || !swRegistration || !user) {
-      return { success: false, error: 'Not supported or not logged in' };
+    if (!isSupported) {
+      console.error('[Notifications] Push notifications not supported in this browser');
+      return { success: false, error: 'Push notifications not supported in this browser' };
+    }
+    
+    if (!swRegistration) {
+      console.error('[Notifications] Service Worker not registered yet');
+      return { success: false, error: 'Service Worker not ready. Please try again.' };
+    }
+    
+    if (!user) {
+      console.error('[Notifications] User not logged in');
+      return { success: false, error: 'Please log in first' };
     }
 
     setLoading(true);
+    console.log('[Notifications] Starting subscription process...');
 
     try {
       // Request notification permission
+      console.log('[Notifications] Requesting permission...');
       const perm = await Notification.requestPermission();
+      console.log('[Notifications] Permission result:', perm);
       setPermission(perm);
 
       if (perm !== 'granted') {
@@ -82,24 +96,29 @@ export function NotificationProvider({ children }) {
       }
 
       // Get VAPID public key from backend
+      console.log('[Notifications] Fetching VAPID key...');
       const keyResponse = await axios.get(`${API_URL}/api/notifications/vapid-public-key`, {
         withCredentials: true
       });
       const vapidPublicKey = keyResponse.data.publicKey;
+      console.log('[Notifications] VAPID key received:', vapidPublicKey ? 'Yes' : 'No');
 
       if (!vapidPublicKey) {
         setLoading(false);
-        return { success: false, error: 'VAPID key not configured' };
+        return { success: false, error: 'VAPID key not configured on server' };
       }
 
       // Subscribe to push manager
+      console.log('[Notifications] Subscribing to push manager...');
       const sub = await swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
       });
+      console.log('[Notifications] Push subscription created');
 
       // Send subscription to backend
       const subJson = sub.toJSON();
+      console.log('[Notifications] Sending subscription to backend...');
       await axios.post(`${API_URL}/api/notifications/subscribe`, {
         endpoint: subJson.endpoint,
         keys: {
@@ -107,6 +126,7 @@ export function NotificationProvider({ children }) {
           auth: subJson.keys.auth
         }
       }, { withCredentials: true });
+      console.log('[Notifications] Subscription saved to backend');
 
       setSubscription(sub);
       setIsSubscribed(true);
@@ -114,9 +134,9 @@ export function NotificationProvider({ children }) {
 
       return { success: true };
     } catch (error) {
-      console.error('Push subscription failed:', error);
+      console.error('[Notifications] Subscription failed:', error);
       setLoading(false);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Unknown error occurred' };
     }
   }, [isSupported, swRegistration, user]);
 
