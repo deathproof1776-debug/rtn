@@ -161,6 +161,13 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
+### P0 (Top Priority - Next Fork)
+- **Enhanced PWA Features** - Better mobile app-like experience
+  - Add "Install App" prompt for Android/iOS
+  - Improve offline support with better caching
+  - Add splash screen and loading states
+  - Optimize for "Add to Home Screen" experience
+
 ### P1 (High Priority)
 - Video upload support
 - User blocking/reporting
