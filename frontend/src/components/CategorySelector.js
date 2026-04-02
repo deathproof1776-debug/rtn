@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { 
   X, 
@@ -91,11 +91,7 @@ export default function CategorySelector({
   const [editDescription, setEditDescription] = useState('');
   const [editQuantity, setEditQuantity] = useState('');
 
-  useEffect(() => {
-    fetchCategories();
-  }, [type]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/categories/${type}`, {
         withCredentials: true
@@ -106,7 +102,11 @@ export default function CategorySelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, [type]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Flatten all items for search
   const allItems = useMemo(() => {

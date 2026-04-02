@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
@@ -141,14 +141,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
   const [networkStatus, setNetworkStatus] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (userId) {
-      fetchProfile();
-      fetchNetworkStatus();
-    }
-  }, [userId]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/profile/${userId}`, {
         withCredentials: true
@@ -159,9 +152,9 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  const fetchNetworkStatus = async () => {
+  const fetchNetworkStatus = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/network/status/${userId}`, {
         withCredentials: true
@@ -170,7 +163,14 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
     } catch (error) {
       console.error('Error fetching network status:', error);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchProfile();
+      fetchNetworkStatus();
+    }
+  }, [userId, fetchProfile, fetchNetworkStatus]);
 
   const handleSendRequest = async () => {
     setActionLoading(true);

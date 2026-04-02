@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
@@ -36,12 +36,7 @@ export default function ProfilePanel() {
   const [networkConnections, setNetworkConnections] = useState([]);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchProfile();
-    fetchNetworkConnections();
-  }, [user]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
     try {
       const response = await axios.get(`${API_URL}/api/profile/${user.id}`, {
@@ -64,9 +59,9 @@ export default function ProfilePanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const fetchNetworkConnections = async () => {
+  const fetchNetworkConnections = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/network/connections`, {
         withCredentials: true
@@ -75,7 +70,12 @@ export default function ProfilePanel() {
     } catch (error) {
       console.error('Error fetching network connections:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchNetworkConnections();
+  }, [fetchProfile, fetchNetworkConnections]);
 
   const handleSave = async () => {
     setSaving(true);

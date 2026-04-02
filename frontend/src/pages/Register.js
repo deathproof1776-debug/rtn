@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Eye, EyeSlash, ArrowRight, MapPin, WarningCircle, FileText, CheckSquare, Square } from '@phosphor-icons/react';
@@ -64,15 +64,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!inviteToken) {
-      setInviteValid(false);
-      return;
-    }
-    validateInvite();
-  }, [inviteToken]);
-
-  const validateInvite = async () => {
+  const validateInvite = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/invites/validate/${inviteToken}`);
       setInviteValid(true);
@@ -85,7 +77,15 @@ export default function Register() {
           : 'This invite link is invalid or has already been used.'
       );
     }
-  };
+  }, [inviteToken]);
+
+  useEffect(() => {
+    if (!inviteToken) {
+      setInviteValid(false);
+      return;
+    }
+    validateInvite();
+  }, [inviteToken, validateInvite]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
