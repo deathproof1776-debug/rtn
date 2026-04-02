@@ -219,9 +219,15 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Code Quality Improvements (April 2, 2026)
 - [x] **Security**: Moved hardcoded credentials in test files to environment variables
-- [x] **React Hooks**: Fixed missing dependencies in useEffect hooks (Dashboard, AdminDashboard)
+- [x] **React Hooks**: Fixed missing dependencies in useEffect hooks (Dashboard, AdminDashboard, CategorySelector, ProfilePanel, UserProfileView, Register)
 - [x] **React Keys**: Fixed array index as key anti-patterns in TradeDealsPanel
 - [x] **Production Seed**: seed_production.py now requires PROD_ADMIN_PASSWORD env variable
+- [x] **Deployment**: Fixed .gitignore blocking .env files, fixed CORS configuration
+- [x] **WebSocket**: Added /api/ws/ route and fixed connection timing race condition
+
+## Known Issues (Fixed April 2, 2026)
+- Messages and Posts APIs are fully functional
+- WebSocket connection has a 100ms delay to ensure token availability after login
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)

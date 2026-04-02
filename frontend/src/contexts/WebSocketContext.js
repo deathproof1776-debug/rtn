@@ -26,6 +26,7 @@ export function WebSocketProvider({ children }) {
       return;
     }
     
+    // Use root /ws path - works in both preview and production
     const wsUrl = `${wsProtocol}://${wsHost}/ws/${user.id}?token=${storedToken}`;
 
     try {
@@ -64,7 +65,11 @@ export function WebSocketProvider({ children }) {
 
   useEffect(() => {
     if (user && user.id) {
-      connect();
+      // Small delay to ensure ws_token is set in sessionStorage
+      const timer = setTimeout(() => {
+        connect();
+      }, 100);
+      return () => clearTimeout(timer);
     }
 
     return () => {

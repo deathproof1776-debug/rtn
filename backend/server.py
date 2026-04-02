@@ -2530,9 +2530,16 @@ async def cancel_trade(trade_id: str, request: Request, background_tasks: Backgr
     return {"message": "Trade offer cancelled", "status": "cancelled"}
 
 
-# WebSocket endpoint
+# WebSocket endpoint - both at root and under /api for compatibility
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    await handle_websocket(websocket, user_id)
+
+@app.websocket("/api/ws/{user_id}")
+async def api_websocket_endpoint(websocket: WebSocket, user_id: str):
+    await handle_websocket(websocket, user_id)
+
+async def handle_websocket(websocket: WebSocket, user_id: str):
     # Verify token from query params
     token = websocket.query_params.get("token")
     if not token:
