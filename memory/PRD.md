@@ -45,80 +45,49 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] Rebranding to "Rebel Trade Network" - Updated all branding
 - [x] Orange Borders/Trim - Added orange accent borders throughout
 - [x] Verified Trader Badge System - Admin verification with badges
-- [x] **Trade Network Feature** - LinkedIn-style mutual connections
-- [x] **Recommended Traders Feature** - Smart trader suggestions
-- [x] **Categorized Goods/Skills/Services** (March 28, 2026):
-  - 5 Goods categories: Food, Tools, Crafts, Livestock, Miscellaneous
-  - 5 Skills categories: Homestead, Landscape, Trade/Technical, Creative, Life/Survival
-  - 7 Services categories: Labor, Equipment, Animal, Professional, Education, Health, Custom
-  - Searchable dropdowns with category accordions
-  - Multi-select from predefined items
-  - Custom item addition support
-  - CategorySelector component with search, expand/collapse, badges
-- [x] **Light/Dark Mode Theme Toggle** (March 28, 2026)
-- [x] **Invite-Only Registration System** (April 2, 2026):
-  - Registration requires a valid invite link from existing member
-  - Existing users can generate unique invite links from "Invite Members" panel
-  - Invite tokens expire after 7 days, single-use only
-  - /register without valid invite shows "Invite Required" gate page
-  - Login page updated to show invite-only messaging (no register link)
-  - Invite panel shows ACTIVE/USED/EXPIRED status for each invite
-  - Backend tracks who created and used each invite
-
-## Categorized Selection System (NEW)
-
-### Goods Categories
-| Category | Sample Items |
-|----------|-------------|
-| **Food** | Fresh Eggs, Honey, Raw Milk, Cheese, Vegetables, Meats, Canned Goods, Maple Syrup, Grains, Fermented Foods |
-| **Tools** | Hand Saws, Axes, Power Drills, Canning Equipment, Beekeeping Equipment, Fencing Tools, Blacksmithing Tools |
-| **Crafts** | Handmade Furniture, Quilts, Clothing, Pottery, Candles, Soaps, Jewelry, Art, Knives, Musical Instruments |
-| **Livestock** | Laying Hens, Dairy Goats, Cattle, Pigs, Sheep, Rabbits, Bees, Horses, Guard Dogs |
-| **Miscellaneous** | Seeds, Plant Starts, Firewood, Lumber, Building Materials, Hay, Compost, Solar Panels, Wool, Hides |
-
-### Skills Categories
-| Category | Sample Items |
-|----------|-------------|
-| **Homestead** | Canning & Preserving, Fermenting, Cheese Making, Soap Making, Butchering, Beekeeping, Seed Saving, Foraging, Herbalism |
-| **Landscape** | Permaculture Design, Irrigation Systems, Fencing, Pond Building, Tree Grafting, Composting, Greenhouse Construction |
-| **Trade/Technical** | Carpentry, Welding, Plumbing, Electrical, Masonry, Solar Installation, Mechanic, Gunsmithing, Blacksmithing |
-| **Creative** | Woodworking, Pottery, Sewing, Knitting, Jewelry Making, Leathercraft, Photography, Writing |
-| **Life/Survival** | First Aid, Midwifery, Veterinary Care, Hunting, Fishing, Wilderness Survival, Radio Communications, Teaching |
-
-### Services Categories
-| Category | Sample Items |
-|----------|-------------|
-| **Labor** | Farm Labor, Fence Building, Firewood Cutting, Construction Labor, Landscaping, Snow Removal |
-| **Equipment** | Tractor Rental, Truck/Trailer Rental, Chainsaw Services, Tilling, Hay Baling, Excavation |
-| **Animal** | Stud Services, Animal Training, Farrier Services, Shearing, Butchering Services, Pet Sitting |
-| **Professional** | Consulting, Land Survey, Legal Services, Accounting, Marketing, Photography |
-| **Education** | Workshops, One-on-One Training, Homesteading Classes, Survival Skills Training, First Aid Training |
-| **Health** | Midwifery, Massage Therapy, Herbal Consultations, Childcare, Eldercare, Meal Prep |
-| **Custom** | Custom Furniture, Custom Clothing, Custom Knives, Custom Leatherwork, Commissioned Art |
+- [x] Trade Network Feature - LinkedIn-style mutual connections
+- [x] Recommended Traders Feature - Smart trader suggestions
+- [x] Categorized Goods/Skills/Services
+- [x] Light/Dark Mode Theme Toggle
+- [x] Invite-Only Registration System
+- [x] **Search Input Padding Fix** (April 2, 2026) - Fixed text bleeding into magnifying glass icon on CategorySelector search inputs
+- [x] **Admin Dashboard** (April 2, 2026):
+  - Demo account (demo@rebeltrade.net) promoted to admin role
+  - Overview tab: Platform stats (users, verified, posts, messages, connections, invites)
+  - Users tab: Full user management (search, verify/unverify, promote/demote role, delete)
+  - Posts tab: Post moderation (view all, delete posts)
+  - Confirmation dialog for destructive actions
+  - Admin-only nav item in sidebar (hidden from regular users)
+  - Backend endpoints: stats, posts list, role management, user/post deletion
 
 ## API Endpoints
-
-### Categories (NEW)
-- GET /api/categories/all - Returns all goods, skills, services categories
-- GET /api/categories/goods - Returns 5 goods categories with items
-- GET /api/categories/skills - Returns 5 skills categories with items
-- GET /api/categories/services - Returns 7 services categories with items
-
-### Invites (NEW - April 2, 2026)
-- POST /api/invites/create - Generate invite link (authenticated)
-- GET /api/invites/validate/{token} - Validate invite token (public)
-- GET /api/invites/my-invites - List user's invites (authenticated)
-
-### Auth
-- POST /api/auth/register (requires invite_token field)
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- POST /api/auth/refresh
 
 ### Admin
 - POST /api/admin/verify-trader (requires admin role)
 - GET /api/admin/users (requires admin role)
+- GET /api/admin/stats (requires admin role)
+- GET /api/admin/posts (requires admin role)
+- DELETE /api/admin/posts/{post_id} (requires admin role)
+- PUT /api/admin/users/{user_id}/role (requires admin role)
+- DELETE /api/admin/users/{user_id} (requires admin role)
+
+### Categories
+- GET /api/categories/all
+- GET /api/categories/goods
+- GET /api/categories/skills
+- GET /api/categories/services
+
+### Invites
+- POST /api/invites/create
+- GET /api/invites/validate/{token}
+- GET /api/invites/my-invites
+
+### Auth
+- POST /api/auth/register (requires invite_token)
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+- POST /api/auth/refresh
 
 ### Trade Network
 - POST /api/network/request
@@ -136,7 +105,7 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ### Posts
 - POST /api/posts
-- GET /api/posts (returns is_network, feed_score for priority)
+- GET /api/posts
 - GET /api/posts/matches
 - POST /api/posts/{id}/like
 
@@ -167,10 +136,6 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
-### P0 (Bugs)
-- ~~Push Notification Toggle broken~~ (FIXED April 2, 2026 - Code was correct, issue was browser support limitation in testing environment. Real browsers work correctly.)
-- ~~Post interactions broken~~ (FIXED April 2, 2026 - Profile click, 3-dots menu, expandable posts)
-
 ### P1 (High Priority)
 - Trade Deals Feature - Formal trade offers/proposals system
 
@@ -181,26 +146,12 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 ### P3 (Enhancement)
 - Reply threading for comments
 - Location radius settings (specify travel/trade distance)
-
-## Recent Bug Fixes (April 2, 2026)
-1. **Post Profile Click** - Users can now click on poster's username or avatar to view their profile
-2. **3-Dots Menu** - Menu now opens with View Profile, Send Message, Report Post options
-3. **Expandable Posts** - Long posts (>200 chars) now show "Read more" / "Show less" toggle
-4. **Push Notifications** - Added debug logging, verified code is correct (browser support varies)
+- Theme toggle UI regression testing (audit hardcoded Tailwind vs CSS variables)
 
 ## Test Credentials
-- Admin: admin@homesteadhub.com / admin123 (role: admin, is_verified: true)
-- Demo: demo@rebeltrade.net / demo123 (regular user)
-- All simulated users: [name]@example.com / homestead123
-
-## Seed Data (March 31, 2026)
-- 11 simulated users across 4 locations (Austin TX, Portland OR, Denver CO, Nashville TN)
-- 7 verified traders showcasing the badge system
-- 10 barter posts with diverse goods/services offerings
-- 10 network connections demonstrating the trade network feature
-- 3 message threads with realistic conversations
-- Comments and likes on multiple posts
-- Run seed script: `cd /app/backend && python seed_data.py`
+- Admin/Demo: demo@rebeltrade.net / demo123 (role: admin)
+- System Admin: admin@homesteadhub.com / admin123 (role: admin)
+- Seeded users: [name]@example.com / homestead123
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)
