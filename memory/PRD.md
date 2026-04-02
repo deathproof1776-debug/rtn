@@ -173,6 +173,17 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Test Credentials
 - Admin: admin@homesteadhub.com / admin123 (role: admin, is_verified: true)
+- Demo: demo@rebeltrade.net / demo123 (regular user)
+- All simulated users: [name]@example.com / homestead123
+
+## Seed Data (March 31, 2026)
+- 11 simulated users across 4 locations (Austin TX, Portland OR, Denver CO, Nashville TN)
+- 7 verified traders showcasing the badge system
+- 10 barter posts with diverse goods/services offerings
+- 10 network connections demonstrating the trade network feature
+- 3 message threads with realistic conversations
+- Comments and likes on multiple posts
+- Run seed script: `cd /app/backend && python seed_data.py`
 
 ## Design System
 - **Primary Color**: #B45309 (Orange)
