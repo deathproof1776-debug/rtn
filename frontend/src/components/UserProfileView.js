@@ -46,9 +46,18 @@ function ExpandableBio({ bio, charLimit = 150 }) {
   );
 }
 
-// Expandable section component for profile items
+// Helper to normalize items (handle both string and object formats)
+const getItemDisplay = (item) => {
+  if (typeof item === 'string') {
+    return { name: item, description: '', quantity: '' };
+  }
+  return { name: item.name || '', description: item.description || '', quantity: item.quantity || '' };
+};
+
+// Expandable section component for profile items with detailed display
 function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, initialLimit = 4 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showItemDetails, setShowItemDetails] = useState(null);
   
   if (!items || items.length === 0) return null;
   
@@ -76,11 +85,48 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
           </button>
         )}
       </div>
-      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-[60px] overflow-hidden'}`}>
-        {displayItems.map((item, i) => (
-          <span key={i} className={`badge ${badgeClass} text-[10px]`}>{item}</span>
-        ))}
+      <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'max-h-[80px] overflow-hidden'}`}>
+        {displayItems.map((item, i) => {
+          const itemData = getItemDisplay(item);
+          const hasDetails = itemData.description || itemData.quantity;
+          const isShowingDetails = showItemDetails === i;
+          
+          return (
+            <div key={i} className="relative">
+              <button
+                onClick={() => hasDetails && setShowItemDetails(isShowingDetails ? null : i)}
+                className={`badge ${badgeClass} text-[10px] ${hasDetails ? 'cursor-pointer hover:opacity-80' : ''}`}
+                title={hasDetails ? 'Click for details' : ''}
+              >
+                {itemData.name}
+                {itemData.quantity && <span className="ml-1 opacity-75">({itemData.quantity})</span>}
+                {hasDetails && !itemData.quantity && <span className="ml-1 opacity-50">•</span>}
+              </button>
+              
+              {/* Details tooltip */}
+              {isShowingDetails && hasDetails && (
+                <div className="absolute z-50 left-0 top-full mt-1 bg-[#1C1917] border border-[#44403C] p-2 min-w-[180px] max-w-[250px] text-[10px] shadow-lg">
+                  {itemData.quantity && (
+                    <div className="text-[#A8A29E] mb-1">
+                      <span className="text-[#78716C]">Qty:</span> {itemData.quantity}
+                    </div>
+                  )}
+                  {itemData.description && (
+                    <div className="text-[#A8A29E]">
+                      <span className="text-[#78716C]">Details:</span> {itemData.description}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+      
+      {/* Click outside to close details tooltip */}
+      {showItemDetails !== null && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowItemDetails(null)} />
+      )}
     </div>
   );
 }

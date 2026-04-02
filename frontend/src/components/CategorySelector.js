@@ -23,10 +23,33 @@ import {
   MagicWand,
   CaretDown,
   CaretUp,
-  Check
+  Check,
+  PencilSimple,
+  Info
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper to normalize item to object format
+const normalizeItem = (item) => {
+  if (typeof item === 'string') {
+    return { name: item, description: '', quantity: '' };
+  }
+  return { name: item.name || '', description: item.description || '', quantity: item.quantity || '' };
+};
+
+// Helper to get item name regardless of format
+const getItemName = (item) => {
+  if (typeof item === 'string') return item;
+  return item?.name || '';
+};
+
+// Helper to check if an item name is in the selected list
+const isItemSelected = (selectedItems, itemName) => {
+  return selectedItems.some(selected => getItemName(selected) === itemName);
+};
+
+// Icon mapping for categories
 
 // Icon mapping for categories
 const CATEGORY_ICONS = {
@@ -64,6 +87,9 @@ export default function CategorySelector({
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [customInput, setCustomInput] = useState('');
+  const [editingItem, setEditingItem] = useState(null); // Track which item is being edited
+  const [editDescription, setEditDescription] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -102,24 +128,51 @@ export default function CategorySelector({
     ).slice(0, 20);
   }, [searchQuery, allItems]);
 
-  const handleSelectItem = (item) => {
-    if (!selectedItems.includes(item)) {
-      onItemsChange([...selectedItems, item]);
+  const handleSelectItem = (itemName) => {
+    if (!isItemSelected(selectedItems, itemName)) {
+      // Add as object with empty description/quantity
+      onItemsChange([...selectedItems, { name: itemName, description: '', quantity: '' }]);
     }
     setSearchQuery('');
     setShowDropdown(false);
   };
 
-  const handleRemoveItem = (item) => {
-    onItemsChange(selectedItems.filter(i => i !== item));
+  const handleRemoveItem = (itemName) => {
+    onItemsChange(selectedItems.filter(i => getItemName(i) !== itemName));
+    if (editingItem === itemName) {
+      setEditingItem(null);
+    }
   };
 
   const handleAddCustom = () => {
     const trimmed = customInput.trim();
-    if (trimmed && !selectedItems.includes(trimmed)) {
-      onItemsChange([...selectedItems, trimmed]);
+    if (trimmed && !isItemSelected(selectedItems, trimmed)) {
+      onItemsChange([...selectedItems, { name: trimmed, description: '', quantity: '' }]);
       setCustomInput('');
     }
+  };
+
+  const handleEditItem = (itemName) => {
+    const item = selectedItems.find(i => getItemName(i) === itemName);
+    if (item) {
+      const normalized = normalizeItem(item);
+      setEditingItem(itemName);
+      setEditDescription(normalized.description);
+      setEditQuantity(normalized.quantity);
+    }
+  };
+
+  const handleSaveItemDetails = (itemName) => {
+    const updatedItems = selectedItems.map(item => {
+      if (getItemName(item) === itemName) {
+        return { name: itemName, description: editDescription, quantity: editQuantity };
+      }
+      return normalizeItem(item);
+    });
+    onItemsChange(updatedItems);
+    setEditingItem(null);
+    setEditDescription('');
+    setEditQuantity('');
   };
 
   const toggleCategory = (catKey) => {
@@ -180,21 +233,24 @@ export default function CategorySelector({
         {/* Search Results Dropdown */}
         {showDropdown && searchQuery && filteredItems.length > 0 && (
           <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1C1917] border border-[#44403C] max-h-60 overflow-y-auto">
-            {filteredItems.map(({ item, category }, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelectItem(item)}
-                className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[#292524] transition-colors ${
-                  selectedItems.includes(item) ? 'bg-[#292524]' : ''
-                }`}
-              >
-                <span className="text-[#E7E5E4]">{item}</span>
-                <span className="text-[10px] text-[#78716C]">{category}</span>
-                {selectedItems.includes(item) && (
-                  <Check size={14} className="text-[#4D7C0F] ml-2" />
-                )}
-              </button>
-            ))}
+            {filteredItems.map(({ item, category }, idx) => {
+              const isSelected = isItemSelected(selectedItems, item);
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectItem(item)}
+                  className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[#292524] transition-colors ${
+                    isSelected ? 'bg-[#292524]' : ''
+                  }`}
+                >
+                  <span className="text-[#E7E5E4]">{item}</span>
+                  <span className="text-[10px] text-[#78716C]">{category}</span>
+                  {isSelected && (
+                    <Check size={14} className="text-[#4D7C0F] ml-2" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -225,7 +281,7 @@ export default function CategorySelector({
         {Object.entries(categories).map(([catKey, catData]) => {
           const IconComponent = getCategoryIcon(catData.icon);
           const isExpanded = expandedCategory === catKey;
-          const selectedInCategory = catData.items.filter(item => selectedItems.includes(item));
+          const selectedInCategory = catData.items.filter(item => isItemSelected(selectedItems, item));
           
           return (
             <div key={catKey} className="border-b border-[#292524] last:border-b-0">
@@ -254,7 +310,7 @@ export default function CategorySelector({
               {isExpanded && (
                 <div className="px-3 pb-3 flex flex-wrap gap-1.5">
                   {catData.items.map((item, idx) => {
-                    const isSelected = selectedItems.includes(item);
+                    const isSelected = isItemSelected(selectedItems, item);
                     return (
                       <button
                         key={idx}
@@ -279,24 +335,81 @@ export default function CategorySelector({
         })}
       </div>
 
-      {/* Selected Items Display */}
+      {/* Selected Items Display with Edit Capability */}
       {selectedItems.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {selectedItems.slice(0, maxDisplay).map((item, idx) => (
-            <span key={idx} className={`badge ${badgeClass} text-[10px] md:text-xs`}>
-              {item}
-              <button 
-                onClick={() => handleRemoveItem(item)} 
-                className="ml-1 hover:text-white"
-                aria-label={`Remove ${item}`}
-              >
-                <X size={10} />
-              </button>
-            </span>
-          ))}
+        <div className="space-y-2">
+          {selectedItems.slice(0, maxDisplay).map((item, idx) => {
+            const normalizedItem = normalizeItem(item);
+            const itemName = normalizedItem.name;
+            const hasDetails = normalizedItem.description || normalizedItem.quantity;
+            const isEditing = editingItem === itemName;
+            
+            return (
+              <div key={idx} className="bg-[#0C0A09] border border-[#292524] p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`badge ${badgeClass} text-[10px] md:text-xs`}>
+                    {itemName}
+                    {normalizedItem.quantity && (
+                      <span className="ml-1 opacity-75">({normalizedItem.quantity})</span>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => isEditing ? handleSaveItemDetails(itemName) : handleEditItem(itemName)}
+                      className="p-1 text-[#78716C] hover:text-[#B45309] transition-colors"
+                      title={isEditing ? "Save details" : "Add details"}
+                    >
+                      {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
+                    </button>
+                    <button 
+                      onClick={() => handleRemoveItem(itemName)} 
+                      className="p-1 text-[#78716C] hover:text-[#991B1B] transition-colors"
+                      aria-label={`Remove ${itemName}`}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Description & Quantity display */}
+                {!isEditing && hasDetails && (
+                  <div className="mt-1.5 text-[10px] text-[#A8A29E] flex items-start gap-1">
+                    <Info size={12} className="flex-shrink-0 mt-0.5" />
+                    <span>{normalizedItem.description}</span>
+                  </div>
+                )}
+                
+                {/* Edit form */}
+                {isEditing && (
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <label className="block text-[10px] text-[#78716C] mb-1">Quantity (optional)</label>
+                      <input
+                        type="text"
+                        value={editQuantity}
+                        onChange={(e) => setEditQuantity(e.target.value)}
+                        className="input-field w-full text-xs py-1.5"
+                        placeholder="e.g., 2 dozen/week, 5 lbs, 10 hours"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-[#78716C] mb-1">Description (optional)</label>
+                      <input
+                        type="text"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        className="input-field w-full text-xs py-1.5"
+                        placeholder="e.g., Free range, Organic, 10 years experience"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {selectedItems.length > maxDisplay && (
-            <span className="text-xs text-[#78716C] self-center">
-              +{selectedItems.length - maxDisplay} more
+            <span className="text-xs text-[#78716C]">
+              +{selectedItems.length - maxDisplay} more items
             </span>
           )}
         </div>

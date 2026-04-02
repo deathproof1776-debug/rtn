@@ -448,9 +448,19 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
             <span className="text-[10px] md:text-xs uppercase tracking-wider text-[var(--brand-accent)] font-semibold">Offering</span>
           </div>
           <div className="flex flex-wrap gap-1">
-            {post.offering?.map((item, i) => (
-              <span key={i} className="badge badge-offering text-[10px] md:text-xs">{item}</span>
-            ))}
+            {post.offering?.map((item, i) => {
+              const itemData = typeof item === 'string' ? { name: item } : item;
+              return (
+                <span 
+                  key={i} 
+                  className="badge badge-offering text-[10px] md:text-xs"
+                  title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
+                >
+                  {itemData.name || item}
+                  {itemData.quantity && <span className="ml-1 opacity-75">({itemData.quantity})</span>}
+                </span>
+              );
+            })}
           </div>
         </div>
         <div className="bg-[var(--bg-main)] p-2.5 md:p-3 border border-[var(--border-color)]">
@@ -459,9 +469,19 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
             <span className="text-[10px] md:text-xs uppercase tracking-wider text-[var(--brand-primary)] font-semibold">Looking For</span>
           </div>
           <div className="flex flex-wrap gap-1">
-            {post.looking_for?.map((item, i) => (
-              <span key={i} className="badge badge-looking text-[10px] md:text-xs">{item}</span>
-            ))}
+            {post.looking_for?.map((item, i) => {
+              const itemData = typeof item === 'string' ? { name: item } : item;
+              return (
+                <span 
+                  key={i} 
+                  className="badge badge-looking text-[10px] md:text-xs"
+                  title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
+                >
+                  {itemData.name || item}
+                  {itemData.quantity && <span className="ml-1 opacity-75">({itemData.quantity})</span>}
+                </span>
+              );
+            })}
           </div>
         </div>
       </div>

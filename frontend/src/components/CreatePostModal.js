@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Image, Tag, ArrowsLeftRight } from '@phosphor-icons/react';
+import { X, Plus, Image, Tag, ArrowsLeftRight, PencilSimple, Check } from '@phosphor-icons/react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -10,11 +10,14 @@ const CATEGORIES = [
   { value: 'skills', label: 'Skills' },
 ];
 
+// Helper to get item name
+const getItemName = (item) => typeof item === 'string' ? item : item?.name || '';
+
 export default function CreatePostModal({ onClose, onPostCreated }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('goods');
-  const [offering, setOffering] = useState([]);
+  const [offering, setOffering] = useState([]);  // Array of {name, description, quantity}
   const [offeringInput, setOfferingInput] = useState('');
   const [lookingFor, setLookingFor] = useState([]);
   const [lookingForInput, setLookingForInput] = useState('');
@@ -22,27 +25,73 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+  
+  // Item detail editing state
+  const [editingItem, setEditingItem] = useState(null); // {type: 'offering'|'lookingFor', index: number}
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editItemDescription, setEditItemDescription] = useState('');
 
   const handleAddOffering = () => {
-    if (offeringInput.trim() && !offering.includes(offeringInput.trim())) {
-      setOffering([...offering, offeringInput.trim()]);
+    const trimmed = offeringInput.trim();
+    if (trimmed && !offering.some(o => getItemName(o) === trimmed)) {
+      setOffering([...offering, { name: trimmed, description: '', quantity: '' }]);
       setOfferingInput('');
     }
   };
 
   const handleAddLookingFor = () => {
-    if (lookingForInput.trim() && !lookingFor.includes(lookingForInput.trim())) {
-      setLookingFor([...lookingFor, lookingForInput.trim()]);
+    const trimmed = lookingForInput.trim();
+    if (trimmed && !lookingFor.some(l => getItemName(l) === trimmed)) {
+      setLookingFor([...lookingFor, { name: trimmed, description: '', quantity: '' }]);
       setLookingForInput('');
     }
   };
 
-  const handleRemoveOffering = (item) => {
-    setOffering(offering.filter(o => o !== item));
+  const handleRemoveOffering = (index) => {
+    setOffering(offering.filter((_, i) => i !== index));
+    if (editingItem?.type === 'offering' && editingItem?.index === index) {
+      setEditingItem(null);
+    }
   };
 
-  const handleRemoveLookingFor = (item) => {
-    setLookingFor(lookingFor.filter(l => l !== item));
+  const handleRemoveLookingFor = (index) => {
+    setLookingFor(lookingFor.filter((_, i) => i !== index));
+    if (editingItem?.type === 'lookingFor' && editingItem?.index === index) {
+      setEditingItem(null);
+    }
+  };
+
+  const handleEditItem = (type, index) => {
+    const item = type === 'offering' ? offering[index] : lookingFor[index];
+    setEditingItem({ type, index });
+    setEditQuantity(item.quantity || '');
+    setEditItemDescription(item.description || '');
+  };
+
+  const handleSaveItemDetails = () => {
+    if (!editingItem) return;
+    
+    if (editingItem.type === 'offering') {
+      const updated = [...offering];
+      updated[editingItem.index] = {
+        ...updated[editingItem.index],
+        quantity: editQuantity,
+        description: editItemDescription
+      };
+      setOffering(updated);
+    } else {
+      const updated = [...lookingFor];
+      updated[editingItem.index] = {
+        ...updated[editingItem.index],
+        quantity: editQuantity,
+        description: editItemDescription
+      };
+      setLookingFor(updated);
+    }
+    
+    setEditingItem(null);
+    setEditQuantity('');
+    setEditItemDescription('');
   };
 
   const handleImageUpload = async (e) => {
@@ -196,14 +245,51 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               </button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {offering.map((item, i) => (
-                <span key={i} className="tag">
-                  {item}
-                  <button type="button" onClick={() => handleRemoveOffering(item)}>
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
+              {offering.map((item, i) => {
+                const isEditing = editingItem?.type === 'offering' && editingItem?.index === i;
+                return (
+                  <div key={i} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="tag m-0">
+                        {item.name}
+                        {item.quantity && <span className="ml-1 opacity-75">({item.quantity})</span>}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => isEditing ? handleSaveItemDetails() : handleEditItem('offering', i)}
+                        className="text-[#78716C] hover:text-[#B45309]"
+                        title={isEditing ? "Save" : "Add details"}
+                      >
+                        {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
+                      </button>
+                      <button type="button" onClick={() => handleRemoveOffering(i)} className="text-[#78716C] hover:text-[#991B1B]">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    {isEditing && (
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="text"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          className="input-field w-full text-xs py-1"
+                          placeholder="Qty: e.g., 2 dozen, 5 lbs"
+                        />
+                        <input
+                          type="text"
+                          value={editItemDescription}
+                          onChange={(e) => setEditItemDescription(e.target.value)}
+                          className="input-field w-full text-xs py-1"
+                          placeholder="Details: e.g., Free range, Organic"
+                        />
+                      </div>
+                    )}
+                    {!isEditing && item.description && (
+                      <div className="text-[10px] text-[#78716C] mt-1">{item.description}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -227,14 +313,51 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               </button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {lookingFor.map((item, i) => (
-                <span key={i} className="tag">
-                  {item}
-                  <button type="button" onClick={() => handleRemoveLookingFor(item)}>
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
+              {lookingFor.map((item, i) => {
+                const isEditing = editingItem?.type === 'lookingFor' && editingItem?.index === i;
+                return (
+                  <div key={i} className="bg-[#0C0A09] border border-[#292524] p-2 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="tag m-0">
+                        {item.name}
+                        {item.quantity && <span className="ml-1 opacity-75">({item.quantity})</span>}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => isEditing ? handleSaveItemDetails() : handleEditItem('lookingFor', i)}
+                        className="text-[#78716C] hover:text-[#B45309]"
+                        title={isEditing ? "Save" : "Add details"}
+                      >
+                        {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
+                      </button>
+                      <button type="button" onClick={() => handleRemoveLookingFor(i)} className="text-[#78716C] hover:text-[#991B1B]">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    {isEditing && (
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="text"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          className="input-field w-full text-xs py-1"
+                          placeholder="Qty: e.g., 2 dozen, 5 lbs"
+                        />
+                        <input
+                          type="text"
+                          value={editItemDescription}
+                          onChange={(e) => setEditItemDescription(e.target.value)}
+                          className="input-field w-full text-xs py-1"
+                          placeholder="Details: e.g., Preferably organic"
+                        />
+                      </div>
+                    )}
+                    {!isEditing && item.description && (
+                      <div className="text-[10px] text-[#78716C] mt-1">{item.description}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

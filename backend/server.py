@@ -162,15 +162,50 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class DetailedItem(BaseModel):
+    """Item with optional description and quantity"""
+    name: str
+    description: Optional[str] = ""
+    quantity: Optional[str] = ""
+
+# Helper to normalize items - accepts both strings and DetailedItem dicts
+def normalize_items(items: List[Any]) -> List[Dict[str, str]]:
+    """Convert mixed list of strings and dicts to consistent DetailedItem format"""
+    if not items:
+        return []
+    result = []
+    for item in items:
+        if isinstance(item, str):
+            result.append({"name": item, "description": "", "quantity": ""})
+        elif isinstance(item, dict):
+            result.append({
+                "name": item.get("name", ""),
+                "description": item.get("description", ""),
+                "quantity": item.get("quantity", "")
+            })
+    return result
+
+def get_item_names(items: List[Any]) -> List[str]:
+    """Extract just the names from items for matching/search"""
+    if not items:
+        return []
+    result = []
+    for item in items:
+        if isinstance(item, str):
+            result.append(item)
+        elif isinstance(item, dict):
+            result.append(item.get("name", ""))
+    return [n for n in result if n]
+
 class UserProfile(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     bio: Optional[str] = None
-    skills: Optional[List[str]] = None
-    goods_offering: Optional[List[str]] = None
-    goods_wanted: Optional[List[str]] = None
-    services_offering: Optional[List[str]] = None
-    services_wanted: Optional[List[str]] = None
+    skills: Optional[List[Any]] = None  # Accepts strings or DetailedItem dicts
+    goods_offering: Optional[List[Any]] = None
+    goods_wanted: Optional[List[Any]] = None
+    services_offering: Optional[List[Any]] = None
+    services_wanted: Optional[List[Any]] = None
     avatar: Optional[str] = None
 
 class VerifyTraderRequest(BaseModel):
@@ -181,8 +216,8 @@ class BarterPost(BaseModel):
     title: str
     description: str
     category: str  # goods, services, skills
-    offering: List[str]
-    looking_for: List[str]
+    offering: List[Any]  # Accepts strings or DetailedItem dicts
+    looking_for: List[Any]
     images: Optional[List[str]] = []
 
 class MessageCreate(BaseModel):
@@ -845,15 +880,15 @@ async def update_profile(profile: UserProfile, request: Request):
     if profile.bio is not None:
         update_data["bio"] = encrypt_data(profile.bio)
     if profile.skills is not None:
-        update_data["skills"] = profile.skills
+        update_data["skills"] = normalize_items(profile.skills)
     if profile.goods_offering is not None:
-        update_data["goods_offering"] = profile.goods_offering
+        update_data["goods_offering"] = normalize_items(profile.goods_offering)
     if profile.goods_wanted is not None:
-        update_data["goods_wanted"] = profile.goods_wanted
+        update_data["goods_wanted"] = normalize_items(profile.goods_wanted)
     if profile.services_offering is not None:
-        update_data["services_offering"] = profile.services_offering
+        update_data["services_offering"] = normalize_items(profile.services_offering)
     if profile.services_wanted is not None:
-        update_data["services_wanted"] = profile.services_wanted
+        update_data["services_wanted"] = normalize_items(profile.services_wanted)
     if profile.avatar is not None:
         update_data["avatar"] = profile.avatar
     
@@ -892,8 +927,8 @@ async def create_post(post: BarterPost, request: Request):
         "title": post.title,
         "description": encrypt_data(post.description),
         "category": post.category,
-        "offering": post.offering,
-        "looking_for": post.looking_for,
+        "offering": normalize_items(post.offering),
+        "looking_for": normalize_items(post.looking_for),
         "images": post.images,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "likes": [],
@@ -1052,19 +1087,28 @@ async def get_matched_posts(request: Request):
         except Exception:
             user_location = user_doc.get("location", "")
     
-    user_wants = (user_doc.get("goods_wanted", []) + 
-                  user_doc.get("services_wanted", []))
-    user_offerings = (user_doc.get("goods_offering", []) + 
-                      user_doc.get("services_offering", []))
+    # Extract item names for matching (handles both old string format and new detailed format)
+    user_wants = (get_item_names(user_doc.get("goods_wanted", [])) + 
+                  get_item_names(user_doc.get("services_wanted", [])))
+    user_offerings = (get_item_names(user_doc.get("goods_offering", [])) + 
+                      get_item_names(user_doc.get("services_offering", [])))
     
     # Find posts where offering matches user's wants OR looking_for matches user's offerings
+    # We need to match against both old format (strings) and new format (objects with 'name')
     query = {"user_id": {"$ne": user["_id"]}}
     if user_wants or user_offerings:
         or_conditions = []
         if user_wants:
-            or_conditions.append({"offering": {"$in": user_wants}})
+            # Match both old format (direct string match) and new format (name field)
+            or_conditions.append({"$or": [
+                {"offering": {"$in": user_wants}},
+                {"offering.name": {"$in": user_wants}}
+            ]})
         if user_offerings:
-            or_conditions.append({"looking_for": {"$in": user_offerings}})
+            or_conditions.append({"$or": [
+                {"looking_for": {"$in": user_offerings}},
+                {"looking_for.name": {"$in": user_offerings}}
+            ]})
         if or_conditions:
             query["$or"] = or_conditions
     
@@ -1108,9 +1152,9 @@ async def get_matched_posts(request: Request):
             score += 200  # Network member priority (highest)
         if post.get("is_nearby"):
             score += 100  # Location match bonus
-        # Check goods/services match
-        post_offerings = post.get("offering", [])
-        post_looking = post.get("looking_for", [])
+        # Check goods/services match - handle both old and new item formats
+        post_offerings = get_item_names(post.get("offering", []))
+        post_looking = get_item_names(post.get("looking_for", []))
         for item in post_offerings:
             if item in user_wants:
                 score += 10
