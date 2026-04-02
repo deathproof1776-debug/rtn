@@ -491,3 +491,40 @@
   transition-duration: 0.15s;
   transition-timing-function: ease-out;
 }
+
+
+/* Theme-aware surface utilities */
+.theme-surface {
+  background-color: var(--bg-surface);
+  transition: background-color 0.3s ease;
+}
+
+.theme-surface-hover {
+  background-color: var(--bg-surface-hover);
+  transition: background-color 0.3s ease;
+}
+
+.theme-surface-active {
+  background-color: var(--bg-surface-active);
+  transition: background-color 0.3s ease;
+}
+
+.theme-border {
+  border-color: var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}

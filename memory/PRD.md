@@ -63,6 +63,17 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Encrypted trade messages
   - Badge count for active incoming trades on sidebar nav
 
+- [x] **Terms of Service Feature** (April 2, 2026):
+  - New users must accept Community Guidelines & Terms before registering
+  - Checkbox with link to full terms modal
+  - Modal covers: No illegal sales, no weapons trafficking, no harassment, 
+    no threats/violence, no hate speech, full liability disclaimer
+  - Submit button disabled until terms accepted
+- [x] **Theme Toggle UI Fix** (April 2, 2026):
+  - Fixed hardcoded colors in MessagesPanel.js and TradeNetworkPanel.js
+  - Added theme-aware CSS utility classes (theme-surface, theme-surface-hover, etc.)
+  - Light mode now displays correctly with soft earth tones across all components
+
 ## API Endpoints
 
 ### Trade Deals
@@ -150,14 +161,29 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
-### P2 (Medium Priority)
+### P1 (High Priority)
 - Video upload support
 - User blocking/reporting
 
-### P3 (Enhancement)
+### P2 (Medium Priority)
 - Reply threading for comments
 - Location radius settings (specify travel/trade distance)
-- Theme toggle UI regression testing (audit hardcoded Tailwind vs CSS variables)
+
+### P3 (Enhancement)
+- Trade ratings/reviews after completed trades
+
+## What Was Completed (April 2, 2026)
+- [x] Terms of Service / Community Guidelines acceptance on registration
+  - Checkbox must be accepted before joining
+  - Modal with full guidelines (no illegal sales, no harassment, no violence, liability disclaimer)
+  - "I Accept" button auto-checks the agreement
+- [x] Theme toggle UI regression fix
+  - Updated MessagesPanel.js to use CSS variables instead of hardcoded colors
+  - Updated TradeNetworkPanel.js to use CSS variables instead of hardcoded colors
+  - Added theme-aware utility classes to App.css
+  - Verified light and dark mode work correctly across all components
+- [x] Verified cookie fix for browser preview authentication
+  - Confirmed users and posts display correctly after login
 
 ## Test Credentials
 - Sole Admin: williamrhodes764@protonmail.com / (user-set password) (role: admin)

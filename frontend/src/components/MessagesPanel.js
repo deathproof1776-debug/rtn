@@ -108,8 +108,8 @@ export default function MessagesPanel() {
       </div>
 
       {selectedConversation ? (
-        <div className="flex-1 flex flex-col bg-[#1C1917] border border-[#292524] -mx-4 md:mx-0">
-          <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 border-b border-[#292524]">
+        <div className="flex-1 flex flex-col theme-surface border theme-border -mx-4 md:mx-0">
+          <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 border-b theme-border">
             <button 
               onClick={() => setSelectedConversation(null)}
               className="btn-ghost p-1.5 md:p-2"
@@ -117,7 +117,7 @@ export default function MessagesPanel() {
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="w-9 h-9 md:w-10 md:h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold text-sm md:text-base flex-shrink-0">
+            <div className="w-9 h-9 md:w-10 md:h-10 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold text-sm md:text-base flex-shrink-0">
               {selectedConversation.user_name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div className="min-w-0">
@@ -148,7 +148,7 @@ export default function MessagesPanel() {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={sendMessage} className="p-3 md:p-4 border-t border-[#292524]">
+          <form onSubmit={sendMessage} className="p-3 md:p-4 border-t theme-border">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -172,10 +172,10 @@ export default function MessagesPanel() {
       ) : (
         <div className="space-y-2">
           {conversations.length === 0 ? (
-            <div className="bg-[#1C1917] border border-[#292524] p-6 md:p-8 text-center">
-              <ChatCircle size={40} className="mx-auto text-[#44403C] mb-3 md:mb-4" />
-              <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] mb-2">No conversations yet</h3>
-              <p className="text-xs md:text-sm text-[#78716C]">
+            <div className="theme-surface border theme-border p-6 md:p-8 text-center">
+              <ChatCircle size={40} className="mx-auto theme-text-muted mb-3 md:mb-4" />
+              <h3 className="text-base md:text-lg font-semibold theme-text-primary mb-2">No conversations yet</h3>
+              <p className="text-xs md:text-sm theme-text-muted">
                 Start a conversation by reaching out to other homesteaders
               </p>
             </div>
@@ -184,12 +184,12 @@ export default function MessagesPanel() {
               <button
                 key={conv.user_id}
                 onClick={() => setSelectedConversation(conv)}
-                className="w-full bg-[#1C1917] border border-[#292524] p-3 md:p-4 text-left card-hover"
+                className="w-full theme-surface border theme-border p-3 md:p-4 text-left card-hover"
                 data-testid={`conversation-${conv.user_id}`}
               >
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <div className="relative flex-shrink-0">
-                    <div className="w-11 h-11 md:w-12 md:h-12 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold text-sm md:text-base">
+                    <div className="w-11 h-11 md:w-12 md:h-12 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold text-sm md:text-base">
                       {conv.user_name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                     {conv.unread_count > 0 && (

@@ -192,10 +192,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
       {activeTab === 'recommended' && (
         <div className="space-y-3" data-testid="recommended-list">
           {recommendations.length === 0 ? (
-            <div className="bg-[#1C1917] border border-[#292524] p-6 md:p-8 text-center">
-              <Sparkle size={48} className="mx-auto text-[#44403C] mb-4" />
-              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No recommendations yet</h3>
-              <p className="text-sm text-[#78716C]">
+            <div className="theme-surface border theme-border p-6 md:p-8 text-center">
+              <Sparkle size={48} className="mx-auto theme-text-muted mb-4" />
+              <h3 className="text-lg font-semibold theme-text-primary mb-2">No recommendations yet</h3>
+              <p className="text-sm theme-text-muted">
                 Update your profile with goods and services you're offering and looking for to get personalized recommendations
               </p>
             </div>
@@ -212,11 +212,11 @@ export default function TradeNetworkPanel({ onViewProfile }) {
               {recommendations.map((rec) => (
                 <div
                   key={rec.id}
-                  className="bg-[#1C1917] border border-[#292524] border-l-2 border-l-[#F59E0B] p-4 hover:border-[#F59E0B]/50 transition-colors"
+                  className="theme-surface border theme-border border-l-2 border-l-[#F59E0B] p-4 hover:border-[#F59E0B]/50 transition-colors"
                   data-testid={`recommended-${rec.id}`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#292524] flex items-center justify-center text-[#F59E0B] font-semibold text-lg flex-shrink-0">
+                    <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[#F59E0B] font-semibold text-lg flex-shrink-0">
                       {rec.avatar ? (
                         <img src={rec.avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -290,10 +290,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
       {activeTab === 'connections' && (
         <div className="space-y-3" data-testid="connections-list">
           {connections.length === 0 ? (
-            <div className="bg-[#1C1917] border border-[#292524] p-6 md:p-8 text-center">
-              <UsersThree size={48} className="mx-auto text-[#44403C] mb-4" />
-              <h3 className="text-lg font-semibold text-[#E7E5E4] mb-2">No connections yet</h3>
-              <p className="text-sm text-[#78716C]">
+            <div className="theme-surface border theme-border p-6 md:p-8 text-center">
+              <UsersThree size={48} className="mx-auto theme-text-muted mb-4" />
+              <h3 className="text-lg font-semibold theme-text-primary mb-2">No connections yet</h3>
+              <p className="text-sm theme-text-muted">
                 Start building your trade network by sending requests to other traders
               </p>
             </div>
@@ -301,10 +301,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
             connections.map((connection) => (
               <div
                 key={connection.id}
-                className="bg-[#1C1917] border border-[#292524] p-4 flex items-center gap-4 hover:border-[#B45309]/30 transition-colors"
+                className="theme-surface border theme-border p-4 flex items-center gap-4 hover:border-[#B45309]/30 transition-colors"
                 data-testid={`connection-${connection.id}`}
               >
-                <div className="w-12 h-12 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold text-lg flex-shrink-0">
+                <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold text-lg flex-shrink-0">
                   {connection.avatar ? (
                     <img src={connection.avatar} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -335,7 +335,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                   {connection.skills?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {connection.skills.slice(0, 3).map((skill, i) => (
-                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-[#292524] text-[#A8A29E]">
+                        <span key={i} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
                           {skill}
                         </span>
                       ))}
@@ -376,10 +376,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                 {pendingRequests.incoming.map((request) => (
                   <div
                     key={request.id}
-                    className="bg-[#1C1917] border border-[#B45309]/30 p-4 flex items-center gap-4"
+                    className="theme-surface border border-[#B45309]/30 p-4 flex items-center gap-4"
                     data-testid={`incoming-request-${request.id}`}
                   >
-                    <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
+                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
                       {request.from_user_avatar ? (
                         <img src={request.from_user_avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -440,10 +440,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                 {pendingRequests.outgoing.map((request) => (
                   <div
                     key={request.id}
-                    className="bg-[#1C1917] border border-[#292524] p-4 flex items-center gap-4"
+                    className="theme-surface border theme-border p-4 flex items-center gap-4"
                     data-testid={`outgoing-request-${request.id}`}
                   >
-                    <div className="w-10 h-10 bg-[#292524] flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
+                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
                       {request.to_user_avatar ? (
                         <img src={request.to_user_avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
