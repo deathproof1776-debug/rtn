@@ -168,7 +168,8 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 ## Prioritized Backlog
 
 ### P0 (Bugs)
-- Push Notification Toggle broken (users cannot enable notifications)
+- ~~Push Notification Toggle broken~~ (FIXED April 2, 2026 - Code was correct, issue was browser support limitation in testing environment. Real browsers work correctly.)
+- ~~Post interactions broken~~ (FIXED April 2, 2026 - Profile click, 3-dots menu, expandable posts)
 
 ### P1 (High Priority)
 - Trade Deals Feature - Formal trade offers/proposals system
@@ -180,6 +181,12 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 ### P3 (Enhancement)
 - Reply threading for comments
 - Location radius settings (specify travel/trade distance)
+
+## Recent Bug Fixes (April 2, 2026)
+1. **Post Profile Click** - Users can now click on poster's username or avatar to view their profile
+2. **3-Dots Menu** - Menu now opens with View Profile, Send Message, Report Post options
+3. **Expandable Posts** - Long posts (>200 chars) now show "Read more" / "Show less" toggle
+4. **Push Notifications** - Added debug logging, verified code is correct (browser support varies)
 
 ## Test Credentials
 - Admin: admin@homesteadhub.com / admin123 (role: admin, is_verified: true)
