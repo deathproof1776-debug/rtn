@@ -22,6 +22,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
     { id: 'messages', label: 'Messages', icon: ChatCircle },
     { id: 'invites', label: 'Invite Members', icon: UserPlus },
     { id: 'profile', label: 'Profile', icon: User },
+    ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Dashboard', icon: Shield }] : []),
   ];
 
   const handleLogout = async () => {

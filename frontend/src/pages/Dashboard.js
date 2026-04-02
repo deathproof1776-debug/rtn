@@ -13,6 +13,7 @@ import UserProfileView from '../components/UserProfileView';
 import MobileNav from '../components/MobileNav';
 import MobileHeader from '../components/MobileHeader';
 import InvitePanel from '../components/InvitePanel';
+import AdminDashboard from './AdminDashboard';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -163,6 +164,9 @@ export default function Dashboard() {
         {activeView === 'messages' && <MessagesPanel />}
         {activeView === 'invites' && <InvitePanel />}
         {activeView === 'profile' && <ProfilePanel />}
+        {activeView === 'admin' && user?.role === 'admin' && (
+          <AdminDashboard onBack={() => setActiveView('feed')} />
+        )}
       </main>
 
       <RightPanel matches={matches} onViewProfile={handleViewProfile} />

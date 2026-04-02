@@ -169,7 +169,8 @@ export default function CategorySelector({
                 setShowDropdown(true);
               }}
               onFocus={() => setShowDropdown(true)}
-              className="input-field w-full pl-9 pr-3"
+              className="input-field w-full"
+              style={{ paddingLeft: '2.25rem' }}
               placeholder={placeholder}
               data-testid={`category-search-${type}-${mode || 'default'}`}
             />

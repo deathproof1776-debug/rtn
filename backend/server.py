@@ -1495,6 +1495,128 @@ async def get_all_users(request: Request, skip: int = 0, limit: int = 50):
     total = await db.users.count_documents({})
     return {"users": users, "total": total}
 
+# Admin: Platform Stats
+@api_router.get("/admin/stats")
+async def get_admin_stats(request: Request):
+    """Admin endpoint to get platform statistics"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    total_users = await db.users.count_documents({})
+    verified_users = await db.users.count_documents({"is_verified": True})
+    total_posts = await db.posts.count_documents({})
+    total_messages = await db.messages.count_documents({})
+    total_connections = await db.network_connections.count_documents({})
+    pending_requests = await db.network_requests.count_documents({"status": "pending"})
+    total_invites = await db.invites.count_documents({})
+    used_invites = await db.invites.count_documents({"used": True})
+    
+    # Recent activity (last 7 days)
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    new_users_week = await db.users.count_documents({"created_at": {"$gte": week_ago}})
+    new_posts_week = await db.posts.count_documents({"created_at": {"$gte": week_ago}})
+    
+    return {
+        "total_users": total_users,
+        "verified_users": verified_users,
+        "total_posts": total_posts,
+        "total_messages": total_messages,
+        "total_connections": total_connections,
+        "pending_requests": pending_requests,
+        "total_invites": total_invites,
+        "used_invites": used_invites,
+        "new_users_week": new_users_week,
+        "new_posts_week": new_posts_week,
+    }
+
+# Admin: Get all posts
+@api_router.get("/admin/posts")
+async def get_admin_posts(request: Request, skip: int = 0, limit: int = 50):
+    """Admin endpoint to get all posts"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    posts = await db.posts.find({}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    for post in posts:
+        post["_id"] = str(post["_id"])
+        if post.get("description"):
+            try:
+                post["description"] = decrypt_data(post["description"])
+            except Exception:
+                pass
+        if post.get("comments"):
+            for comment in post["comments"]:
+                if comment.get("content"):
+                    try:
+                        comment["content"] = decrypt_data(comment["content"])
+                    except Exception:
+                        pass
+    
+    total = await db.posts.count_documents({})
+    return {"posts": posts, "total": total}
+
+# Admin: Delete post
+@api_router.delete("/admin/posts/{post_id}")
+async def admin_delete_post(post_id: str, request: Request):
+    """Admin endpoint to delete any post"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.posts.delete_one({"_id": ObjectId(post_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"message": "Post deleted successfully"}
+
+class UpdateUserRole(BaseModel):
+    role: str  # 'admin' or 'user'
+
+# Admin: Change user role
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, data: UpdateUserRole, request: Request):
+    """Admin endpoint to change user role"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if data.role not in ["admin", "user"]:
+        raise HTTPException(status_code=400, detail="Invalid role. Must be 'admin' or 'user'")
+    
+    target = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": data.role}})
+    return {"message": f"User role updated to {data.role}", "user_id": user_id, "role": data.role}
+
+# Admin: Delete user
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, request: Request):
+    """Admin endpoint to delete a user"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Can't delete yourself
+    if user_id == admin_user["_id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    target = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Delete user and their data
+    await db.users.delete_one({"_id": ObjectId(user_id)})
+    await db.posts.delete_many({"user_id": user_id})
+    await db.messages.delete_many({"$or": [{"sender_id": user_id}, {"receiver_id": user_id}]})
+    await db.network_connections.delete_many({"$or": [{"user_id": user_id}, {"connected_user_id": user_id}]})
+    await db.network_requests.delete_many({"$or": [{"from_user_id": user_id}, {"to_user_id": user_id}]})
+    await db.push_subscriptions.delete_many({"user_id": user_id})
+    
+    return {"message": "User and all associated data deleted"}
+
 # Push Notification endpoints
 @api_router.get("/notifications/vapid-public-key")
 async def get_vapid_public_key():
