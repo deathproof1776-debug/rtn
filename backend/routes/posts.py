@@ -44,12 +44,19 @@ def locations_match(loc1: str, loc2: str) -> bool:
 @router.post("/posts", status_code=201)
 async def create_post(post: BarterPost, request: Request):
     user = await get_current_user(request)
+    
+    # Validate required fields
+    if not post.title or not post.title.strip():
+        raise HTTPException(status_code=400, detail="Title is required")
+    if not post.description or not post.description.strip():
+        raise HTTPException(status_code=400, detail="Description is required")
+    
     post_doc = {
         "user_id": user["_id"],
         "user_name": user.get("name", "Anonymous"),
         "user_avatar": user.get("avatar", ""),
-        "title": post.title,
-        "description": encrypt_data(post.description),
+        "title": post.title.strip(),
+        "description": encrypt_data(post.description.strip()),
         "category": post.category,
         "offering": normalize_items(post.offering),
         "looking_for": normalize_items(post.looking_for),

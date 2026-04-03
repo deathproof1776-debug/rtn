@@ -227,6 +227,11 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
   - Community Board: Nearby, Network, Verified, Topic filter
   - Clear filters button
   - Filter pill UI with active state styling
+- [x] **Bug Fix**: Added validation for empty/whitespace title and description in barter post creation
+- [x] **Push Notifications for Community Board** - Already implemented:
+  - Notification when someone likes your community post
+  - Notification when someone comments on your community post
+  - Notification when someone replies to your comment
   - All UI flows verified working
 
 ## What Was Completed (April 2, 2026)
