@@ -230,7 +230,10 @@ export default function Dashboard() {
           />
         )}
         {activeView === 'admin' && user?.role === 'admin' && (
-          <AdminDashboard onBack={() => setActiveView('feed')} />
+          <AdminDashboard 
+            onBack={() => setActiveView('feed')} 
+            onViewProfile={handleViewProfile}
+          />
         )}
       </main>
 

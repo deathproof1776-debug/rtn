@@ -207,6 +207,14 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Trade ratings/reviews after completed trades
 
 ## What Was Completed (April 3, 2026)
+- [x] **Post Delete Feature** - Users can delete their own posts, admins can delete any post
+  - Added DELETE /api/posts/{post_id} endpoint with authorization checks
+  - PostCard.js shows "Delete Post" option in dropdown menu for own posts or admins
+  - Feed.js handles post deletion with instant UI removal
+  - Security: Regular users get 403 when trying to delete others' posts
+- [x] **Admin View Profile** - Admin can view user profiles from Admin Dashboard
+  - Added "View Profile" option to user action dropdown in Users tab
+  - Navigates to user's profile via existing onViewProfile handler
 - [x] **Backend Refactoring** - Modular routes structure
   - Reduced server.py from 3,137 lines to ~200 lines
   - Created /routes/ directory with 12 modular route files

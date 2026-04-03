@@ -160,6 +160,19 @@ export default function Feed({
     }
   };
 
+  const handleDelete = async (postId) => {
+    try {
+      await axios.delete(`${API_URL}/api/posts/${postId}`, {
+        withCredentials: true
+      });
+      // Remove from local state
+      setPosts(posts.filter(p => p._id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert(error.response?.data?.detail || 'Failed to delete post');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -272,7 +285,9 @@ export default function Feed({
               key={post._id} 
               post={post} 
               onLike={handleLike} 
+              onDelete={handleDelete}
               currentUserId={user?.id} 
+              isAdmin={user?.role === 'admin'}
               onViewProfile={onViewProfile} 
               onProposeTrade={onProposeTrade} 
               onStartChat={onStartChat} 

@@ -17,7 +17,8 @@ import {
   Handshake,
   User,
   ChatText,
-  Warning
+  Warning,
+  Trash
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import ThreadedComments from './ThreadedComments';
@@ -30,7 +31,9 @@ export default function PostCard({
   currentUserId, 
   onViewProfile, 
   onProposeTrade, 
-  onStartChat 
+  onStartChat,
+  onDelete,
+  isAdmin
 }) {
   const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
@@ -224,6 +227,22 @@ export default function PostCard({
                   >
                     <Warning size={16} />
                     Report Post
+                  </button>
+                )}
+                {/* Delete option for own posts or admin */}
+                {(post.user_id === currentUserId || isAdmin) && onDelete && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+                        onDelete(post._id);
+                      }
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
+                    data-testid={`post-menu-delete-${post._id}`}
+                  >
+                    <Trash size={16} />
+                    Delete Post
                   </button>
                 )}
               </div>

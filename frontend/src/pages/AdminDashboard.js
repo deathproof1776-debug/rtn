@@ -50,7 +50,7 @@ function StatCard({ icon: Icon, label, value, subValue, color }) {
   );
 }
 
-function UserRow({ user, onVerify, onChangeRole, onDelete, currentUserId }) {
+function UserRow({ user, onVerify, onChangeRole, onDelete, onViewProfile, currentUserId }) {
   const [showActions, setShowActions] = useState(false);
   const isSelf = user._id === currentUserId;
 
@@ -89,6 +89,17 @@ function UserRow({ user, onVerify, onChangeRole, onDelete, currentUserId }) {
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
             <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-lg min-w-[180px]" data-testid={`admin-user-menu-${user._id}`}>
+              <button
+                onClick={() => { 
+                  if (onViewProfile) onViewProfile(user._id); 
+                  setShowActions(false); 
+                }}
+                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
+                data-testid={`admin-view-profile-${user._id}`}
+              >
+                <Eye size={16} />
+                View Profile
+              </button>
               <button
                 onClick={() => { onVerify(user._id, !user.is_verified); setShowActions(false); }}
                 className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
@@ -161,7 +172,7 @@ function PostRow({ post, onDelete }) {
   );
 }
 
-export default function AdminDashboard({ onBack }) {
+export default function AdminDashboard({ onBack, onViewProfile }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
@@ -409,6 +420,7 @@ export default function AdminDashboard({ onBack }) {
                   onVerify={handleVerify}
                   onChangeRole={handleChangeRole}
                   onDelete={handleDeleteUser}
+                  onViewProfile={onViewProfile}
                 />
               ))}
               {filteredUsers.length === 0 && (

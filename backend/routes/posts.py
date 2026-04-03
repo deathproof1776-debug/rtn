@@ -473,3 +473,26 @@ async def delete_comment(post_id: str, comment_id: str, request: Request):
     )
 
     return {"message": "Comment deleted"}
+
+
+@router.delete("/posts/{post_id}")
+async def delete_post(post_id: str, request: Request):
+    """Delete a post - user can delete their own, admin can delete any"""
+    user = await get_current_user(request)
+    
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Check authorization - user can delete their own post, admin can delete any
+    is_owner = post.get("user_id") == user["_id"]
+    is_admin = user.get("role") == "admin"
+    
+    if not is_owner and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+    
+    # Delete the post
+    await db.posts.delete_one({"_id": ObjectId(post_id)})
+    
+    return {"message": "Post deleted successfully"}
+
