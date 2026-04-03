@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Plus, Image, Tag, ArrowsLeftRight, PencilSimple, Check } from '@phosphor-icons/react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -14,6 +15,7 @@ const CATEGORIES = [
 const getItemName = (item) => typeof item === 'string' ? item : item?.name || '';
 
 export default function CreatePostModal({ onClose, onPostCreated }) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('goods');
@@ -145,6 +147,9 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
 
       onPostCreated({
         _id: response.data.id,
+        user_id: user?.id,
+        user_name: user?.name || 'Anonymous',
+        user_avatar: user?.avatar || '',
         title,
         description,
         category,
