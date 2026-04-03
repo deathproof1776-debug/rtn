@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [tradeDealsCount, setTradeDealsCount] = useState(0);
   const [viewingProfileId, setViewingProfileId] = useState(null);
   const [tradeTarget, setTradeTarget] = useState(null);
+  const [chatUserId, setChatUserId] = useState(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -105,6 +106,7 @@ export default function Dashboard() {
 
   const handleStartChat = (userId) => {
     setViewingProfileId(null);
+    setChatUserId(userId);
     setActiveView('messages');
   };
 
@@ -143,6 +145,7 @@ export default function Dashboard() {
         <Sidebar 
           activeView={activeView} 
           setActiveView={(view) => {
+            if (view !== 'messages') setChatUserId(null);
             setActiveView(view);
             setSidebarOpen(false);
           }}
@@ -160,7 +163,10 @@ export default function Dashboard() {
       {/* Desktop Sidebar */}
       <Sidebar 
         activeView={activeView} 
-        setActiveView={setActiveView}
+        setActiveView={(view) => {
+          if (view !== 'messages') setChatUserId(null);
+          setActiveView(view);
+        }}
         onCreatePost={() => setShowCreatePost(true)}
         networkRequestCount={networkRequestCount}
         tradeDealsCount={tradeDealsCount}
@@ -176,6 +182,7 @@ export default function Dashboard() {
             onRefresh={fetchPosts}
             onViewProfile={handleViewProfile}
             onProposeTrade={handleProposeTrade}
+            onStartChat={handleStartChat}
           />
         )}
         {activeView === 'trades' && <TradeDealsPanel />}
@@ -184,7 +191,12 @@ export default function Dashboard() {
             onViewProfile={handleViewProfile}
           />
         )}
-        {activeView === 'messages' && <MessagesPanel />}
+        {activeView === 'messages' && (
+          <MessagesPanel 
+            initialChatUserId={chatUserId}
+            key={chatUserId || 'messages'}
+          />
+        )}
         {activeView === 'invites' && <InvitePanel />}
         {activeView === 'profile' && <ProfilePanel />}
         {activeView === 'admin' && user?.role === 'admin' && (

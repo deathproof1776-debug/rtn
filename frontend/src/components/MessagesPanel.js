@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function MessagesPanel() {
+export default function MessagesPanel({ initialChatUserId = null }) {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -21,36 +21,78 @@ export default function MessagesPanel() {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    fetchConversations();
+  const fetchConversations = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/conversations`, {
+        withCredentials: true
+      });
+      setConversations(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  // Start chat with a specific user if initialChatUserId is provided
+  const startChatWithUser = useCallback(async (userId) => {
+    if (!userId) return;
+    
+    // First, fetch conversations to see if one already exists
+    const convos = await fetchConversations();
+    const existingConvo = convos.find(c => c.user_id === userId);
+    
+    if (existingConvo) {
+      setSelectedConversation(existingConvo);
+    } else {
+      // Fetch user info to create a new conversation placeholder
+      try {
+        const response = await axios.get(`${API_URL}/api/profile/${userId}`, {
+          withCredentials: true
+        });
+        const userData = response.data;
+        setSelectedConversation({
+          user_id: userId,
+          user_name: userData.name || 'Unknown User',
+          user_avatar: userData.avatar || '',
+          last_message: '',
+          unread_count: 0
+        });
+        setMessages([]);
+      } catch (error) {
+        console.error('Error fetching user for chat:', error);
+      }
+    }
+  }, [fetchConversations]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  // Handle initial chat user
+  useEffect(() => {
+    if (initialChatUserId) {
+      startChatWithUser(initialChatUserId);
+    }
+  }, [initialChatUserId, startChatWithUser]);
+
+  // Fetch messages when conversation is selected
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.user_id);
     }
   }, [selectedConversation]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchConversations = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/conversations`, {
-        withCredentials: true
-      });
-      setConversations(response.data);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchMessages = async (userId) => {
     try {

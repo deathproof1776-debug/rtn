@@ -24,7 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh, onViewProfile, onProposeTrade }) {
+export default function Feed({ posts, loading, onCreatePost, onFilterChange, nearbyOnly = false, onRefresh, onViewProfile, onProposeTrade, onStartChat }) {
   const { user } = useAuth();
   const [filterNearby, setFilterNearby] = useState(nearbyOnly);
   const [refreshing, setRefreshing] = useState(false);
@@ -190,7 +190,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
       ) : (
         <div className="space-y-4">
           {displayPosts.map((post) => (
-            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} onViewProfile={onViewProfile} onProposeTrade={onProposeTrade} />
+            <PostCard key={post._id} post={post} onLike={handleLike} currentUserId={user?.id} onViewProfile={onViewProfile} onProposeTrade={onProposeTrade} onStartChat={onStartChat} />
           ))}
         </div>
       )}
@@ -198,7 +198,7 @@ export default function Feed({ posts, loading, onCreatePost, onFilterChange, nea
   );
 }
 
-function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }) {
+function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade, onStartChat }) {
   const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [showComments, setShowComments] = useState(false);
@@ -377,7 +377,9 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade }
                 </button>
                 <button
                   onClick={() => {
-                    // Could open messaging with this user in future
+                    if (onStartChat) {
+                      onStartChat(post.user_id);
+                    }
                     setShowMenu(false);
                   }}
                   className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
