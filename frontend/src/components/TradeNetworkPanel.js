@@ -19,6 +19,12 @@ import { formatDistanceToNow } from 'date-fns';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get display name from item (handles both string and object formats)
+const getItemName = (item) => {
+  if (typeof item === 'string') return item;
+  return item?.name || '';
+};
+
 export default function TradeNetworkPanel({ onViewProfile }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('connections');
@@ -335,8 +341,8 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                   {connection.skills?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {connection.skills.slice(0, 3).map((skill, i) => (
-                        <span key={`skill-${skill}-${i}`} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
-                          {skill}
+                        <span key={`skill-${getItemName(skill)}-${i}`} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
+                          {getItemName(skill)}
                         </span>
                       ))}
                       {connection.skills.length > 3 && (

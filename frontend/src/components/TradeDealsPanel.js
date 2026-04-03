@@ -24,6 +24,12 @@ import CounterTradeModal from './CounterTradeModal';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get display name from item (handles both string and object formats)
+const getItemName = (item) => {
+  if (typeof item === 'string') return item;
+  return item?.name || '';
+};
+
 export default function TradeDealsPanel() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('incoming');
@@ -177,7 +183,7 @@ export default function TradeDealsPanel() {
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {currentOffering.map((item, i) => (
-                    <span key={`offer-${item}-${i}`} className="badge badge-offering text-xs">{item}</span>
+                    <span key={`offer-${getItemName(item)}-${i}`} className="badge badge-offering text-xs">{getItemName(item)}</span>
                   ))}
                 </div>
               </div>
@@ -187,7 +193,7 @@ export default function TradeDealsPanel() {
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {currentRequesting.map((item, i) => (
-                    <span key={`req-${item}-${i}`} className="badge badge-looking text-xs">{item}</span>
+                    <span key={`req-${getItemName(item)}-${i}`} className="badge badge-looking text-xs">{getItemName(item)}</span>
                   ))}
                 </div>
               </div>
@@ -225,7 +231,7 @@ export default function TradeDealsPanel() {
                           <p className="text-[10px] uppercase text-[var(--brand-accent)]">Offering</p>
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {co.offering.map((item, i) => (
-                              <span key={`co-offer-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[rgba(77,124,15,0.15)] text-[var(--brand-accent)] border border-[var(--brand-accent)]">{item}</span>
+                              <span key={`co-offer-${getItemName(item)}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[rgba(77,124,15,0.15)] text-[var(--brand-accent)] border border-[var(--brand-accent)]">{getItemName(item)}</span>
                             ))}
                           </div>
                         </div>
@@ -233,7 +239,7 @@ export default function TradeDealsPanel() {
                           <p className="text-[10px] uppercase text-[var(--brand-primary)]">Requesting</p>
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {co.requesting.map((item, i) => (
-                              <span key={`co-req-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[rgba(180,83,9,0.15)] text-[var(--brand-primary)] border border-[var(--brand-primary)]">{item}</span>
+                              <span key={`co-req-${getItemName(item)}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[rgba(180,83,9,0.15)] text-[var(--brand-primary)] border border-[var(--brand-primary)]">{getItemName(item)}</span>
                             ))}
                           </div>
                         </div>
@@ -348,7 +354,7 @@ export default function TradeDealsPanel() {
             <p className="text-[10px] uppercase tracking-wider text-[var(--brand-accent)] mb-1">Offering</p>
             <div className="flex flex-wrap gap-1">
               {trade.offering.map((item, i) => (
-                <span key={`hist-offer-${item}-${i}`} className="badge badge-offering text-xs">{item}</span>
+                <span key={`hist-offer-${getItemName(item)}-${i}`} className="badge badge-offering text-xs">{getItemName(item)}</span>
               ))}
             </div>
           </div>
@@ -356,7 +362,7 @@ export default function TradeDealsPanel() {
             <p className="text-[10px] uppercase tracking-wider text-[var(--brand-primary)] mb-1">Requesting</p>
             <div className="flex flex-wrap gap-1">
               {trade.requesting.map((item, i) => (
-                <span key={`hist-req-${item}-${i}`} className="badge badge-looking text-xs">{item}</span>
+                <span key={`hist-req-${getItemName(item)}-${i}`} className="badge badge-looking text-xs">{getItemName(item)}</span>
               ))}
             </div>
           </div>

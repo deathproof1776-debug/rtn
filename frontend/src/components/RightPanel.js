@@ -4,6 +4,12 @@ import { ArrowsLeftRight, Lightning, Users, MapPin, NavigationArrow, SealCheck, 
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to get display name from item (handles both string and object formats)
+const getItemName = (item) => {
+  if (typeof item === 'string') return item;
+  return item?.name || '';
+};
+
 export default function RightPanel({ matches, onViewProfile }) {
   const [nearbyUsers, setNearbyUsers] = useState([]);
   const [userLocation, setUserLocation] = useState('');
@@ -179,7 +185,7 @@ function NearbyUserCard({ user, onClick }) {
           {user.skills?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {user.skills.slice(0, 2).map((skill, i) => (
-                <span key={`skill-${skill}-${i}`} className="badge text-[10px]">{skill}</span>
+                <span key={`skill-${getItemName(skill)}-${i}`} className="badge text-[10px]">{getItemName(skill)}</span>
               ))}
             </div>
           )}
@@ -225,7 +231,7 @@ function MatchCard({ match, onClick }) {
           )}
           <div className="flex flex-wrap gap-1 mt-2">
             {match.offering?.slice(0, 2).map((item, i) => (
-              <span key={`match-offer-${item}-${i}`} className="badge badge-offering text-[10px]">{item}</span>
+              <span key={`match-offer-${getItemName(item)}-${i}`} className="badge badge-offering text-[10px]">{getItemName(item)}</span>
             ))}
           </div>
         </div>
