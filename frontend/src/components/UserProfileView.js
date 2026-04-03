@@ -93,7 +93,7 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
           const isShowingDetails = showItemDetails === i;
           
           return (
-            <div key={i} className="relative">
+            <div key={`${title}-${itemData.name}-${i}`} className="relative">
               <button
                 onClick={() => hasDetails && setShowItemDetails(isShowingDetails ? null : i)}
                 className={`badge ${badgeClass} text-[10px] ${hasDetails ? 'cursor-pointer hover:opacity-80' : ''}`}

@@ -22,7 +22,7 @@ export function WebSocketProvider({ children }) {
     // Use a fallback approach with a token stored in sessionStorage after login
     const storedToken = sessionStorage.getItem('ws_token') || '';
     if (!storedToken) {
-      console.log('WebSocket: No token available yet, skipping connection');
+      if (process.env.NODE_ENV === 'development') console.log('WebSocket: No token available yet, skipping connection');
       return;
     }
     
@@ -34,7 +34,7 @@ export function WebSocketProvider({ children }) {
 
       wsRef.current.onopen = () => {
         setConnected(true);
-        console.log('WebSocket connected');
+        if (process.env.NODE_ENV === 'development') console.log('WebSocket connected');
       };
 
       wsRef.current.onmessage = (event) => {
@@ -50,7 +50,7 @@ export function WebSocketProvider({ children }) {
 
       wsRef.current.onclose = () => {
         setConnected(false);
-        console.log('WebSocket disconnected');
+        if (process.env.NODE_ENV === 'development') console.log('WebSocket disconnected');
         // Attempt to reconnect after 5 seconds
         reconnectTimeoutRef.current = setTimeout(connect, 5000);
       };

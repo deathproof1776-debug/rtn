@@ -179,7 +179,7 @@ function NearbyUserCard({ user, onClick }) {
           {user.skills?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {user.skills.slice(0, 2).map((skill, i) => (
-                <span key={i} className="badge text-[10px]">{skill}</span>
+                <span key={`skill-${skill}-${i}`} className="badge text-[10px]">{skill}</span>
               ))}
             </div>
           )}
@@ -225,7 +225,7 @@ function MatchCard({ match, onClick }) {
           )}
           <div className="flex flex-wrap gap-1 mt-2">
             {match.offering?.slice(0, 2).map((item, i) => (
-              <span key={i} className="badge badge-offering text-[10px]">{item}</span>
+              <span key={`match-offer-${item}-${i}`} className="badge badge-offering text-[10px]">{item}</span>
             ))}
           </div>
         </div>

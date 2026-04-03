@@ -447,7 +447,7 @@ export default function AdminDashboard({ onBack }) {
                   const timeAgo = getTimeAgo(log.created_at);
 
                   return (
-                    <div key={idx} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0" data-testid={`audit-log-entry-${idx}`}>
+                    <div key={log._id || `log-${log.action}-${log.created_at}`} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0" data-testid={`audit-log-entry-${idx}`}>
                       <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${config.color}20` }}>
                         <ActionIcon size={16} style={{ color: config.color }} weight="fill" />
                       </div>

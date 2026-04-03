@@ -237,7 +237,7 @@ export default function CategorySelector({
               const isSelected = isItemSelected(selectedItems, item);
               return (
                 <button
-                  key={idx}
+                  key={`search-${item}-${category}`}
                   onClick={() => handleSelectItem(item)}
                   className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[#292524] transition-colors ${
                     isSelected ? 'bg-[#292524]' : ''
@@ -313,7 +313,7 @@ export default function CategorySelector({
                     const isSelected = isItemSelected(selectedItems, item);
                     return (
                       <button
-                        key={idx}
+                        key={`cat-item-${category}-${item}`}
                         onClick={() => isSelected ? handleRemoveItem(item) : handleSelectItem(item)}
                         className={`text-[11px] px-2 py-1 border transition-colors ${
                           isSelected 
@@ -345,7 +345,7 @@ export default function CategorySelector({
             const isEditing = editingItem === itemName;
             
             return (
-              <div key={idx} className="bg-[#0C0A09] border border-[#292524] p-2">
+              <div key={`selected-${itemName}-${idx}`} className="bg-[#0C0A09] border border-[#292524] p-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className={`badge ${badgeClass} text-[10px] md:text-xs`}>
                     {itemName}
