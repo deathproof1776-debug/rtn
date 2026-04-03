@@ -10,9 +10,11 @@ import {
   Handshake,
   Carrot,
   Wrench,
-  Briefcase
+  Briefcase,
+  Images
 } from '@phosphor-icons/react';
 import CategorySelector from './CategorySelector';
+import Gallery from './Gallery';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -34,6 +36,7 @@ export default function ProfilePanel() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [networkConnections, setNetworkConnections] = useState([]);
+  const [showGallery, setShowGallery] = useState(false);
   const fileInputRef = useRef(null);
 
   const fetchProfile = useCallback(async () => {
@@ -99,8 +102,22 @@ export default function ProfilePanel() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image too large. Maximum size is 10MB');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('category', 'avatar');
 
     try {
       const response = await axios.post(`${API_URL}/api/upload`, formData, {
@@ -110,6 +127,7 @@ export default function ProfilePanel() {
       setProfile({ ...profile, avatar: `${API_URL}${response.data.url}` });
     } catch (error) {
       console.error('Error uploading avatar:', error);
+      alert(error.response?.data?.detail || 'Failed to upload avatar');
     }
   };
 
@@ -172,6 +190,14 @@ export default function ProfilePanel() {
               )}
             </div>
             <p className="text-xs md:text-sm text-[#78716C]">Tap the camera to change avatar</p>
+            <button
+              onClick={() => setShowGallery(true)}
+              className="mt-2 flex items-center gap-1.5 text-xs text-[#B45309] hover:text-[#D97706] transition-colors"
+              data-testid="view-my-gallery-btn"
+            >
+              <Images size={14} />
+              My Gallery
+            </button>
           </div>
         </div>
 
@@ -334,6 +360,19 @@ export default function ProfilePanel() {
           {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </div>
+
+      {/* Gallery Modal */}
+      {showGallery && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-[#1C1917] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <Gallery 
+              userId={user?.id}
+              isOwnProfile={true}
+              onBack={() => setShowGallery(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, WebSocket, WebSocketDisconnect, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, WebSocket, WebSocketDisconnect, UploadFile, File, Form, BackgroundTasks, Response, Query, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -14,6 +14,7 @@ import jwt
 import secrets
 import json
 import aiofiles
+import uuid
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
@@ -22,6 +23,13 @@ from cryptography.fernet import Fernet
 import base64
 import hashlib
 from pywebpush import webpush, WebPushException
+
+# Import object storage module
+from storage import (
+    init_storage, put_object, get_object, generate_storage_path,
+    validate_file, get_content_type, is_video,
+    ALLOWED_IMAGE_TYPES, ALLOWED_VIDEO_TYPES, ALLOWED_TYPES
+)
 
 ROOT_DIR = Path(__file__).parent
 
@@ -255,6 +263,12 @@ class TradeCounterOffer(BaseModel):
 
 class TradeOfferRespond(BaseModel):
     action: str  # "accept" or "decline"
+
+class GalleryItemCreate(BaseModel):
+    caption: Optional[str] = ""
+    
+class GalleryCommentCreate(BaseModel):
+    content: str
 
 # ========================
 # Predefined Categories Data
@@ -1400,32 +1414,349 @@ async def send_message(message: MessageCreate, request: Request, background_task
     
     return {"id": str(result.inserted_id), "message": "Message sent"}
 
-# File upload
-@api_router.post("/upload")
-async def upload_file(request: Request, file: UploadFile = File(...)):
-    await get_current_user(request)  # Verify auth
-    
-    # Create uploads directory if not exists
-    upload_dir = ROOT_DIR / "uploads"
-    upload_dir.mkdir(exist_ok=True)
-    
-    # Generate unique filename
-    ext = Path(file.filename).suffix
-    filename = f"{secrets.token_hex(16)}{ext}"
-    filepath = upload_dir / filename
-    
-    async with aiofiles.open(filepath, 'wb') as f:
-        content = await file.read()
-        await f.write(content)
-    
-    return {"url": f"/api/uploads/{filename}", "filename": filename}
+# ========================
+# File Upload with Object Storage
+# ========================
 
-@api_router.get("/uploads/{filename}")
-async def get_upload(filename: str):
-    filepath = ROOT_DIR / "uploads" / filename
-    if not filepath.exists():
+@api_router.post("/upload")
+async def upload_file(
+    request: Request, 
+    file: UploadFile = File(...),
+    category: str = Form(default="general")
+):
+    """
+    Upload a file to persistent object storage.
+    Categories: avatar, post, gallery
+    """
+    user = await get_current_user(request)
+    user_id = user["_id"]
+    
+    # Read file content
+    content = await file.read()
+    content_type = file.content_type or get_content_type(file.filename)
+    
+    # Determine file category for validation
+    file_category = "video" if is_video(content_type) else "image"
+    
+    # Validate file
+    is_valid, error_msg = validate_file(content_type, len(content), file_category)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Generate storage path
+    storage_path = generate_storage_path(user_id, category, file.filename)
+    
+    try:
+        # Upload to object storage
+        result = put_object(storage_path, content, content_type)
+        
+        # Store file reference in database
+        file_doc = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "storage_path": result["path"],
+            "original_filename": file.filename,
+            "content_type": content_type,
+            "size": result.get("size", len(content)),
+            "category": category,
+            "is_video": is_video(content_type),
+            "is_deleted": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.files.insert_one(file_doc)
+        
+        # Return URL that goes through our backend
+        return {
+            "url": f"/api/files/{result['path']}",
+            "path": result["path"],
+            "filename": file.filename,
+            "content_type": content_type,
+            "is_video": is_video(content_type)
+        }
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload file")
+
+
+@api_router.get("/files/{path:path}")
+async def get_file(
+    path: str,
+    request: Request,
+    auth: Optional[str] = Query(None)
+):
+    """
+    Retrieve a file from object storage.
+    Supports query param auth for img src tags.
+    """
+    # Allow public access to uploaded files (they're displayed in feeds)
+    # The storage path itself acts as an unguessable token
+    
+    # Check if file exists in database
+    file_record = await db.files.find_one({"storage_path": path, "is_deleted": False})
+    if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(filepath)
+    
+    try:
+        data, content_type = get_object(path)
+        return Response(
+            content=data,
+            media_type=file_record.get("content_type", content_type)
+        )
+    except Exception as e:
+        logger.error(f"Failed to retrieve file {path}: {e}")
+        raise HTTPException(status_code=404, detail="File not found")
+
+
+# Legacy upload endpoint for backwards compatibility
+@api_router.get("/uploads/{filename}")
+async def get_legacy_upload(filename: str):
+    """Legacy endpoint - check local files first, then redirect to new storage"""
+    filepath = ROOT_DIR / "uploads" / filename
+    if filepath.exists():
+        return FileResponse(filepath)
+    raise HTTPException(status_code=404, detail="File not found")
+
+
+# ========================
+# Gallery Endpoints
+# ========================
+
+@api_router.post("/gallery/upload")
+async def upload_gallery_item(
+    request: Request,
+    file: UploadFile = File(...),
+    caption: str = Form(default="")
+):
+    """Upload a photo or video to user's gallery"""
+    user = await get_current_user(request)
+    user_id = user["_id"]
+    
+    # Read file content
+    content = await file.read()
+    content_type = file.content_type or get_content_type(file.filename)
+    
+    # Validate file type (allow images and videos)
+    is_valid, error_msg = validate_file(content_type, len(content), "media")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Generate storage path
+    storage_path = generate_storage_path(user_id, "gallery", file.filename)
+    
+    try:
+        # Upload to object storage
+        result = put_object(storage_path, content, content_type)
+        
+        # Create gallery item
+        gallery_id = str(uuid.uuid4())
+        gallery_doc = {
+            "id": gallery_id,
+            "user_id": user_id,
+            "user_name": user.get("name", "Unknown"),
+            "storage_path": result["path"],
+            "original_filename": file.filename,
+            "content_type": content_type,
+            "is_video": is_video(content_type),
+            "caption": caption,
+            "likes": [],
+            "comments": [],
+            "like_count": 0,
+            "comment_count": 0,
+            "is_deleted": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.gallery.insert_one(gallery_doc)
+        
+        return {
+            "id": gallery_id,
+            "url": f"/api/files/{result['path']}",
+            "is_video": is_video(content_type),
+            "caption": caption,
+            "message": "Gallery item uploaded successfully"
+        }
+    except Exception as e:
+        logger.error(f"Gallery upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload gallery item")
+
+
+@api_router.get("/gallery/{user_id}")
+async def get_user_gallery(
+    user_id: str,
+    request: Request,
+    skip: int = 0,
+    limit: int = 20
+):
+    """Get gallery items for a specific user"""
+    # Optional auth - galleries are public
+    try:
+        current_user = await get_current_user(request)
+        current_user_id = current_user["_id"]
+    except Exception:
+        current_user_id = None
+    
+    # Verify user exists
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get gallery items
+    items = await db.gallery.find(
+        {"user_id": user_id, "is_deleted": False}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Format response
+    gallery_items = []
+    for item in items:
+        gallery_items.append({
+            "id": item["id"],
+            "url": f"/api/files/{item['storage_path']}",
+            "is_video": item.get("is_video", False),
+            "caption": item.get("caption", ""),
+            "like_count": item.get("like_count", len(item.get("likes", []))),
+            "comment_count": item.get("comment_count", len(item.get("comments", []))),
+            "is_liked": current_user_id in item.get("likes", []) if current_user_id else False,
+            "created_at": item["created_at"]
+        })
+    
+    return {
+        "user_id": user_id,
+        "user_name": target_user.get("name", "Unknown"),
+        "items": gallery_items,
+        "total": await db.gallery.count_documents({"user_id": user_id, "is_deleted": False})
+    }
+
+
+@api_router.get("/gallery/item/{item_id}")
+async def get_gallery_item(item_id: str, request: Request):
+    """Get a single gallery item with full details"""
+    try:
+        current_user = await get_current_user(request)
+        current_user_id = current_user["_id"]
+    except Exception:
+        current_user_id = None
+    
+    item = await db.gallery.find_one({"id": item_id, "is_deleted": False})
+    if not item:
+        raise HTTPException(status_code=404, detail="Gallery item not found")
+    
+    # Get user info
+    owner = await db.users.find_one({"_id": ObjectId(item["user_id"])})
+    
+    # Format comments with user info
+    comments = []
+    for comment in item.get("comments", []):
+        comments.append({
+            "id": comment["id"],
+            "user_id": comment["user_id"],
+            "user_name": comment["user_name"],
+            "content": comment["content"],
+            "created_at": comment["created_at"]
+        })
+    
+    return {
+        "id": item["id"],
+        "user_id": item["user_id"],
+        "user_name": owner.get("name", "Unknown") if owner else "Unknown",
+        "user_avatar": owner.get("avatar", "") if owner else "",
+        "url": f"/api/files/{item['storage_path']}",
+        "is_video": item.get("is_video", False),
+        "caption": item.get("caption", ""),
+        "like_count": item.get("like_count", len(item.get("likes", []))),
+        "is_liked": current_user_id in item.get("likes", []) if current_user_id else False,
+        "comments": comments,
+        "created_at": item["created_at"]
+    }
+
+
+@api_router.post("/gallery/{item_id}/like")
+async def like_gallery_item(item_id: str, request: Request):
+    """Like or unlike a gallery item"""
+    user = await get_current_user(request)
+    user_id = user["_id"]
+    
+    item = await db.gallery.find_one({"id": item_id, "is_deleted": False})
+    if not item:
+        raise HTTPException(status_code=404, detail="Gallery item not found")
+    
+    likes = item.get("likes", [])
+    
+    if user_id in likes:
+        # Unlike
+        likes.remove(user_id)
+        action = "unliked"
+    else:
+        # Like
+        likes.append(user_id)
+        action = "liked"
+    
+    await db.gallery.update_one(
+        {"id": item_id},
+        {"$set": {"likes": likes, "like_count": len(likes)}}
+    )
+    
+    return {"action": action, "like_count": len(likes)}
+
+
+@api_router.post("/gallery/{item_id}/comment")
+async def comment_on_gallery_item(
+    item_id: str,
+    comment: GalleryCommentCreate,
+    request: Request
+):
+    """Add a comment to a gallery item"""
+    user = await get_current_user(request)
+    user_id = user["_id"]
+    user_name = user.get("name", "Unknown")
+    
+    item = await db.gallery.find_one({"id": item_id, "is_deleted": False})
+    if not item:
+        raise HTTPException(status_code=404, detail="Gallery item not found")
+    
+    comment_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "user_name": user_name,
+        "content": comment.content,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.gallery.update_one(
+        {"id": item_id},
+        {
+            "$push": {"comments": comment_doc},
+            "$inc": {"comment_count": 1}
+        }
+    )
+    
+    return {
+        "id": comment_doc["id"],
+        "user_id": user_id,
+        "user_name": user_name,
+        "content": comment.content,
+        "created_at": comment_doc["created_at"]
+    }
+
+
+@api_router.delete("/gallery/{item_id}")
+async def delete_gallery_item(item_id: str, request: Request):
+    """Soft delete a gallery item (owner only)"""
+    user = await get_current_user(request)
+    user_id = user["_id"]
+    
+    item = await db.gallery.find_one({"id": item_id, "is_deleted": False})
+    if not item:
+        raise HTTPException(status_code=404, detail="Gallery item not found")
+    
+    # Only owner or admin can delete
+    if item["user_id"] != user_id and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to delete this item")
+    
+    await db.gallery.update_one(
+        {"id": item_id},
+        {"$set": {"is_deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Gallery item deleted"}
 
 # Get nearby users (location-based user matching)
 @api_router.get("/users/nearby")
@@ -2654,6 +2985,13 @@ app.add_middleware(
 # Admin seeding
 @app.on_event("startup")
 async def startup():
+    # Initialize object storage
+    try:
+        init_storage()
+        logger.info("Object storage initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize object storage: {e}")
+    
     # Create indexes
     await db.users.create_index("email", unique=True)
     await db.messages.create_index([("sender_id", 1), ("receiver_id", 1)])
@@ -2667,6 +3005,9 @@ async def startup():
     await db.trade_deals.create_index([("proposer_id", 1), ("status", 1)])
     await db.trade_deals.create_index([("receiver_id", 1), ("status", 1)])
     await db.trade_deals.create_index("updated_at")
+    # Gallery indexes
+    await db.gallery.create_index([("user_id", 1), ("created_at", -1)])
+    await db.gallery.create_index("is_deleted")
     
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")

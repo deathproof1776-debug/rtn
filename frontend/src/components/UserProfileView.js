@@ -14,7 +14,8 @@ import {
   ChatCircle,
   Handshake,
   CaretDown,
-  CaretUp
+  CaretUp,
+  Images
 } from '@phosphor-icons/react';
 
 // Expandable Bio component for long descriptions
@@ -134,12 +135,13 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function UserProfileView({ userId, onClose, onStartChat, onProposeTrade }) {
+export default function UserProfileView({ userId, onClose, onStartChat, onProposeTrade, onViewGallery }) {
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [networkStatus, setNetworkStatus] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [galleryCount, setGalleryCount] = useState(0);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -169,6 +171,10 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
     if (userId) {
       fetchProfile();
       fetchNetworkStatus();
+      // Fetch gallery count
+      axios.get(`${API_URL}/api/gallery/${userId}`, { withCredentials: true })
+        .then(res => setGalleryCount(res.data.total || 0))
+        .catch(() => setGalleryCount(0));
     }
   }, [userId, fetchProfile, fetchNetworkStatus]);
 
@@ -366,6 +372,21 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                 <ArrowsLeftRight size={16} />
                 Propose Trade
               </button>
+              {galleryCount > 0 && (
+                <button
+                  onClick={() => {
+                    if (onViewGallery) {
+                      onClose();
+                      onViewGallery(userId, profile?.name || 'Unknown');
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] hover:text-[#B45309]"
+                  data-testid="view-gallery-btn"
+                >
+                  <Images size={16} />
+                  Gallery ({galleryCount})
+                </button>
+              )}
             </div>
           )}
 

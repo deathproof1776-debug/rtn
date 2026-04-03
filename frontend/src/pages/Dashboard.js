@@ -16,6 +16,7 @@ import MobileHeader from '../components/MobileHeader';
 import InvitePanel from '../components/InvitePanel';
 import AdminDashboard from './AdminDashboard';
 import CreateTradeModal from '../components/CreateTradeModal';
+import Gallery from '../components/Gallery';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [viewingProfileId, setViewingProfileId] = useState(null);
   const [tradeTarget, setTradeTarget] = useState(null);
   const [chatUserId, setChatUserId] = useState(null);
+  const [viewingGallery, setViewingGallery] = useState(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -112,6 +114,11 @@ export default function Dashboard() {
 
   const handleProposeTrade = (userId, userName) => {
     setTradeTarget({ userId, userName });
+  };
+
+  const handleViewGallery = (userId, userName) => {
+    setViewingGallery({ userId, userName });
+    setActiveView('gallery');
   };
 
   if (loading) {
@@ -199,6 +206,23 @@ export default function Dashboard() {
         )}
         {activeView === 'invites' && <InvitePanel />}
         {activeView === 'profile' && <ProfilePanel />}
+        {activeView === 'gallery' && viewingGallery && (
+          <Gallery 
+            userId={viewingGallery.userId}
+            isOwnProfile={viewingGallery.userId === user?.id}
+            onBack={() => {
+              setViewingGallery(null);
+              setActiveView('feed');
+            }}
+          />
+        )}
+        {activeView === 'my-gallery' && (
+          <Gallery 
+            userId={user?.id}
+            isOwnProfile={true}
+            onBack={() => setActiveView('profile')}
+          />
+        )}
         {activeView === 'admin' && user?.role === 'admin' && (
           <AdminDashboard onBack={() => setActiveView('feed')} />
         )}
@@ -227,6 +251,7 @@ export default function Dashboard() {
           onClose={() => setViewingProfileId(null)}
           onStartChat={handleStartChat}
           onProposeTrade={handleProposeTrade}
+          onViewGallery={handleViewGallery}
         />
       )}
 
