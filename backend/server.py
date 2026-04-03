@@ -1491,8 +1491,18 @@ async def get_file(
     # Allow public access to uploaded files (they're displayed in feeds)
     # The storage path itself acts as an unguessable token
     
-    # Check if file exists in database
+    # Check if file exists in database (files collection or gallery collection)
     file_record = await db.files.find_one({"storage_path": path, "is_deleted": False})
+    
+    # Also check gallery collection if not found in files
+    if not file_record:
+        gallery_record = await db.gallery.find_one({"storage_path": path, "is_deleted": False})
+        if gallery_record:
+            file_record = {
+                "storage_path": gallery_record["storage_path"],
+                "content_type": gallery_record.get("content_type", "application/octet-stream")
+            }
+    
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
     
