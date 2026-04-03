@@ -48,17 +48,31 @@ async def api_websocket_endpoint(websocket: WebSocket, user_id: str):
 async def handle_websocket(websocket: WebSocket, user_id: str):
     """Handle WebSocket connections for real-time messaging"""
     from bson import ObjectId
+    import jwt as pyjwt
+    from auth import get_jwt_secret, JWT_ALGORITHM
     
-    # Verify token from query params
+    # Verify JWT token from query params
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=4001)
         return
 
-    user = await db.users.find_one({"_id": ObjectId(user_id)})
-    if not user or token != user_id:
-        await websocket.close(code=4001)
-        return
+    # Validate JWT token
+    try:
+        payload = pyjwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            await websocket.close(code=4001)
+            return
+        token_user_id = payload.get("sub")
+        if token_user_id != user_id:
+            await websocket.close(code=4001)
+            return
+    except pyjwt.InvalidTokenError:
+        # Fallback to legacy user_id token for backwards compatibility
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        if not user or token != user_id:
+            await websocket.close(code=4001)
+            return
 
     await manager.connect(websocket, user_id)
     try:

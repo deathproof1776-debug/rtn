@@ -77,7 +77,15 @@ async def get_file(
     request: Request,
     auth: Optional[str] = Query(None)
 ):
-    """Retrieve a file from object storage."""
+    """Retrieve a file from object storage. Requires authentication for non-public files."""
+    # Require authentication for file access
+    try:
+        await get_current_user(request)
+    except Exception:
+        # Allow public access only for avatar files (needed for profile display)
+        if not path.startswith("rebel-trade-network/avatars/"):
+            raise HTTPException(status_code=401, detail="Authentication required")
+    
     # Check files collection
     file_record = await db.files.find_one({"storage_path": path, "is_deleted": False})
 
