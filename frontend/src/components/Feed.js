@@ -362,43 +362,49 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade, 
                   <User size={16} />
                   View Profile
                 </button>
-                <button
-                  onClick={() => {
-                    if (onProposeTrade && post.user_id !== currentUserId) {
-                      onProposeTrade(post.user_id, post.user_name);
-                    }
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-                  data-testid={`post-menu-trade-${post._id}`}
-                >
-                  <ArrowsLeftRight size={16} />
-                  Propose Trade
-                </button>
-                <button
-                  onClick={() => {
-                    if (onStartChat) {
-                      onStartChat(post.user_id);
-                    }
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-                  data-testid={`post-menu-message-${post._id}`}
-                >
-                  <ChatText size={16} />
-                  Send Message
-                </button>
-                <button
-                  onClick={() => {
-                    // Report functionality - future feature
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
-                  data-testid={`post-menu-report-${post._id}`}
-                >
-                  <Warning size={16} />
-                  Report Post
-                </button>
+                {post.user_id !== currentUserId && (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (onProposeTrade) {
+                          onProposeTrade(post.user_id, post.user_name);
+                        }
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                      data-testid={`post-menu-trade-${post._id}`}
+                    >
+                      <ArrowsLeftRight size={16} />
+                      Propose Trade
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (onStartChat) {
+                          onStartChat(post.user_id);
+                        }
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                      data-testid={`post-menu-message-${post._id}`}
+                    >
+                      <ChatText size={16} />
+                      Send Message
+                    </button>
+                  </>
+                )}
+                {post.user_id !== currentUserId && (
+                  <button
+                    onClick={() => {
+                      // Report functionality - future feature
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
+                    data-testid={`post-menu-report-${post._id}`}
+                  >
+                    <Warning size={16} />
+                    Report Post
+                  </button>
+                )}
               </div>
             </>
           )}
