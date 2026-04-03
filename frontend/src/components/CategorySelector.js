@@ -185,14 +185,14 @@ export default function CategorySelector({
   };
 
   // Color based on mode
-  const accentColor = mode === 'wanted' ? '#B45309' : '#4D7C0F';
+  const accentColor = mode === 'wanted' ? 'var(--brand-primary)' : 'var(--brand-accent)';
   const badgeClass = mode === 'wanted' ? 'badge-looking' : 'badge-offering';
 
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-4 bg-[#292524] w-24 mb-2"></div>
-        <div className="h-10 bg-[#292524] w-full"></div>
+        <div className="h-4 bg-[var(--bg-surface-hover)] w-24 mb-2"></div>
+        <div className="h-10 bg-[var(--bg-surface-hover)] w-full"></div>
       </div>
     );
   }
@@ -212,7 +212,7 @@ export default function CategorySelector({
           <div className="relative flex-1">
             <MagnifyingGlass 
               size={16} 
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#78716C]" 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" 
             />
             <input
               type="text"
@@ -232,21 +232,21 @@ export default function CategorySelector({
 
         {/* Search Results Dropdown */}
         {showDropdown && searchQuery && filteredItems.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1C1917] border border-[#44403C] max-h-60 overflow-y-auto">
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] max-h-60 overflow-y-auto">
             {filteredItems.map(({ item, category }, idx) => {
               const isSelected = isItemSelected(selectedItems, item);
               return (
                 <button
                   key={`search-${item}-${category}`}
                   onClick={() => handleSelectItem(item)}
-                  className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[#292524] transition-colors ${
-                    isSelected ? 'bg-[#292524]' : ''
+                  className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-[var(--bg-surface-hover)] transition-colors ${
+                    isSelected ? 'bg-[var(--bg-surface-hover)]' : ''
                   }`}
                 >
-                  <span className="text-[#E7E5E4]">{item}</span>
-                  <span className="text-[10px] text-[#78716C]">{category}</span>
+                  <span className="text-[var(--text-primary)]">{item}</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{category}</span>
                   {isSelected && (
-                    <Check size={14} className="text-[#4D7C0F] ml-2" />
+                    <Check size={14} className="text-[var(--brand-accent)] ml-2" />
                   )}
                 </button>
               );
@@ -277,32 +277,32 @@ export default function CategorySelector({
       </div>
 
       {/* Category Browser */}
-      <div className="bg-[#0C0A09] border border-[#292524] max-h-64 overflow-y-auto">
+      <div className="bg-[var(--bg-main)] border border-[var(--bg-surface-hover)] max-h-64 overflow-y-auto">
         {Object.entries(categories).map(([catKey, catData]) => {
           const IconComponent = getCategoryIcon(catData.icon);
           const isExpanded = expandedCategory === catKey;
           const selectedInCategory = catData.items.filter(item => isItemSelected(selectedItems, item));
           
           return (
-            <div key={catKey} className="border-b border-[#292524] last:border-b-0">
+            <div key={catKey} className="border-b border-[var(--bg-surface-hover)] last:border-b-0">
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(catKey)}
-                className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-[#1C1917] transition-colors"
+                className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-[var(--bg-surface)] transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <IconComponent size={16} style={{ color: accentColor }} />
-                  <span className="text-sm font-medium text-[#E7E5E4]">{catData.name}</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{catData.name}</span>
                   {selectedInCategory.length > 0 && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-[#292524] text-[#A8A29E]">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-secondary)]">
                       {selectedInCategory.length} selected
                     </span>
                   )}
                 </div>
                 {isExpanded ? (
-                  <CaretUp size={14} className="text-[#78716C]" />
+                  <CaretUp size={14} className="text-[var(--text-muted)]" />
                 ) : (
-                  <CaretDown size={14} className="text-[#78716C]" />
+                  <CaretDown size={14} className="text-[var(--text-muted)]" />
                 )}
               </button>
 
@@ -318,9 +318,9 @@ export default function CategorySelector({
                         className={`text-[11px] px-2 py-1 border transition-colors ${
                           isSelected 
                             ? mode === 'wanted'
-                              ? 'bg-[#B45309]/20 border-[#B45309] text-[#E7E5E4]'
-                              : 'bg-[#4D7C0F]/20 border-[#4D7C0F] text-[#E7E5E4]'
-                            : 'bg-transparent border-[#44403C] text-[#A8A29E] hover:border-[#78716C] hover:text-[#E7E5E4]'
+                              ? 'bg-[var(--brand-primary)]/20 border-[var(--brand-primary)] text-[var(--text-primary)]'
+                              : 'bg-[var(--brand-accent)]/20 border-[var(--brand-accent)] text-[var(--text-primary)]'
+                            : 'bg-transparent border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         {isSelected && <Check size={10} className="inline mr-1" />}
@@ -345,7 +345,7 @@ export default function CategorySelector({
             const isEditing = editingItem === itemName;
             
             return (
-              <div key={`selected-${itemName}-${idx}`} className="bg-[#0C0A09] border border-[#292524] p-2">
+              <div key={`selected-${itemName}-${idx}`} className="bg-[var(--bg-main)] border border-[var(--bg-surface-hover)] p-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className={`badge ${badgeClass} text-[10px] md:text-xs`}>
                     {itemName}
@@ -356,14 +356,14 @@ export default function CategorySelector({
                   <div className="flex items-center gap-1">
                     <button 
                       onClick={() => isEditing ? handleSaveItemDetails(itemName) : handleEditItem(itemName)}
-                      className="p-1 text-[#78716C] hover:text-[#B45309] transition-colors"
+                      className="p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors"
                       title={isEditing ? "Save details" : "Add details"}
                     >
                       {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
                     </button>
                     <button 
                       onClick={() => handleRemoveItem(itemName)} 
-                      className="p-1 text-[#78716C] hover:text-[#991B1B] transition-colors"
+                      className="p-1 text-[var(--text-muted)] hover:text-[var(--brand-danger)] transition-colors"
                       aria-label={`Remove ${itemName}`}
                     >
                       <X size={14} />
@@ -373,7 +373,7 @@ export default function CategorySelector({
                 
                 {/* Description & Quantity display */}
                 {!isEditing && hasDetails && (
-                  <div className="mt-1.5 text-[10px] text-[#A8A29E] flex items-start gap-1">
+                  <div className="mt-1.5 text-[10px] text-[var(--text-secondary)] flex items-start gap-1">
                     <Info size={12} className="flex-shrink-0 mt-0.5" />
                     <span>{normalizedItem.description}</span>
                   </div>
@@ -383,7 +383,7 @@ export default function CategorySelector({
                 {isEditing && (
                   <div className="mt-2 space-y-2">
                     <div>
-                      <label className="block text-[10px] text-[#78716C] mb-1">Quantity (optional)</label>
+                      <label className="block text-[10px] text-[var(--text-muted)] mb-1">Quantity (optional)</label>
                       <input
                         type="text"
                         value={editQuantity}
@@ -393,7 +393,7 @@ export default function CategorySelector({
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-[#78716C] mb-1">Description (optional)</label>
+                      <label className="block text-[10px] text-[var(--text-muted)] mb-1">Description (optional)</label>
                       <input
                         type="text"
                         value={editDescription}
@@ -408,7 +408,7 @@ export default function CategorySelector({
             );
           })}
           {selectedItems.length > maxDisplay && (
-            <span className="text-xs text-[#78716C]">
+            <span className="text-xs text-[var(--text-muted)]">
               +{selectedItems.length - maxDisplay} more items
             </span>
           )}

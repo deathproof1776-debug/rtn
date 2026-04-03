@@ -46,28 +46,28 @@ export default function Login() {
       <div className="absolute inset-0 bg-black/70"></div>
       
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
-        <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#B45309] p-8">
+        <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] border-t-[3px] border-t-[var(--brand-primary)] p-8">
           <div className="flex items-center gap-3 mb-8">
-            <Shield size={40} weight="duotone" className="text-[#B45309]" />
+            <Shield size={40} weight="duotone" className="text-[var(--brand-primary)]" />
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+              <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
                 REBEL TRADE NETWORK
               </h1>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#78716C]">Exit the Matrix</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Exit the Matrix</p>
             </div>
           </div>
 
-          <h2 className="text-xl font-semibold text-[#E7E5E4] mb-6">Welcome Back</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">Welcome Back</h2>
 
           {error && (
-            <div className="bg-[#991B1B]/20 border border-[#991B1B] text-[#E7E5E4] px-4 py-3 mb-6" data-testid="login-error">
+            <div className="bg-[var(--brand-danger)]/20 border border-[var(--brand-danger)] text-[var(--text-primary)] px-4 py-3 mb-6" data-testid="login-error">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Email</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Email</label>
               <input
                 type="email"
                 value={email}
@@ -80,7 +80,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Password</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -94,7 +94,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#E7E5E4]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 >
                   {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
                 </button>
@@ -116,7 +116,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[#78716C] text-sm">
+          <p className="mt-6 text-center text-[var(--text-muted)] text-sm">
             Rebel Trade Network is invite-only.
             <br />
             Ask an existing member for an invite link to join.

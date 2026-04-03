@@ -71,7 +71,7 @@ function UserRow({ user, onVerify, onChangeRole, onDelete, currentUserId }) {
             <span className="text-[9px] px-1.5 py-0.5 bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] font-semibold uppercase tracking-wider">Admin</span>
           )}
           {isSelf && (
-            <span className="text-[9px] px-1.5 py-0.5 bg-[#4D7C0F]/20 text-[#4D7C0F] font-semibold uppercase tracking-wider">You</span>
+            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--brand-accent)]/20 text-[var(--brand-accent)] font-semibold uppercase tracking-wider">You</span>
           )}
         </div>
         <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
@@ -365,8 +365,8 @@ export default function AdminDashboard({ onBack }) {
           ) : stats ? (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <StatCard icon={Users} label="Total Users" value={stats.total_users} subValue={`+${stats.new_users_week} this week`} color="#B45309" />
-                <StatCard icon={SealCheck} label="Verified Traders" value={stats.verified_users} color="#4D7C0F" />
+                <StatCard icon={Users} label="Total Users" value={stats.total_users} subValue={`+${stats.new_users_week} this week`} color="var(--brand-primary)" />
+                <StatCard icon={SealCheck} label="Verified Traders" value={stats.verified_users} color="var(--brand-accent)" />
                 <StatCard icon={Article} label="Total Posts" value={stats.total_posts} subValue={`+${stats.new_posts_week} this week`} color="#0369A1" />
                 <StatCard icon={ChatCircle} label="Messages" value={stats.total_messages} color="#7C3AED" />
                 <StatCard icon={Handshake} label="Connections" value={stats.total_connections} subValue={`${stats.pending_requests} pending requests`} color="#DC2626" />
@@ -545,13 +545,13 @@ export default function AdminDashboard({ onBack }) {
               ) : (
                 auditLogs.map((log, idx) => {
                   const actionConfig = {
-                    verified: { icon: SealCheck, color: '#4D7C0F', label: 'Verified trader' },
+                    verified: { icon: SealCheck, color: 'var(--brand-accent)', label: 'Verified trader' },
                     unverified: { icon: SealCheck, color: '#DC2626', label: 'Removed verification from' },
-                    role_changed: { icon: Crown, color: '#B45309', label: 'Changed role of' },
+                    role_changed: { icon: Crown, color: 'var(--brand-primary)', label: 'Changed role of' },
                     deleted_post: { icon: Trash, color: '#DC2626', label: 'Deleted post' },
                     deleted_user: { icon: UserMinus, color: '#DC2626', label: 'Deleted user' },
                   };
-                  const config = actionConfig[log.action] || { icon: Notepad, color: '#78716C', label: log.action };
+                  const config = actionConfig[log.action] || { icon: Notepad, color: 'var(--text-muted)', label: log.action };
                   const ActionIcon = config.icon;
                   const timeAgo = getTimeAgo(log.created_at);
 

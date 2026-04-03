@@ -127,7 +127,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-[#78716C]">Loading your trade network...</div>
+        <div className="text-[var(--text-muted)]">Loading your trade network...</div>
       </div>
     );
   }
@@ -137,20 +137,20 @@ export default function TradeNetworkPanel({ onViewProfile }) {
   return (
     <div className="max-w-3xl mx-auto" data-testid="trade-network-panel">
       <div className="flex items-center gap-2 mb-4 md:mb-6">
-        <Handshake size={24} weight="duotone" className="text-[#B45309]" />
-        <h2 className="text-xl md:text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+        <Handshake size={24} weight="duotone" className="text-[var(--brand-primary)]" />
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
           My Trade Network
         </h2>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 md:gap-2 mb-4 md:mb-6 border-b border-[#292524] overflow-x-auto">
+      <div className="flex gap-1 md:gap-2 mb-4 md:mb-6 border-b border-[var(--bg-surface-hover)] overflow-x-auto">
         <button
           onClick={() => setActiveTab('recommended')}
           className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'recommended'
               ? 'text-[#F59E0B] border-[#F59E0B]'
-              : 'text-[#78716C] border-transparent hover:text-[#A8A29E]'
+              : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-secondary)]'
           }`}
           data-testid="tab-recommended"
         >
@@ -167,8 +167,8 @@ export default function TradeNetworkPanel({ onViewProfile }) {
           onClick={() => setActiveTab('connections')}
           className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${
             activeTab === 'connections'
-              ? 'text-[#B45309] border-[#B45309]'
-              : 'text-[#78716C] border-transparent hover:text-[#A8A29E]'
+              ? 'text-[var(--brand-primary)] border-[var(--brand-primary)]'
+              : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-secondary)]'
           }`}
           data-testid="tab-connections"
         >
@@ -179,15 +179,15 @@ export default function TradeNetworkPanel({ onViewProfile }) {
           onClick={() => setActiveTab('requests')}
           className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'requests'
-              ? 'text-[#B45309] border-[#B45309]'
-              : 'text-[#78716C] border-transparent hover:text-[#A8A29E]'
+              ? 'text-[var(--brand-primary)] border-[var(--brand-primary)]'
+              : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-secondary)]'
           }`}
           data-testid="tab-requests"
         >
           <UserPlus size={18} weight={activeTab === 'requests' ? 'fill' : 'regular'} />
           Requests
           {incomingCount > 0 && (
-            <span className="bg-[#B45309] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+            <span className="bg-[var(--brand-primary)] text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
               {incomingCount}
             </span>
           )}
@@ -232,7 +232,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <span 
-                          className="font-medium text-[#E7E5E4] truncate cursor-pointer hover:text-[#F59E0B]"
+                          className="font-medium text-[var(--text-primary)] truncate cursor-pointer hover:text-[#F59E0B]"
                           onClick={() => onViewProfile && onViewProfile(rec.id)}
                         >
                           {rec.name}
@@ -245,7 +245,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                         )}
                       </div>
                       {rec.location && (
-                        <div className="flex items-center gap-1 text-xs text-[#78716C] mb-2">
+                        <div className="flex items-center gap-1 text-xs text-[var(--text-muted)] mb-2">
                           <MapPin size={10} />
                           {rec.location}
                         </div>
@@ -258,7 +258,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       {rec.offers_you_want?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-1">
                           {rec.offers_you_want.map((item, i) => (
-                            <span key={`offers-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[#15803D]/20 text-[#22C55E] border border-[#15803D]/30">
+                            <span key={`offers-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[var(--brand-success)]/20 text-[#22C55E] border border-[var(--brand-success)]/30">
                               Offers: {item}
                             </span>
                           ))}
@@ -268,7 +268,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       {rec.wants_you_offer?.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {rec.wants_you_offer.map((item, i) => (
-                            <span key={`wants-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[#B45309]/20 text-[#F59E0B] border border-[#B45309]/30">
+                            <span key={`wants-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[var(--brand-primary)]/20 text-[#F59E0B] border border-[var(--brand-primary)]/30">
                               Wants: {item}
                             </span>
                           ))}
@@ -278,7 +278,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     <button
                       onClick={() => handleSendRequest(rec.id)}
                       disabled={actionLoading === rec.id}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-[#F59E0B] text-black text-sm font-medium hover:bg-[#D97706] transition-colors disabled:opacity-50 flex-shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-[#F59E0B] text-black text-sm font-medium hover:bg-[var(--brand-primary-hover)] transition-colors disabled:opacity-50 flex-shrink-0"
                       data-testid={`add-recommended-${rec.id}`}
                     >
                       <UserPlus size={16} />
@@ -307,10 +307,10 @@ export default function TradeNetworkPanel({ onViewProfile }) {
             connections.map((connection) => (
               <div
                 key={connection.id}
-                className="theme-surface border theme-border p-4 flex items-center gap-4 hover:border-[#B45309]/30 transition-colors"
+                className="theme-surface border theme-border p-4 flex items-center gap-4 hover:border-[var(--brand-primary)]/30 transition-colors"
                 data-testid={`connection-${connection.id}`}
               >
-                <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold text-lg flex-shrink-0">
+                <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-lg flex-shrink-0">
                   {connection.avatar ? (
                     <img src={connection.avatar} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -320,7 +320,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span 
-                      className="font-medium text-[#E7E5E4] truncate cursor-pointer hover:text-[#B45309]"
+                      className="font-medium text-[var(--text-primary)] truncate cursor-pointer hover:text-[var(--brand-primary)]"
                       onClick={() => onViewProfile && onViewProfile(connection.id)}
                     >
                       {connection.name}
@@ -333,7 +333,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     )}
                   </div>
                   {connection.location && (
-                    <div className="flex items-center gap-1 text-xs text-[#78716C] mt-0.5">
+                    <div className="flex items-center gap-1 text-xs text-[var(--text-muted)] mt-0.5">
                       <MapPin size={10} />
                       {connection.location}
                     </div>
@@ -346,7 +346,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                         </span>
                       ))}
                       {connection.skills.length > 3 && (
-                        <span className="text-[10px] text-[#78716C]">+{connection.skills.length - 3}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">+{connection.skills.length - 3}</span>
                       )}
                     </div>
                   )}
@@ -354,7 +354,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                 <button
                   onClick={() => handleRemoveConnection(connection.id)}
                   disabled={actionLoading === connection.id}
-                  className="p-2 text-[#991B1B] hover:bg-[#991B1B]/10 transition-colors disabled:opacity-50"
+                  className="p-2 text-[var(--brand-danger)] hover:bg-[var(--brand-danger)]/10 transition-colors disabled:opacity-50"
                   title="Remove from network"
                   data-testid={`remove-connection-${connection.id}`}
                 >
@@ -371,21 +371,21 @@ export default function TradeNetworkPanel({ onViewProfile }) {
         <div className="space-y-6" data-testid="requests-section">
           {/* Incoming Requests */}
           <div>
-            <h3 className="text-sm font-semibold text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3 flex items-center gap-2">
               <ArrowRight size={14} className="rotate-180" />
               Incoming Requests ({pendingRequests.incoming?.length || 0})
             </h3>
             {pendingRequests.incoming?.length === 0 ? (
-              <p className="text-sm text-[#78716C] italic">No pending requests</p>
+              <p className="text-sm text-[var(--text-muted)] italic">No pending requests</p>
             ) : (
               <div className="space-y-3">
                 {pendingRequests.incoming.map((request) => (
                   <div
                     key={request.id}
-                    className="theme-surface border border-[#B45309]/30 p-4 flex items-center gap-4"
+                    className="theme-surface border border-[var(--brand-primary)]/30 p-4 flex items-center gap-4"
                     data-testid={`incoming-request-${request.id}`}
                   >
-                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
+                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold flex-shrink-0">
                       {request.from_user_avatar ? (
                         <img src={request.from_user_avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -394,7 +394,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-[#E7E5E4]">{request.from_user_name}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{request.from_user_name}</span>
                         {request.is_verified && (
                           <span className="verified-badge">
                             <SealCheck size={10} weight="fill" />
@@ -402,7 +402,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-[#78716C]">
+                      <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
                         <Clock size={10} />
                         {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
                       </div>
@@ -411,7 +411,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       <button
                         onClick={() => handleAcceptRequest(request.id)}
                         disabled={actionLoading === request.id}
-                        className="p-2 bg-[#15803D]/20 text-[#22C55E] hover:bg-[#15803D]/30 transition-colors disabled:opacity-50"
+                        className="p-2 bg-[var(--brand-success)]/20 text-[#22C55E] hover:bg-[var(--brand-success)]/30 transition-colors disabled:opacity-50"
                         title="Accept"
                         data-testid={`accept-request-${request.id}`}
                       >
@@ -420,7 +420,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                       <button
                         onClick={() => handleDeclineRequest(request.id)}
                         disabled={actionLoading === request.id}
-                        className="p-2 bg-[#991B1B]/20 text-[#EF4444] hover:bg-[#991B1B]/30 transition-colors disabled:opacity-50"
+                        className="p-2 bg-[var(--brand-danger)]/20 text-[#EF4444] hover:bg-[var(--brand-danger)]/30 transition-colors disabled:opacity-50"
                         title="Decline"
                         data-testid={`decline-request-${request.id}`}
                       >
@@ -435,12 +435,12 @@ export default function TradeNetworkPanel({ onViewProfile }) {
 
           {/* Outgoing Requests */}
           <div>
-            <h3 className="text-sm font-semibold text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3 flex items-center gap-2">
               <ArrowRight size={14} />
               Sent Requests ({pendingRequests.outgoing?.length || 0})
             </h3>
             {pendingRequests.outgoing?.length === 0 ? (
-              <p className="text-sm text-[#78716C] italic">No pending requests</p>
+              <p className="text-sm text-[var(--text-muted)] italic">No pending requests</p>
             ) : (
               <div className="space-y-3">
                 {pendingRequests.outgoing.map((request) => (
@@ -449,7 +449,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     className="theme-surface border theme-border p-4 flex items-center gap-4"
                     data-testid={`outgoing-request-${request.id}`}
                   >
-                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[#B45309] font-semibold flex-shrink-0">
+                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold flex-shrink-0">
                       {request.to_user_avatar ? (
                         <img src={request.to_user_avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -458,7 +458,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-[#E7E5E4]">{request.to_user_name}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{request.to_user_name}</span>
                         {request.is_verified && (
                           <span className="verified-badge">
                             <SealCheck size={10} weight="fill" />
@@ -466,7 +466,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-[#78716C]">
+                      <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
                         <Clock size={10} />
                         Sent {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
                       </div>
@@ -474,7 +474,7 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                     <button
                       onClick={() => handleCancelRequest(request.id)}
                       disabled={actionLoading === request.id}
-                      className="px-3 py-1.5 text-xs border border-[#44403C] text-[#A8A29E] hover:border-[#991B1B] hover:text-[#EF4444] transition-colors disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs border border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:border-[var(--brand-danger)] hover:text-[#EF4444] transition-colors disabled:opacity-50"
                       data-testid={`cancel-request-${request.id}`}
                     >
                       Cancel

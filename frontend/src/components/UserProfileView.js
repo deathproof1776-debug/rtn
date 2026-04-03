@@ -29,11 +29,11 @@ function ExpandableBio({ bio, charLimit = 150 }) {
   
   return (
     <div>
-      <p className="text-sm text-[#A8A29E]">{displayText}</p>
+      <p className="text-sm text-[var(--text-secondary)]">{displayText}</p>
       {needsTruncation && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs text-[#B45309] hover:text-[#D97706] mt-1 transition-colors"
+          className="flex items-center gap-1 text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] mt-1 transition-colors"
           data-testid="expand-bio"
         >
           {expanded ? (
@@ -65,15 +65,15 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
   const hasMore = items.length > initialLimit;
   
   return (
-    <div className="bg-[#0C0A09] p-3 border border-[#292524]">
+    <div className="bg-[var(--bg-main)] p-3 border border-[var(--bg-surface-hover)]">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs uppercase tracking-wider font-semibold" style={{ color: iconColor }}>
-          {title} <span className="text-[#78716C] font-normal">({items.length})</span>
+          {title} <span className="text-[var(--text-muted)] font-normal">({items.length})</span>
         </div>
         {hasMore && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-[#78716C] hover:text-[#B45309] transition-colors"
+            className="flex items-center gap-1 text-xs text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors"
             data-testid={`expand-${title.toLowerCase().replace(/\s+/g, '-')}`}
           >
             {expanded ? (
@@ -107,15 +107,15 @@ function ExpandableSection({ title, items, badgeClass, icon: Icon, iconColor, in
               
               {/* Details tooltip */}
               {isShowingDetails && hasDetails && (
-                <div className="absolute z-50 left-0 top-full mt-1 bg-[#1C1917] border border-[#44403C] p-2 min-w-[180px] max-w-[250px] text-[10px] shadow-lg">
+                <div className="absolute z-50 left-0 top-full mt-1 bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] p-2 min-w-[180px] max-w-[250px] text-[10px] shadow-lg">
                   {itemData.quantity && (
-                    <div className="text-[#A8A29E] mb-1">
-                      <span className="text-[#78716C]">Qty:</span> {itemData.quantity}
+                    <div className="text-[var(--text-secondary)] mb-1">
+                      <span className="text-[var(--text-muted)]">Qty:</span> {itemData.quantity}
                     </div>
                   )}
                   {itemData.description && (
-                    <div className="text-[#A8A29E]">
-                      <span className="text-[#78716C]">Details:</span> {itemData.description}
+                    <div className="text-[var(--text-secondary)]">
+                      <span className="text-[var(--text-muted)]">Details:</span> {itemData.description}
                     </div>
                   )}
                 </div>
@@ -236,8 +236,8 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-[#1C1917] border border-[#292524] p-8 max-w-lg w-full">
-          <div className="text-[#78716C] text-center">Loading profile...</div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-hover)] p-8 max-w-lg w-full">
+          <div className="text-[var(--text-muted)] text-center">Loading profile...</div>
         </div>
       </div>
     );
@@ -246,8 +246,8 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
   if (!profile) {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-[#1C1917] border border-[#292524] p-8 max-w-lg w-full text-center">
-          <p className="text-[#A8A29E]">User not found</p>
+        <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-hover)] p-8 max-w-lg w-full text-center">
+          <p className="text-[var(--text-secondary)]">User not found</p>
           <button onClick={onClose} className="btn-secondary mt-4">Close</button>
         </div>
       </div>
@@ -258,13 +258,13 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" data-testid="user-profile-modal">
-      <div className="bg-[#1C1917] border border-[#B45309] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--bg-surface)] border border-[var(--brand-primary)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#292524]">
-          <h2 className="text-lg font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+        <div className="flex items-center justify-between p-4 border-b border-[var(--bg-surface-hover)]">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Trader Profile
           </h2>
-          <button onClick={onClose} className="p-1.5 text-[#78716C] hover:text-[#E7E5E4]" data-testid="close-profile-modal">
+          <button onClick={onClose} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]" data-testid="close-profile-modal">
             <X size={20} />
           </button>
         </div>
@@ -273,7 +273,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
         <div className="p-4 md:p-6 space-y-5">
           {/* Avatar & Basic Info */}
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-[#292524] flex items-center justify-center text-[#B45309] text-2xl font-bold flex-shrink-0">
+            <div className="w-16 h-16 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-2xl font-bold flex-shrink-0">
               {profile.avatar ? (
                 <img src={profile.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -282,7 +282,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-semibold text-[#E7E5E4]">{profile.name}</h3>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{profile.name}</h3>
                 {profile.is_verified && (
                   <span className="verified-badge verified-badge-lg" data-testid="profile-verified">
                     <SealCheck size={12} weight="fill" />
@@ -291,7 +291,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                 )}
               </div>
               {profile.location && (
-                <div className="flex items-center gap-1 text-sm text-[#78716C] mt-1">
+                <div className="flex items-center gap-1 text-sm text-[var(--text-muted)] mt-1">
                   <MapPin size={14} />
                   {profile.location}
                 </div>
@@ -304,14 +304,14 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
             <div className="flex flex-wrap gap-2">
               {networkStatus.status === 'connected' && (
                 <>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#15803D]/20 text-[#22C55E] text-sm">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-success)]/20 text-[#22C55E] text-sm">
                     <Handshake size={16} weight="fill" />
                     In Your Network
                   </div>
                   <button
                     onClick={handleRemoveConnection}
                     disabled={actionLoading}
-                    className="px-3 py-1.5 border border-[#991B1B] text-[#EF4444] text-sm hover:bg-[#991B1B]/10 disabled:opacity-50"
+                    className="px-3 py-1.5 border border-[var(--brand-danger)] text-[#EF4444] text-sm hover:bg-[var(--brand-danger)]/10 disabled:opacity-50"
                     data-testid="remove-from-network-btn"
                   >
                     Remove
@@ -322,7 +322,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                 <button
                   onClick={handleCancelRequest}
                   disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-[var(--brand-primary)] disabled:opacity-50"
                   data-testid="cancel-request-btn"
                 >
                   <Clock size={16} />
@@ -333,7 +333,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                 <button
                   onClick={handleAcceptRequest}
                   disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#B45309] text-white text-sm hover:bg-[#92400E] disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-primary)] text-white text-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
                   data-testid="accept-request-btn"
                 >
                   <UserPlus size={16} />
@@ -344,7 +344,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                 <button
                   onClick={handleSendRequest}
                   disabled={actionLoading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#B45309] text-white text-sm hover:bg-[#92400E] disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-primary)] text-white text-sm hover:bg-[var(--brand-primary-hover)] disabled:opacity-50"
                   data-testid="add-to-network-btn"
                 >
                   <UserPlus size={16} />
@@ -353,7 +353,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               )}
               <button
                 onClick={() => onStartChat && onStartChat(userId)}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] hover:text-[#B45309]"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                 data-testid="message-user-btn"
               >
                 <ChatCircle size={16} />
@@ -366,7 +366,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                     onProposeTrade(userId, profile?.name || 'Unknown');
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] hover:text-[#B45309]"
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                 data-testid="propose-trade-user-btn"
               >
                 <ArrowsLeftRight size={16} />
@@ -380,7 +380,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                       onViewGallery(userId, profile?.name || 'Unknown');
                     }
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[#44403C] text-[#A8A29E] text-sm hover:border-[#B45309] hover:text-[#B45309]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                   data-testid="view-gallery-btn"
                 >
                   <Images size={16} />
@@ -402,7 +402,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               items={profile.skills}
               badgeClass="tag"
               icon={Tag}
-              iconColor="#B45309"
+              iconColor="var(--brand-primary)"
               initialLimit={6}
             />
           )}
@@ -413,7 +413,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               title="Goods Offering"
               items={profile.goods_offering}
               badgeClass="badge-offering"
-              iconColor="#4D7C0F"
+              iconColor="var(--brand-accent)"
               initialLimit={5}
             />
 
@@ -421,7 +421,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               title="Goods Wanted"
               items={profile.goods_wanted}
               badgeClass="badge-looking"
-              iconColor="#B45309"
+              iconColor="var(--brand-primary)"
               initialLimit={5}
             />
 
@@ -429,7 +429,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               title="Services Offering"
               items={profile.services_offering}
               badgeClass="badge-offering"
-              iconColor="#4D7C0F"
+              iconColor="var(--brand-accent)"
               initialLimit={5}
             />
 
@@ -437,7 +437,7 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
               title="Services Wanted"
               items={profile.services_wanted}
               badgeClass="badge-looking"
-              iconColor="#B45309"
+              iconColor="var(--brand-primary)"
               initialLimit={5}
             />
           </div>

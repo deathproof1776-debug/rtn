@@ -134,7 +134,7 @@ export default function ProfilePanel() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-[#78716C]">Loading profile...</div>
+        <div className="text-[var(--text-muted)]">Loading profile...</div>
       </div>
     );
   }
@@ -142,23 +142,23 @@ export default function ProfilePanel() {
   return (
     <div className="max-w-2xl mx-auto" data-testid="profile-panel">
       <div className="flex items-center gap-2 mb-4 md:mb-6">
-        <User size={22} weight="duotone" className="text-[#B45309]" />
-        <h2 className="text-xl md:text-2xl font-bold text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+        <User size={22} weight="duotone" className="text-[var(--brand-primary)]" />
+        <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
           Your Profile
         </h2>
       </div>
 
       {message && (
-        <div className={`mb-4 px-3 md:px-4 py-2.5 md:py-3 text-sm ${message.includes('Error') ? 'bg-[#991B1B]/20 border border-[#991B1B]' : 'bg-[#15803D]/20 border border-[#15803D]'} text-[#E7E5E4]`}>
+        <div className={`mb-4 px-3 md:px-4 py-2.5 md:py-3 text-sm ${message.includes('Error') ? 'bg-[var(--brand-danger)]/20 border border-[var(--brand-danger)]' : 'bg-[var(--brand-success)]/20 border border-[var(--brand-success)]'} text-[var(--text-primary)]`}>
           {message}
         </div>
       )}
 
-      <div className="bg-[#1C1917] border border-[#292524] p-4 md:p-6 space-y-5 md:space-y-6">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 md:p-6 space-y-5 md:space-y-6">
         {/* Avatar */}
         <div className="flex items-center gap-3 md:gap-4">
           <div className="relative">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-[#292524] flex items-center justify-center text-[#B45309] text-xl md:text-2xl font-bold overflow-hidden flex-shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-xl md:text-2xl font-bold overflow-hidden flex-shrink-0">
               {profile.avatar ? (
                 <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -167,7 +167,7 @@ export default function ProfilePanel() {
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-8 md:h-8 bg-[#B45309] flex items-center justify-center"
+              className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-8 md:h-8 bg-[var(--brand-primary)] text-white flex items-center justify-center"
             >
               <Camera size={14} />
             </button>
@@ -181,7 +181,7 @@ export default function ProfilePanel() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base md:text-lg font-semibold text-[#E7E5E4] truncate">{profile.name || 'Your Name'}</h3>
+              <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] truncate">{profile.name || 'Your Name'}</h3>
               {profile.is_verified && (
                 <span className="verified-badge verified-badge-lg" data-testid="profile-verified-badge">
                   <SealCheck size={12} weight="fill" />
@@ -189,10 +189,10 @@ export default function ProfilePanel() {
                 </span>
               )}
             </div>
-            <p className="text-xs md:text-sm text-[#78716C]">Tap the camera to change avatar</p>
+            <p className="text-xs md:text-sm text-[var(--text-muted)]">Tap the camera to change avatar</p>
             <button
               onClick={() => setShowGallery(true)}
-              className="mt-2 flex items-center gap-1.5 text-xs text-[#B45309] hover:text-[#D97706] transition-colors"
+              className="mt-2 flex items-center gap-1.5 text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] transition-colors"
               data-testid="view-my-gallery-btn"
             >
               <Images size={14} />
@@ -204,7 +204,7 @@ export default function ProfilePanel() {
         {/* Basic Info */}
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">Name</label>
+            <label className="block text-xs md:text-sm text-[var(--text-secondary)] mb-1.5 md:mb-2">Name</label>
             <input
               type="text"
               value={profile.name}
@@ -214,7 +214,7 @@ export default function ProfilePanel() {
             />
           </div>
           <div>
-            <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">
+            <label className="block text-xs md:text-sm text-[var(--text-secondary)] mb-1.5 md:mb-2">
               <MapPin size={12} className="inline mr-1" />
               Location
             </label>
@@ -230,7 +230,7 @@ export default function ProfilePanel() {
         </div>
 
         <div>
-          <label className="block text-xs md:text-sm text-[#A8A29E] mb-1.5 md:mb-2">Bio</label>
+          <label className="block text-xs md:text-sm text-[var(--text-secondary)] mb-1.5 md:mb-2">Bio</label>
           <textarea
             value={profile.bio}
             onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
@@ -241,10 +241,10 @@ export default function ProfilePanel() {
         </div>
 
         {/* Skills Section */}
-        <div className="border-t border-[#292524] pt-5">
+        <div className="border-t border-[var(--border-color)] pt-5">
           <div className="flex items-center gap-2 mb-4">
-            <Wrench size={18} className="text-[#B45309]" />
-            <h3 className="text-base font-semibold text-[#E7E5E4]">Skills</h3>
+            <Wrench size={18} className="text-[var(--brand-primary)]" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">Skills</h3>
           </div>
           <CategorySelector
             type="skills"
@@ -256,10 +256,10 @@ export default function ProfilePanel() {
         </div>
 
         {/* Goods Section */}
-        <div className="border-t border-[#292524] pt-5">
+        <div className="border-t border-[var(--border-color)] pt-5">
           <div className="flex items-center gap-2 mb-4">
-            <Carrot size={18} className="text-[#B45309]" />
-            <h3 className="text-base font-semibold text-[#E7E5E4]">Goods</h3>
+            <Carrot size={18} className="text-[var(--brand-primary)]" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">Goods</h3>
           </div>
           
           <div className="space-y-4">
@@ -284,10 +284,10 @@ export default function ProfilePanel() {
         </div>
 
         {/* Services Section */}
-        <div className="border-t border-[#292524] pt-5">
+        <div className="border-t border-[var(--border-color)] pt-5">
           <div className="flex items-center gap-2 mb-4">
-            <Briefcase size={18} className="text-[#B45309]" />
-            <h3 className="text-base font-semibold text-[#E7E5E4]">Services</h3>
+            <Briefcase size={18} className="text-[var(--brand-primary)]" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">Services</h3>
           </div>
           
           <div className="space-y-4">
@@ -312,16 +312,16 @@ export default function ProfilePanel() {
         </div>
 
         {/* My Trade Network Summary */}
-        <div className="bg-[#0C0A09] p-4 border border-[#292524]">
+        <div className="bg-[var(--bg-main)] p-4 border border-[var(--border-color)]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Handshake size={18} className="text-[#B45309]" />
-              <span className="text-sm font-semibold text-[#E7E5E4]">My Trade Network</span>
+              <Handshake size={18} className="text-[var(--brand-primary)]" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">My Trade Network</span>
             </div>
-            <span className="text-xs text-[#78716C]">{networkConnections.length} connections</span>
+            <span className="text-xs text-[var(--text-muted)]">{networkConnections.length} connections</span>
           </div>
           {networkConnections.length === 0 ? (
-            <p className="text-xs text-[#78716C]">
+            <p className="text-xs text-[var(--text-muted)]">
               Build your network by connecting with other traders
             </p>
           ) : (
@@ -329,22 +329,22 @@ export default function ProfilePanel() {
               {networkConnections.slice(0, 6).map((conn) => (
                 <div 
                   key={conn.id} 
-                  className="flex items-center gap-1.5 px-2 py-1 bg-[#1C1917] border border-[#292524]"
+                  className="flex items-center gap-1.5 px-2 py-1 bg-[var(--bg-surface)] border border-[var(--border-color)]"
                   title={conn.name}
                 >
-                  <div className="w-5 h-5 bg-[#292524] flex items-center justify-center text-[#B45309] text-[10px] font-semibold">
+                  <div className="w-5 h-5 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-[10px] font-semibold">
                     {conn.avatar ? (
                       <img src={conn.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
                       conn.name?.charAt(0)?.toUpperCase() || 'U'
                     )}
                   </div>
-                  <span className="text-xs text-[#A8A29E] truncate max-w-[80px]">{conn.name}</span>
-                  {conn.is_verified && <SealCheck size={10} className="text-[#B45309] flex-shrink-0" weight="fill" />}
+                  <span className="text-xs text-[var(--text-secondary)] truncate max-w-[80px]">{conn.name}</span>
+                  {conn.is_verified && <SealCheck size={10} className="text-[var(--brand-primary)] flex-shrink-0" weight="fill" />}
                 </div>
               ))}
               {networkConnections.length > 6 && (
-                <span className="text-xs text-[#78716C] self-center">+{networkConnections.length - 6} more</span>
+                <span className="text-xs text-[var(--text-muted)] self-center">+{networkConnections.length - 6} more</span>
               )}
             </div>
           )}
@@ -364,7 +364,7 @@ export default function ProfilePanel() {
       {/* Gallery Modal */}
       {showGallery && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#1C1917] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-[var(--bg-surface)] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <Gallery 
               userId={user?.id}
               isOwnProfile={true}

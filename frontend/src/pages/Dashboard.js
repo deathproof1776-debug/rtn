@@ -124,8 +124,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0C0A09] flex items-center justify-center">
-        <div className="text-[#A8A29E]">Loading...</div>
+      <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
+        <div className="text-[var(--text-secondary)]">Loading...</div>
       </div>
     );
   }

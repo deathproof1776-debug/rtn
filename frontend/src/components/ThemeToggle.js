@@ -8,11 +8,7 @@ export default function ThemeToggle({ className = '' }) {
   return (
     <button
       onClick={toggleTheme}
-      className={`relative p-2 rounded-lg transition-all duration-300 ${
-        isDark 
-          ? 'bg-stone-800 hover:bg-stone-700 text-amber-500' 
-          : 'bg-[#D0C7B8] hover:bg-[#C4B9A8] text-[#8B5A2B]'
-      } ${className}`}
+      className={`relative p-2 rounded-lg transition-all duration-300 bg-[var(--bg-surface-hover)] hover:bg-[var(--bg-surface-active)] text-[var(--brand-primary)] ${className}`}
       data-testid="theme-toggle"
       title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}

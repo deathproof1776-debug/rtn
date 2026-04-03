@@ -25,13 +25,13 @@ function InviteGate() {
          }}>
       <div className="absolute inset-0 bg-black/70"></div>
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
-        <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#991B1B] p-8 text-center" data-testid="invite-gate">
-          <WarningCircle size={48} weight="duotone" className="text-[#991B1B] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#E7E5E4] mb-3">Invite Required</h2>
-          <p className="text-[#A8A29E] mb-6">
+        <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] border-t-[3px] border-t-[var(--brand-danger)] p-8 text-center" data-testid="invite-gate">
+          <WarningCircle size={48} weight="duotone" className="text-[var(--brand-danger)] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-3">Invite Required</h2>
+          <p className="text-[var(--text-secondary)] mb-6">
             Rebel Trade Network is invite-only. You need a valid invitation link from an existing member to join.
           </p>
-          <p className="text-[#78716C] text-sm mb-6">
+          <p className="text-[var(--text-muted)] text-sm mb-6">
             Know someone in the network? Ask them to send you an invite link.
           </p>
           <Link to="/login" className="btn-primary inline-flex items-center gap-2" data-testid="back-to-login-link">
@@ -121,8 +121,8 @@ export default function Register() {
   // No invite token or invalid token — show gate
   if (inviteValid === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0C0A09]">
-        <div className="text-[#A8A29E]">Validating invite...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main)]">
+        <div className="text-[var(--text-secondary)]">Validating invite...</div>
       </div>
     );
   }
@@ -138,10 +138,10 @@ export default function Register() {
              }}>
           <div className="absolute inset-0 bg-black/70"></div>
           <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
-            <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#991B1B] p-8 text-center" data-testid="invite-expired">
-              <WarningCircle size={48} weight="duotone" className="text-[#991B1B] mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-[#E7E5E4] mb-3">Invalid Invite</h2>
-              <p className="text-[#A8A29E] mb-6">{inviteError}</p>
+            <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] border-t-[3px] border-t-[var(--brand-danger)] p-8 text-center" data-testid="invite-expired">
+              <WarningCircle size={48} weight="duotone" className="text-[var(--brand-danger)] mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-3">Invalid Invite</h2>
+              <p className="text-[var(--text-secondary)] mb-6">{inviteError}</p>
               <Link to="/login" className="btn-primary inline-flex items-center gap-2" data-testid="back-to-login-link">
                 Back to Sign In
               </Link>
@@ -163,34 +163,34 @@ export default function Register() {
       <div className="absolute inset-0 bg-black/70"></div>
       
       <div className="relative z-10 w-full max-w-md p-8 animate-fade-in">
-        <div className="bg-[#1C1917] border border-[#44403C] border-t-[3px] border-t-[#B45309] p-8">
+        <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] border-t-[3px] border-t-[var(--brand-primary)] p-8">
           <div className="flex items-center gap-3 mb-8">
-            <Shield size={40} weight="duotone" className="text-[#B45309]" />
+            <Shield size={40} weight="duotone" className="text-[var(--brand-primary)]" />
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-[#E7E5E4]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
+              <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
                 REBEL TRADE NETWORK
               </h1>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#78716C]">Exit the Matrix</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Exit the Matrix</p>
             </div>
           </div>
 
           {invitedBy && (
-            <div className="bg-[#B45309]/10 border border-[#B45309]/30 text-[#E7E5E4] px-4 py-3 mb-6 text-sm" data-testid="invite-info">
-              You've been invited by <span className="font-semibold text-[#B45309]">{invitedBy}</span>
+            <div className="bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 text-[var(--text-primary)] px-4 py-3 mb-6 text-sm" data-testid="invite-info">
+              You've been invited by <span className="font-semibold text-[var(--brand-primary)]">{invitedBy}</span>
             </div>
           )}
 
-          <h2 className="text-xl font-semibold text-[#E7E5E4] mb-6">Join the Network</h2>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">Join the Network</h2>
 
           {error && (
-            <div className="bg-[#991B1B]/20 border border-[#991B1B] text-[#E7E5E4] px-4 py-3 mb-6" data-testid="register-error">
+            <div className="bg-[var(--brand-danger)]/20 border border-[var(--brand-danger)] text-[var(--text-primary)] px-4 py-3 mb-6" data-testid="register-error">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Name</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Name</label>
               <input
                 type="text"
                 value={name}
@@ -203,7 +203,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Email</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Email</label>
               <input
                 type="email"
                 value={email}
@@ -216,7 +216,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">
                 <MapPin size={16} className="inline mr-1" />
                 Location (Region/Area)
               </label>
@@ -231,7 +231,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Password</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -245,7 +245,7 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#E7E5E4]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 >
                   {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
                 </button>
@@ -253,7 +253,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm text-[#A8A29E] mb-2">Confirm Password</label>
+              <label className="block text-sm text-[var(--text-secondary)] mb-2">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
@@ -266,12 +266,12 @@ export default function Register() {
             </div>
 
             {/* Community Guidelines & Terms Acceptance */}
-            <div className="bg-[#292524] border border-[#44403C] p-4 mt-4">
+            <div className="bg-[var(--bg-surface-hover)] border border-[var(--bg-surface-active)] p-4 mt-4">
               <div className="flex items-start gap-3">
                 <button
                   type="button"
                   onClick={() => setAcceptedTerms(!acceptedTerms)}
-                  className="mt-0.5 text-[#B45309] hover:text-[#D97706] transition-colors flex-shrink-0"
+                  className="mt-0.5 text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] transition-colors flex-shrink-0"
                   data-testid="terms-checkbox"
                 >
                   {acceptedTerms ? (
@@ -281,19 +281,19 @@ export default function Register() {
                   )}
                 </button>
                 <div className="text-sm">
-                  <p className="text-[#E7E5E4] mb-2">
+                  <p className="text-[var(--text-primary)] mb-2">
                     I have read and agree to the{' '}
                     <button
                       type="button"
                       onClick={() => setShowTermsModal(true)}
-                      className="text-[#B45309] hover:text-[#D97706] underline inline-flex items-center gap-1"
+                      className="text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] underline inline-flex items-center gap-1"
                       data-testid="view-terms-button"
                     >
                       <FileText size={14} />
                       Community Guidelines & Terms
                     </button>
                   </p>
-                  <p className="text-[#78716C] text-xs leading-relaxed">
+                  <p className="text-[var(--text-muted)] text-xs leading-relaxed">
                     By joining, I acknowledge that I am solely responsible for all trade deals I make on this platform, and the creators of Rebel Trade Network are not liable for any transactions.
                   </p>
                 </div>
@@ -315,9 +315,9 @@ export default function Register() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[#78716C]">
+          <p className="mt-6 text-center text-[var(--text-muted)]">
             Already a member?{' '}
-            <Link to="/login" className="text-[#B45309] hover:text-[#92400E]" data-testid="login-link">
+            <Link to="/login" className="text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)]" data-testid="login-link">
               Sign In
             </Link>
           </p>
@@ -327,78 +327,78 @@ export default function Register() {
       {/* Terms Modal */}
       {showTermsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" data-testid="terms-modal">
-          <div className="bg-[#1C1917] border border-[#44403C] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col animate-fade-in">
-            <div className="flex items-center justify-between p-4 border-b border-[#44403C]">
+          <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col animate-fade-in">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--bg-surface-active)]">
               <div className="flex items-center gap-2">
-                <FileText size={24} className="text-[#B45309]" />
-                <h3 className="text-lg font-semibold text-[#E7E5E4]">Community Guidelines & Terms</h3>
+                <FileText size={24} className="text-[var(--brand-primary)]" />
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Community Guidelines & Terms</h3>
               </div>
               <button
                 onClick={() => setShowTermsModal(false)}
-                className="text-[#78716C] hover:text-[#E7E5E4] text-2xl leading-none"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-2xl leading-none"
                 data-testid="close-terms-modal"
               >
                 ×
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto flex-1 space-y-6 text-[#A8A29E]">
+            <div className="p-6 overflow-y-auto flex-1 space-y-6 text-[var(--text-secondary)]">
               {/* Prohibited Activities */}
               <section>
-                <h4 className="text-[#E7E5E4] font-semibold mb-3 flex items-center gap-2">
-                  <WarningCircle size={20} className="text-[#991B1B]" />
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3 flex items-center gap-2">
+                  <WarningCircle size={20} className="text-[var(--brand-danger)]" />
                   Prohibited Activities
                 </h4>
                 <ul className="space-y-2 text-sm list-disc list-inside">
-                  <li><span className="text-[#991B1B] font-semibold">User is responsible for following all applicable laws.</span> You are solely responsible for ensuring that any items you trade, sell, or exchange comply with all local, state, and federal laws. This includes but is not limited to controlled substances, regulated goods, and any items prohibited in your jurisdiction.</li>
-                  <li><span className="text-[#991B1B] font-semibold">No weapons trafficking.</span> Trading of firearms, explosives, or other regulated weapons must comply with all applicable laws and regulations.</li>
-                  <li><span className="text-[#991B1B] font-semibold">No counterfeit goods.</span> Fake, fraudulent, or misrepresented items are not allowed.</li>
+                  <li><span className="text-[var(--brand-danger)] font-semibold">User is responsible for following all applicable laws.</span> You are solely responsible for ensuring that any items you trade, sell, or exchange comply with all local, state, and federal laws. This includes but is not limited to controlled substances, regulated goods, and any items prohibited in your jurisdiction.</li>
+                  <li><span className="text-[var(--brand-danger)] font-semibold">No weapons trafficking.</span> Trading of firearms, explosives, or other regulated weapons must comply with all applicable laws and regulations.</li>
+                  <li><span className="text-[var(--brand-danger)] font-semibold">No counterfeit goods.</span> Fake, fraudulent, or misrepresented items are not allowed.</li>
                 </ul>
               </section>
 
               {/* Community Standards */}
               <section>
-                <h4 className="text-[#E7E5E4] font-semibold mb-3 flex items-center gap-2">
-                  <Shield size={20} className="text-[#B45309]" />
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3 flex items-center gap-2">
+                  <Shield size={20} className="text-[var(--brand-primary)]" />
                   Community Standards
                 </h4>
                 <ul className="space-y-2 text-sm list-disc list-inside">
-                  <li><span className="text-[#B45309] font-semibold">No harassment.</span> Bullying, intimidation, stalking, or any form of harassment towards other members will not be tolerated.</li>
-                  <li><span className="text-[#B45309] font-semibold">No threats or violence.</span> Any threats of violence, promotion of violence, or incitement to harm others is strictly prohibited and may be reported to authorities.</li>
-                  <li><span className="text-[#B45309] font-semibold">No hate speech.</span> Discrimination, slurs, or hateful content targeting individuals or groups is not allowed.</li>
-                  <li><span className="text-[#B45309] font-semibold">Respect privacy.</span> Do not share other members' personal information without consent.</li>
+                  <li><span className="text-[var(--brand-primary)] font-semibold">No harassment.</span> Bullying, intimidation, stalking, or any form of harassment towards other members will not be tolerated.</li>
+                  <li><span className="text-[var(--brand-primary)] font-semibold">No threats or violence.</span> Any threats of violence, promotion of violence, or incitement to harm others is strictly prohibited and may be reported to authorities.</li>
+                  <li><span className="text-[var(--brand-primary)] font-semibold">No hate speech.</span> Discrimination, slurs, or hateful content targeting individuals or groups is not allowed.</li>
+                  <li><span className="text-[var(--brand-primary)] font-semibold">Respect privacy.</span> Do not share other members' personal information without consent.</li>
                 </ul>
               </section>
 
               {/* Liability Disclaimer */}
-              <section className="bg-[#292524] border border-[#44403C] p-4">
-                <h4 className="text-[#E7E5E4] font-semibold mb-3">Liability Disclaimer</h4>
+              <section className="bg-[var(--bg-surface-hover)] border border-[var(--bg-surface-active)] p-4">
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3">Liability Disclaimer</h4>
                 <div className="text-sm space-y-3">
                   <p>
-                    <strong className="text-[#E7E5E4]">User Responsibility:</strong> You are solely responsible for any and all trade deals, transactions, communications, and interactions you engage in through Rebel Trade Network. This includes verifying the legitimacy of items, the trustworthiness of trading partners, and ensuring compliance with all applicable laws.
+                    <strong className="text-[var(--text-primary)]">User Responsibility:</strong> You are solely responsible for any and all trade deals, transactions, communications, and interactions you engage in through Rebel Trade Network. This includes verifying the legitimacy of items, the trustworthiness of trading partners, and ensuring compliance with all applicable laws.
                   </p>
                   <p>
-                    <strong className="text-[#E7E5E4]">No Liability:</strong> The creators, operators, and administrators of Rebel Trade Network are NOT liable for any losses, damages, disputes, injuries, or legal consequences arising from trades, transactions, or interactions made through this platform.
+                    <strong className="text-[var(--text-primary)]">No Liability:</strong> The creators, operators, and administrators of Rebel Trade Network are NOT liable for any losses, damages, disputes, injuries, or legal consequences arising from trades, transactions, or interactions made through this platform.
                   </p>
                   <p>
-                    <strong className="text-[#E7E5E4]">Trade at Your Own Risk:</strong> All trades are conducted at your own risk. We do not guarantee, verify, or endorse any items, services, or members on this platform.
+                    <strong className="text-[var(--text-primary)]">Trade at Your Own Risk:</strong> All trades are conducted at your own risk. We do not guarantee, verify, or endorse any items, services, or members on this platform.
                   </p>
                 </div>
               </section>
 
               {/* Enforcement */}
               <section>
-                <h4 className="text-[#E7E5E4] font-semibold mb-3">Enforcement</h4>
+                <h4 className="text-[var(--text-primary)] font-semibold mb-3">Enforcement</h4>
                 <p className="text-sm">
                   Violations of these guidelines may result in warnings, suspension, or permanent removal from the network. Severe violations may be reported to appropriate law enforcement agencies.
                 </p>
               </section>
             </div>
 
-            <div className="p-4 border-t border-[#44403C] flex gap-3">
+            <div className="p-4 border-t border-[var(--bg-surface-active)] flex gap-3">
               <button
                 onClick={() => setShowTermsModal(false)}
-                className="flex-1 py-2 px-4 border border-[#44403C] text-[#A8A29E] hover:bg-[#292524] transition-colors"
+                className="flex-1 py-2 px-4 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
                 data-testid="terms-close-button"
               >
                 Close

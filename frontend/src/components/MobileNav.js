@@ -30,7 +30,7 @@ export default function MobileNav({ activeView, setActiveView, onCreatePost, net
             aria-label={item.label}
           >
             {isCreate ? (
-              <div className="w-10 h-10 rounded-full bg-[#B45309] flex items-center justify-center -mt-4 shadow-lg">
+              <div className="w-10 h-10 rounded-full bg-[var(--brand-primary)] flex items-center justify-center -mt-4 shadow-lg">
                 <item.icon size={22} weight="bold" className="text-white" />
               </div>
             ) : (
@@ -40,7 +40,7 @@ export default function MobileNav({ activeView, setActiveView, onCreatePost, net
                   weight={isActive ? 'fill' : 'regular'} 
                 />
                 {item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#B45309] text-white text-[9px] px-1 py-0.5 rounded-full min-w-[14px] text-center leading-none">
+                  <span className="absolute -top-1 -right-1 bg-[var(--brand-primary)] text-white text-[9px] px-1 py-0.5 rounded-full min-w-[14px] text-center leading-none">
                     {item.badge}
                   </span>
                 )}
