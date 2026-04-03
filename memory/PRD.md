@@ -17,10 +17,34 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Architecture
 - **Backend**: FastAPI + MongoDB + WebSocket + pywebpush
+  - **Modular Routes Structure** (Refactored April 3, 2026):
+    - server.py (~200 lines) - Entry point, WebSocket, startup
+    - routes/__init__.py - Route aggregator
+    - routes/auth.py - Authentication endpoints
+    - routes/posts.py - Posts and comments
+    - routes/network.py - Trade network connections
+    - routes/trades.py - Trade deals
+    - routes/gallery.py - Gallery uploads
+    - routes/profile.py - User profiles + nearby users
+    - routes/admin.py - Admin dashboard
+    - routes/categories.py - Category data
+    - routes/invites.py - Invite system
+    - routes/messaging.py - Direct messages
+    - routes/notifications.py - Push notifications
+    - routes/uploads.py - File uploads
+    - database.py - MongoDB connection and encryption
+    - auth.py - Auth helpers (JWT, password hashing)
+    - models.py - Pydantic models
+    - websocket_manager.py - WebSocket connection manager
+    - notifications.py - Push notification helpers
+    - categories.py - Predefined category data
 - **Frontend**: React + Tailwind + Phosphor Icons + Service Worker
+  - **Modular Components** (Refactored April 3, 2026):
+    - Feed.js - Refactored to use PostCard component
+    - PostCard.js - Extracted from Feed.js for modularity
 - **Auth**: JWT with httpOnly cookies
 - **Encryption**: Fernet symmetric encryption for sensitive data
-- **Storage**: Local file uploads
+- **Storage**: Emergent Cloud Object Storage (persistent)
 - **Push Notifications**: Web Push API with VAPID keys
 - **Theming**: CSS Variables for Light/Dark mode support
 
@@ -168,15 +192,26 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 ## Prioritized Backlog
 
 ### P1 (High Priority)
-- Video upload support
 - User blocking/reporting
 
 ### P2 (Medium Priority)
-- Reply threading for comments
 - Location radius settings (specify travel/trade distance)
 
 ### P3 (Enhancement)
 - Trade ratings/reviews after completed trades
+
+## What Was Completed (April 3, 2026)
+- [x] **Backend Refactoring** - Modular routes structure
+  - Reduced server.py from 3,137 lines to ~200 lines
+  - Created /routes/ directory with 12 modular route files
+  - Created separate modules: database.py, auth.py, models.py, websocket_manager.py, notifications.py, categories.py
+  - All API endpoints preserved and working (36/36 tests pass)
+  - Fixed get_recommended_traders TypeError with dict items
+  - Added missing /api/users/nearby endpoint
+- [x] **Frontend Refactoring** - Component modularization
+  - Extracted PostCard.js from Feed.js for better reusability
+  - Feed.js reduced from 554 lines to ~170 lines
+  - All UI flows verified working
 
 ## What Was Completed (April 2, 2026)
 - [x] **Enhanced PWA Features** - Full Progressive Web App implementation
