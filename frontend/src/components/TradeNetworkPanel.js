@@ -1,29 +1,22 @@
+/**
+ * TradeNetworkPanel - Manage trade network connections and recommendations
+ * Refactored to use modular sub-components
+ */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
   UsersThree, 
   UserPlus, 
-  Check, 
-  X, 
-  MapPin,
-  SealCheck,
-  UserMinus,
-  Clock,
-  ArrowRight,
   Handshake,
   Sparkle,
-  Lightning
+  Lightning,
+  ArrowRight
 } from '@phosphor-icons/react';
-import { formatDistanceToNow } from 'date-fns';
+
+import { RecommendedTraderCard, ConnectionCard, IncomingRequestCard, OutgoingRequestCard } from './network';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Helper to get display name from item (handles both string and object formats)
-const getItemName = (item) => {
-  if (typeof item === 'string') return item;
-  return item?.name || '';
-};
 
 export default function TradeNetworkPanel({ onViewProfile }) {
   const { user } = useAuth();
@@ -216,76 +209,13 @@ export default function TradeNetworkPanel({ onViewProfile }) {
                 </div>
               </div>
               {recommendations.map((rec) => (
-                <div
+                <RecommendedTraderCard
                   key={rec.id}
-                  className="theme-surface border theme-border border-l-2 border-l-[#F59E0B] p-4 hover:border-[#F59E0B]/50 transition-colors"
-                  data-testid={`recommended-${rec.id}`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[#F59E0B] font-semibold text-lg flex-shrink-0">
-                      {rec.avatar ? (
-                        <img src={rec.avatar} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        rec.name?.charAt(0)?.toUpperCase() || 'U'
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span 
-                          className="font-medium text-[var(--text-primary)] truncate cursor-pointer hover:text-[#F59E0B]"
-                          onClick={() => onViewProfile && onViewProfile(rec.id)}
-                        >
-                          {rec.name}
-                        </span>
-                        {rec.is_verified && (
-                          <span className="verified-badge">
-                            <SealCheck size={10} weight="fill" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      {rec.location && (
-                        <div className="flex items-center gap-1 text-xs text-[var(--text-muted)] mb-2">
-                          <MapPin size={10} />
-                          {rec.location}
-                        </div>
-                      )}
-                      {/* Match reason */}
-                      <div className="text-xs text-[#F59E0B] mb-2 font-medium">
-                        {rec.reason}
-                      </div>
-                      {/* What they offer that you want */}
-                      {rec.offers_you_want?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-1">
-                          {rec.offers_you_want.map((item, i) => (
-                            <span key={`offers-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[var(--brand-success)]/20 text-[#22C55E] border border-[var(--brand-success)]/30">
-                              Offers: {item}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {/* What they want that you offer */}
-                      {rec.wants_you_offer?.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {rec.wants_you_offer.map((item, i) => (
-                            <span key={`wants-${item}-${i}`} className="text-[10px] px-1.5 py-0.5 bg-[var(--brand-primary)]/20 text-[#F59E0B] border border-[var(--brand-primary)]/30">
-                              Wants: {item}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleSendRequest(rec.id)}
-                      disabled={actionLoading === rec.id}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-[#F59E0B] text-black text-sm font-medium hover:bg-[var(--brand-primary-hover)] transition-colors disabled:opacity-50 flex-shrink-0"
-                      data-testid={`add-recommended-${rec.id}`}
-                    >
-                      <UserPlus size={16} />
-                      <span className="hidden sm:inline">Connect</span>
-                    </button>
-                  </div>
-                </div>
+                  recommendation={rec}
+                  onConnect={handleSendRequest}
+                  onViewProfile={onViewProfile}
+                  isLoading={actionLoading === rec.id}
+                />
               ))}
             </>
           )}
@@ -305,62 +235,13 @@ export default function TradeNetworkPanel({ onViewProfile }) {
             </div>
           ) : (
             connections.map((connection) => (
-              <div
+              <ConnectionCard
                 key={connection.id}
-                className="theme-surface border theme-border p-4 flex items-center gap-4 hover:border-[var(--brand-primary)]/30 transition-colors"
-                data-testid={`connection-${connection.id}`}
-              >
-                <div className="w-12 h-12 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-lg flex-shrink-0">
-                  {connection.avatar ? (
-                    <img src={connection.avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    connection.name?.charAt(0)?.toUpperCase() || 'U'
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span 
-                      className="font-medium text-[var(--text-primary)] truncate cursor-pointer hover:text-[var(--brand-primary)]"
-                      onClick={() => onViewProfile && onViewProfile(connection.id)}
-                    >
-                      {connection.name}
-                    </span>
-                    {connection.is_verified && (
-                      <span className="verified-badge">
-                        <SealCheck size={10} weight="fill" />
-                        Verified Trader
-                      </span>
-                    )}
-                  </div>
-                  {connection.location && (
-                    <div className="flex items-center gap-1 text-xs text-[var(--text-muted)] mt-0.5">
-                      <MapPin size={10} />
-                      {connection.location}
-                    </div>
-                  )}
-                  {connection.skills?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {connection.skills.slice(0, 3).map((skill, i) => (
-                        <span key={`skill-${getItemName(skill)}-${i}`} className="text-[10px] px-1.5 py-0.5 theme-surface-hover theme-text-secondary">
-                          {getItemName(skill)}
-                        </span>
-                      ))}
-                      {connection.skills.length > 3 && (
-                        <span className="text-[10px] text-[var(--text-muted)]">+{connection.skills.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleRemoveConnection(connection.id)}
-                  disabled={actionLoading === connection.id}
-                  className="p-2 text-[var(--brand-danger)] hover:bg-[var(--brand-danger)]/10 transition-colors disabled:opacity-50"
-                  title="Remove from network"
-                  data-testid={`remove-connection-${connection.id}`}
-                >
-                  <UserMinus size={20} />
-                </button>
-              </div>
+                connection={connection}
+                onRemove={handleRemoveConnection}
+                onViewProfile={onViewProfile}
+                isLoading={actionLoading === connection.id}
+              />
             ))
           )}
         </div>
@@ -380,54 +261,13 @@ export default function TradeNetworkPanel({ onViewProfile }) {
             ) : (
               <div className="space-y-3">
                 {pendingRequests.incoming.map((request) => (
-                  <div
+                  <IncomingRequestCard
                     key={request.id}
-                    className="theme-surface border border-[var(--brand-primary)]/30 p-4 flex items-center gap-4"
-                    data-testid={`incoming-request-${request.id}`}
-                  >
-                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold flex-shrink-0">
-                      {request.from_user_avatar ? (
-                        <img src={request.from_user_avatar} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        request.from_user_name?.charAt(0)?.toUpperCase() || 'U'
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-[var(--text-primary)]">{request.from_user_name}</span>
-                        {request.is_verified && (
-                          <span className="verified-badge">
-                            <SealCheck size={10} weight="fill" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                        <Clock size={10} />
-                        {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleAcceptRequest(request.id)}
-                        disabled={actionLoading === request.id}
-                        className="p-2 bg-[var(--brand-success)]/20 text-[#22C55E] hover:bg-[var(--brand-success)]/30 transition-colors disabled:opacity-50"
-                        title="Accept"
-                        data-testid={`accept-request-${request.id}`}
-                      >
-                        <Check size={18} weight="bold" />
-                      </button>
-                      <button
-                        onClick={() => handleDeclineRequest(request.id)}
-                        disabled={actionLoading === request.id}
-                        className="p-2 bg-[var(--brand-danger)]/20 text-[#EF4444] hover:bg-[var(--brand-danger)]/30 transition-colors disabled:opacity-50"
-                        title="Decline"
-                        data-testid={`decline-request-${request.id}`}
-                      >
-                        <X size={18} weight="bold" />
-                      </button>
-                    </div>
-                  </div>
+                    request={request}
+                    onAccept={handleAcceptRequest}
+                    onDecline={handleDeclineRequest}
+                    isLoading={actionLoading === request.id}
+                  />
                 ))}
               </div>
             )}
@@ -444,42 +284,12 @@ export default function TradeNetworkPanel({ onViewProfile }) {
             ) : (
               <div className="space-y-3">
                 {pendingRequests.outgoing.map((request) => (
-                  <div
+                  <OutgoingRequestCard
                     key={request.id}
-                    className="theme-surface border theme-border p-4 flex items-center gap-4"
-                    data-testid={`outgoing-request-${request.id}`}
-                  >
-                    <div className="w-10 h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold flex-shrink-0">
-                      {request.to_user_avatar ? (
-                        <img src={request.to_user_avatar} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        request.to_user_name?.charAt(0)?.toUpperCase() || 'U'
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-[var(--text-primary)]">{request.to_user_name}</span>
-                        {request.is_verified && (
-                          <span className="verified-badge">
-                            <SealCheck size={10} weight="fill" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                        <Clock size={10} />
-                        Sent {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleCancelRequest(request.id)}
-                      disabled={actionLoading === request.id}
-                      className="px-3 py-1.5 text-xs border border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:border-[var(--brand-danger)] hover:text-[#EF4444] transition-colors disabled:opacity-50"
-                      data-testid={`cancel-request-${request.id}`}
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                    request={request}
+                    onCancel={handleCancelRequest}
+                    isLoading={actionLoading === request.id}
+                  />
                 ))}
               </div>
             )}
