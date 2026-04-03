@@ -63,7 +63,15 @@ async def create_post(post: BarterPost, request: Request):
 
 
 @router.get("/posts")
-async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_only: bool = False):
+async def get_posts(
+    request: Request, 
+    skip: int = 0, 
+    limit: int = 20, 
+    nearby_only: bool = False,
+    network_only: bool = False,
+    verified_only: bool = False,
+    category: str = None
+):
     user = await get_current_user(request)
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
 
@@ -90,8 +98,15 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
         except Exception:
             user_location = user_doc.get("location", "")
 
+    # Build query with filters
+    query = {}
+    if category and category != "all":
+        query["category"] = category
+    if network_only:
+        query["user_id"] = {"$in": list(network_user_ids)}
+
     posts = await db.posts.find(
-        {},
+        query,
         {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1,
          "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}
     ).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit * 3).to_list(100 if nearby_only else limit * 3)
@@ -142,11 +157,13 @@ async def get_posts(request: Request, skip: int = 0, limit: int = 20, nearby_onl
             feed_score += 100
         post["feed_score"] = feed_score
 
-        if nearby_only:
-            if post["is_nearby"]:
-                result_posts.append(post)
-        else:
-            result_posts.append(post)
+        # Apply filters
+        if verified_only and not post["is_verified"]:
+            continue
+        if nearby_only and not post["is_nearby"]:
+            continue
+        
+        result_posts.append(post)
 
     result_posts.sort(key=lambda x: (-x.get("feed_score", 0), x.get("created_at", "")), reverse=False)
     result_posts.sort(key=lambda x: -x.get("feed_score", 0))

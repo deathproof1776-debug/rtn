@@ -21,7 +21,12 @@ import {
   Eye,
   ClockCounterClockwise,
   UserMinus,
-  Notepad
+  Notepad,
+  Megaphone,
+  Plus,
+  PencilSimple,
+  ToggleLeft,
+  ToggleRight
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -169,6 +174,9 @@ export default function AdminDashboard({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
+  const [systemMessages, setSystemMessages] = useState([]);
+  const [showCreateMessage, setShowCreateMessage] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -211,12 +219,22 @@ export default function AdminDashboard({ onBack }) {
     }
   }, []);
 
+  const fetchSystemMessages = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/system-messages`, { withCredentials: true });
+      setSystemMessages(res.data.messages || []);
+    } catch (err) {
+      console.error('Error fetching system messages:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchStats();
     fetchUsers();
     fetchPosts();
     fetchAuditLogs();
-  }, [fetchStats, fetchUsers, fetchPosts, fetchAuditLogs]);
+    fetchSystemMessages();
+  }, [fetchStats, fetchUsers, fetchPosts, fetchAuditLogs, fetchSystemMessages]);
 
   const handleVerify = async (userId, isVerified) => {
     try {
@@ -296,6 +314,7 @@ export default function AdminDashboard({ onBack }) {
     { id: 'overview', label: 'Overview', icon: ChartBar },
     { id: 'users', label: 'Users', icon: Users, count: usersTotal },
     { id: 'posts', label: 'Posts', icon: Article, count: postsTotal },
+    { id: 'announcements', label: 'Announcements', icon: Megaphone },
     { id: 'activity', label: 'Activity Log', icon: ClockCounterClockwise, count: auditTotal },
   ];
 
@@ -419,6 +438,96 @@ export default function AdminDashboard({ onBack }) {
         </div>
       )}
 
+      {/* Announcements Tab */}
+      {activeTab === 'announcements' && (
+        <div data-testid="admin-announcements-tab">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-[var(--text-muted)]">
+              System messages appear as banners on the Barter Feed and Community Board.
+            </p>
+            <button
+              onClick={() => setShowCreateMessage(true)}
+              className="btn-primary flex items-center gap-2"
+              data-testid="create-announcement-btn"
+            >
+              <Plus size={16} weight="bold" />
+              New Announcement
+            </button>
+          </div>
+          
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
+            <div className="px-3 py-2 border-b border-[var(--border-color)]">
+              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">
+                {systemMessages.length} announcement{systemMessages.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto">
+              {systemMessages.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Megaphone size={32} className="text-[var(--text-muted)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-muted)]">No announcements yet.</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Create one to broadcast to all users.</p>
+                </div>
+              ) : (
+                systemMessages.map((msg) => (
+                  <SystemMessageRow
+                    key={msg._id}
+                    message={msg}
+                    onEdit={() => setEditingMessage(msg)}
+                    onToggle={async () => {
+                      try {
+                        await axios.put(`${API_URL}/api/admin/system-messages/${msg._id}`, 
+                          { is_active: !msg.is_active }, 
+                          { withCredentials: true }
+                        );
+                        fetchSystemMessages();
+                      } catch (err) {
+                        console.error('Error toggling message:', err);
+                      }
+                    }}
+                    onDelete={async () => {
+                      if (window.confirm('Delete this announcement?')) {
+                        try {
+                          await axios.delete(`${API_URL}/api/admin/system-messages/${msg._id}`, { withCredentials: true });
+                          fetchSystemMessages();
+                        } catch (err) {
+                          console.error('Error deleting message:', err);
+                        }
+                      }
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Create/Edit Message Modal */}
+          {(showCreateMessage || editingMessage) && (
+            <SystemMessageModal
+              message={editingMessage}
+              onClose={() => {
+                setShowCreateMessage(false);
+                setEditingMessage(null);
+              }}
+              onSave={async (data) => {
+                try {
+                  if (editingMessage) {
+                    await axios.put(`${API_URL}/api/admin/system-messages/${editingMessage._id}`, data, { withCredentials: true });
+                  } else {
+                    await axios.post(`${API_URL}/api/admin/system-messages`, data, { withCredentials: true });
+                  }
+                  fetchSystemMessages();
+                  setShowCreateMessage(false);
+                  setEditingMessage(null);
+                } catch (err) {
+                  console.error('Error saving message:', err);
+                }
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {/* Activity Log Tab */}
       {activeTab === 'activity' && (
         <div data-testid="admin-activity-tab">
@@ -499,6 +608,154 @@ export default function AdminDashboard({ onBack }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// System Message Row Component
+function SystemMessageRow({ message, onEdit, onToggle, onDelete }) {
+  const typeColors = {
+    info: 'bg-blue-900/30 border-blue-600 text-blue-400',
+    warning: 'bg-yellow-900/30 border-yellow-600 text-yellow-400',
+    success: 'bg-green-900/30 border-green-600 text-green-400',
+    urgent: 'bg-red-900/30 border-red-600 text-red-400'
+  };
+
+  return (
+    <div className="flex items-start gap-3 p-3 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)]" data-testid={`system-message-${message._id}`}>
+      <div className={`px-2 py-1 text-xs font-medium rounded border-l-2 ${typeColors[message.type] || typeColors.info}`}>
+        {message.type?.toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-[var(--text-primary)] line-clamp-2">{message.message}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">
+          Priority: {message.priority} • Created by {message.created_by_name}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={onToggle}
+          className={`p-1.5 rounded transition-colors ${message.is_active ? 'text-green-500 hover:bg-green-900/30' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)]'}`}
+          title={message.is_active ? 'Active - Click to disable' : 'Inactive - Click to enable'}
+        >
+          {message.is_active ? <ToggleRight size={20} weight="fill" /> : <ToggleLeft size={20} />}
+        </button>
+        <button
+          onClick={onEdit}
+          className="p-1.5 text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--bg-surface-hover)] rounded transition-colors"
+          title="Edit"
+        >
+          <PencilSimple size={16} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-900/30 rounded transition-colors"
+          title="Delete"
+        >
+          <Trash size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// System Message Modal Component
+function SystemMessageModal({ message, onClose, onSave }) {
+  const [formData, setFormData] = useState({
+    message: message?.message || '',
+    type: message?.type || 'info',
+    priority: message?.priority || 0,
+    is_active: message?.is_active ?? true
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.message.trim()) return;
+    
+    setSaving(true);
+    await onSave(formData);
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-5 max-w-md mx-4 w-full">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+          {message ? 'Edit Announcement' : 'New Announcement'}
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Message</label>
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              className="input-field w-full h-24 resize-none"
+              placeholder="Enter announcement message..."
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className="input-field w-full"
+              >
+                <option value="info">Info (Blue)</option>
+                <option value="success">Success (Green)</option>
+                <option value="warning">Warning (Yellow)</option>
+                <option value="urgent">Urgent (Red)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Priority</label>
+              <input
+                type="number"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                className="input-field w-full"
+                min="0"
+                max="100"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label htmlFor="is_active" className="text-sm text-[var(--text-secondary)]">
+              Active (visible to users)
+            </label>
+          </div>
+          
+          <div className="flex gap-2 justify-end pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !formData.message.trim()}
+              className="btn-primary px-4 py-2 text-sm flex items-center gap-2"
+            >
+              {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              {message ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

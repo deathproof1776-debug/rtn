@@ -16,6 +16,7 @@ from .admin import router as admin_router
 from .notifications import router as notifications_router
 from .categories import router as categories_router
 from .invites import router as invites_router
+from .community import router as community_router
 
 # Create main API router
 api_router = APIRouter(prefix="/api")
@@ -33,6 +34,7 @@ api_router.include_router(admin_router, tags=["Admin"])
 api_router.include_router(notifications_router, tags=["Notifications"])
 api_router.include_router(categories_router, tags=["Categories"])
 api_router.include_router(invites_router, tags=["Invites"])
+api_router.include_router(community_router, tags=["Community"])
 
 
 # Health check at API root

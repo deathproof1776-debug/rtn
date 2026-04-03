@@ -255,3 +255,151 @@ async def admin_delete_user(user_id: str, request: Request):
     )
 
     return {"message": "User and all associated data deleted"}
+
+
+
+# ========================
+# System Messages (Banner Announcements)
+# ========================
+
+@router.post("/system-messages")
+async def create_system_message(request: Request):
+    """Create a new system-wide announcement banner"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    data = await request.json()
+    message = data.get("message", "").strip()
+    message_type = data.get("type", "info")  # info, warning, success, urgent
+    is_active = data.get("is_active", True)
+    priority = data.get("priority", 0)  # Higher priority = shown first
+    
+    if not message:
+        raise HTTPException(status_code=400, detail="Message content is required")
+    
+    if message_type not in ["info", "warning", "success", "urgent"]:
+        message_type = "info"
+    
+    msg_doc = {
+        "message": message,
+        "type": message_type,
+        "is_active": is_active,
+        "priority": priority,
+        "created_by": admin_user["_id"],
+        "created_by_name": admin_user.get("name", "Admin"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.system_messages.insert_one(msg_doc)
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"],
+        admin_name=admin_user.get("name", "Admin"),
+        action="created_system_message",
+        target_type="system_message",
+        target_id=str(result.inserted_id),
+        target_name=message[:50],
+        details=f"Type: {message_type}, Active: {is_active}"
+    )
+    
+    return {"id": str(result.inserted_id), "message": "System message created"}
+
+
+@router.get("/system-messages")
+async def get_all_system_messages(request: Request, skip: int = 0, limit: int = 50):
+    """Get all system messages (admin view)"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    messages = await db.system_messages.find({}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    for msg in messages:
+        msg["_id"] = str(msg["_id"])
+    
+    total = await db.system_messages.count_documents({})
+    return {"messages": messages, "total": total}
+
+
+@router.put("/system-messages/{message_id}")
+async def update_system_message(message_id: str, request: Request):
+    """Update a system message"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    data = await request.json()
+    
+    msg = await db.system_messages.find_one({"_id": ObjectId(message_id)})
+    if not msg:
+        raise HTTPException(status_code=404, detail="System message not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if "message" in data:
+        update_data["message"] = data["message"].strip()
+    if "type" in data and data["type"] in ["info", "warning", "success", "urgent"]:
+        update_data["type"] = data["type"]
+    if "is_active" in data:
+        update_data["is_active"] = bool(data["is_active"])
+    if "priority" in data:
+        update_data["priority"] = int(data["priority"])
+    
+    await db.system_messages.update_one(
+        {"_id": ObjectId(message_id)},
+        {"$set": update_data}
+    )
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"],
+        admin_name=admin_user.get("name", "Admin"),
+        action="updated_system_message",
+        target_type="system_message",
+        target_id=message_id,
+        target_name=msg.get("message", "")[:50],
+        details=f"Updated fields: {list(update_data.keys())}"
+    )
+    
+    return {"message": "System message updated"}
+
+
+@router.delete("/system-messages/{message_id}")
+async def delete_system_message(message_id: str, request: Request):
+    """Delete a system message"""
+    admin_user = await get_current_user(request)
+    if admin_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    msg = await db.system_messages.find_one({"_id": ObjectId(message_id)})
+    if not msg:
+        raise HTTPException(status_code=404, detail="System message not found")
+    
+    await db.system_messages.delete_one({"_id": ObjectId(message_id)})
+    
+    await log_admin_action(
+        admin_id=admin_user["_id"],
+        admin_name=admin_user.get("name", "Admin"),
+        action="deleted_system_message",
+        target_type="system_message",
+        target_id=message_id,
+        target_name=msg.get("message", "")[:50],
+        details=""
+    )
+    
+    return {"message": "System message deleted"}
+
+
+# Public endpoint for active system messages
+@router.get("/system-messages/active", tags=["Public"])
+async def get_active_system_messages():
+    """Get active system messages for display (no auth required)"""
+    messages = await db.system_messages.find(
+        {"is_active": True},
+        {"_id": 1, "message": 1, "type": 1, "priority": 1}
+    ).sort("priority", -1).limit(10).to_list(10)
+    
+    for msg in messages:
+        msg["_id"] = str(msg["_id"])
+    
+    return {"messages": messages}

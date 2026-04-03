@@ -9,7 +9,8 @@ import {
   X,
   Handshake,
   UserPlus,
-  ArrowsLeftRight
+  ArrowsLeftRight,
+  Newspaper
 } from '@phosphor-icons/react';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
@@ -19,7 +20,8 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
   const { user, logout } = useAuth();
 
   const navItems = [
-    { id: 'feed', label: 'Feed', icon: House },
+    { id: 'feed', label: 'Barter Feed', icon: House },
+    { id: 'community', label: 'Community Board', icon: Newspaper },
     { id: 'trades', label: 'Trade Deals', icon: ArrowsLeftRight, badge: tradeDealsCount },
     { id: 'network', label: 'My Trade Network', icon: Handshake, badge: networkRequestCount },
     { id: 'messages', label: 'Messages', icon: ChatCircle },

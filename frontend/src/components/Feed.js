@@ -1,32 +1,45 @@
 /**
  * Feed - Main feed component displaying barter posts
- * Refactored to use extracted PostCard component
+ * Refactored with filters and system banner
  */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { 
-  MapPin,
   ArrowsLeftRight,
   ArrowClockwise
 } from '@phosphor-icons/react';
 import PostCard from './PostCard';
+import FeedFilters from './FeedFilters';
+import SystemBanner from './SystemBanner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Barter categories
+const BARTER_CATEGORIES = [
+  { id: 'goods', name: 'Goods' },
+  { id: 'services', name: 'Services' },
+  { id: 'skills', name: 'Skills' }
+];
+
 export default function Feed({ 
-  posts, 
-  loading, 
+  posts: initialPosts, 
+  loading: initialLoading, 
   onCreatePost, 
-  onFilterChange, 
-  nearbyOnly = false, 
   onRefresh, 
   onViewProfile, 
   onProposeTrade, 
   onStartChat 
 }) {
   const { user } = useAuth();
-  const [filterNearby, setFilterNearby] = useState(nearbyOnly);
+  const [posts, setPosts] = useState(initialPosts || []);
+  const [loading, setLoading] = useState(initialLoading);
+  const [filters, setFilters] = useState({
+    nearby: false,
+    network: false,
+    verified: false,
+    category: 'all'
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const containerRef = useRef(null);
@@ -34,6 +47,57 @@ export default function Feed({
   const isPulling = useRef(false);
 
   const PULL_THRESHOLD = 80;
+
+  // Update posts when initialPosts changes
+  useEffect(() => {
+    if (initialPosts) {
+      setPosts(initialPosts);
+    }
+  }, [initialPosts]);
+
+  useEffect(() => {
+    setLoading(initialLoading);
+  }, [initialLoading]);
+
+  // Fetch posts with filters
+  const fetchFilteredPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.nearby) params.append('nearby_only', 'true');
+      if (filters.network) params.append('network_only', 'true');
+      if (filters.verified) params.append('verified_only', 'true');
+      if (filters.category && filters.category !== 'all') {
+        params.append('category', filters.category);
+      }
+      
+      const res = await axios.get(`${API_URL}/api/posts?${params.toString()}`, {
+        withCredentials: true
+      });
+      setPosts(res.data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    // Only fetch if filters are not all default
+    const hasActiveFilters = filters.nearby || filters.network || filters.verified || 
+                            (filters.category && filters.category !== 'all');
+    if (hasActiveFilters) {
+      fetchFilteredPosts();
+    } else if (onRefresh) {
+      // Use parent's refresh for default view
+      onRefresh();
+    }
+  }, [filters, fetchFilteredPosts, onRefresh]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
 
   const handleTouchStart = useCallback((e) => {
     const container = containerRef.current;
@@ -56,17 +120,17 @@ export default function Feed({
   }, []);
 
   const handleTouchEnd = useCallback(async () => {
-    if (pullDistance >= PULL_THRESHOLD && onRefresh && !refreshing) {
+    if (pullDistance >= PULL_THRESHOLD && !refreshing) {
       setRefreshing(true);
       try {
-        await onRefresh();
+        await fetchFilteredPosts();
       } finally {
         setRefreshing(false);
       }
     }
     setPullDistance(0);
     isPulling.current = false;
-  }, [pullDistance, onRefresh, refreshing]);
+  }, [pullDistance, refreshing, fetchFilteredPosts]);
 
   const handleLike = async (postId) => {
     try {
@@ -77,18 +141,6 @@ export default function Feed({
       console.error('Error liking post:', error);
     }
   };
-
-  const handleFilterToggle = () => {
-    const newValue = !filterNearby;
-    setFilterNearby(newValue);
-    if (onFilterChange) {
-      onFilterChange(newValue);
-    }
-  };
-
-  const displayPosts = filterNearby 
-    ? posts.filter(post => post.is_nearby)
-    : posts;
 
   if (loading) {
     return (
@@ -113,6 +165,9 @@ export default function Feed({
       onTouchEnd={handleTouchEnd}
       className="relative"
     >
+      {/* System Banner */}
+      <SystemBanner />
+
       {/* Pull to refresh indicator */}
       <div 
         className="pull-to-refresh-indicator md:hidden"
@@ -138,56 +193,63 @@ export default function Feed({
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-4 md:mb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
             Barter Feed
           </h2>
-          <p className="text-xs md:text-sm text-[var(--text-muted)] mt-0.5 md:mt-1">Connect. Trade. Thrive.</p>
+          <p className="text-xs md:text-sm text-[var(--text-muted)] mt-0.5">Connect. Trade. Thrive.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleFilterToggle}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border transition-all ${
-              filterNearby 
-                ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' 
-                : 'bg-transparent border-[var(--bg-surface-active)] text-[var(--text-secondary)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
-            }`}
-            data-testid="filter-nearby-btn"
-          >
-            <MapPin size={14} weight={filterNearby ? 'fill' : 'regular'} />
-            <span className="hidden sm:inline">Nearby</span>
-          </button>
-        </div>
+        <button
+          onClick={fetchFilteredPosts}
+          disabled={refreshing}
+          className="btn-ghost p-2"
+          title="Refresh"
+        >
+          <ArrowClockwise size={18} className={refreshing ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      {displayPosts.length === 0 ? (
+      {/* Filters */}
+      <div className="mb-4">
+        <FeedFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          categories={BARTER_CATEGORIES}
+          categoryLabel="Category"
+        />
+      </div>
+
+      {/* Posts */}
+      {posts.length === 0 ? (
         <div className="post-card text-center py-12">
-          {filterNearby ? (
-            <>
-              <MapPin size={48} className="mx-auto text-[var(--bg-surface-active)] mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No nearby posts found</h3>
-              <p className="text-sm text-[var(--text-muted)] mb-4">
-                Try expanding your search or update your location in your profile
-              </p>
-              <button onClick={handleFilterToggle} className="btn-ghost text-[var(--brand-primary)]" data-testid="show-all-posts-btn">
-                Show All Posts
-              </button>
-            </>
+          <ArrowsLeftRight size={48} className="mx-auto text-[var(--bg-surface-active)] mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+            {filters.nearby || filters.network || filters.verified ? 'No matching posts found' : 'No barter posts yet'}
+          </h3>
+          <p className="text-sm text-[var(--text-muted)] mb-4">
+            {filters.nearby || filters.network || filters.verified 
+              ? 'Try adjusting your filters to see more posts'
+              : 'Be the first to share what you can offer or need'
+            }
+          </p>
+          {filters.nearby || filters.network || filters.verified ? (
+            <button 
+              onClick={() => setFilters({ nearby: false, network: false, verified: false, category: 'all' })} 
+              className="btn-ghost text-[var(--brand-primary)]"
+            >
+              Clear Filters
+            </button>
           ) : (
-            <>
-              <ArrowsLeftRight size={48} className="mx-auto text-[var(--bg-surface-active)] mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No barter posts yet</h3>
-              <p className="text-sm text-[var(--text-muted)] mb-4">Be the first to share what you can offer or need</p>
-              <button onClick={onCreatePost} className="btn-primary" data-testid="create-first-post">
-                Create Your First Post
-              </button>
-            </>
+            <button onClick={onCreatePost} className="btn-primary" data-testid="create-first-post">
+              Create Your First Post
+            </button>
           )}
         </div>
       ) : (
         <div className="space-y-4">
-          {displayPosts.map((post) => (
+          {posts.map((post) => (
             <PostCard 
               key={post._id} 
               post={post} 

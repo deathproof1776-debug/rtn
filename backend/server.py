@@ -155,6 +155,7 @@ async def startup():
     await db.users.create_index("email", unique=True)
     await db.messages.create_index([("sender_id", 1), ("receiver_id", 1)])
     await db.posts.create_index("created_at")
+    await db.posts.create_index("category")
     await db.push_subscriptions.create_index([("user_id", 1), ("endpoint", 1)], unique=True)
     await db.network_connections.create_index([("user_id", 1), ("connected_user_id", 1)], unique=True)
     await db.network_requests.create_index([("from_user_id", 1), ("to_user_id", 1)])
@@ -165,6 +166,13 @@ async def startup():
     await db.trade_deals.create_index("updated_at")
     await db.gallery.create_index([("user_id", 1), ("created_at", -1)])
     await db.gallery.create_index("is_deleted")
+    # Community Board indexes
+    await db.community_posts.create_index([("created_at", -1)])
+    await db.community_posts.create_index("topic")
+    await db.community_posts.create_index("is_deleted")
+    # System Messages indexes
+    await db.system_messages.create_index("is_active")
+    await db.system_messages.create_index("priority")
 
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")

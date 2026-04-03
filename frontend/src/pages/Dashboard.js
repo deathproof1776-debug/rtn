@@ -17,6 +17,7 @@ import InvitePanel from '../components/InvitePanel';
 import AdminDashboard from './AdminDashboard';
 import CreateTradeModal from '../components/CreateTradeModal';
 import Gallery from '../components/Gallery';
+import CommunityBoard from '../components/CommunityBoard';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -190,6 +191,11 @@ export default function Dashboard() {
             onViewProfile={handleViewProfile}
             onProposeTrade={handleProposeTrade}
             onStartChat={handleStartChat}
+          />
+        )}
+        {activeView === 'community' && (
+          <CommunityBoard
+            onViewProfile={handleViewProfile}
           />
         )}
         {activeView === 'trades' && <TradeDealsPanel />}
