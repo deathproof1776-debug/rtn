@@ -127,97 +127,100 @@ function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90"
       onClick={onClose}
     >
       <div 
-        className="bg-[var(--bg-surface)] rounded-lg overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col md:flex-row"
+        className="bg-[var(--bg-surface)] rounded-lg overflow-hidden max-w-4xl w-full max-h-[95vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         data-testid="gallery-item-modal"
       >
-        {/* Media */}
-        <div className="flex-1 bg-black flex items-center justify-center min-h-[300px] md:min-h-[500px]">
-          {item.is_video ? (
-            <video
-              ref={videoRef}
-              src={`${API_URL}${item.url}`}
-              className="max-w-full max-h-full"
-              controls
-              autoPlay
-            />
-          ) : (
-            <img
-              src={`${API_URL}${item.url}`}
-              alt={item.caption || 'Gallery item'}
-              className="max-w-full max-h-full object-contain"
-            />
-          )}
+        {/* Header - Always on top */}
+        <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)] flex items-center justify-center text-white font-bold text-sm">
+              {item.user_name?.[0]?.toUpperCase() || '?'}
+            </div>
+            <span className="font-medium text-[var(--text-primary)]">{item.user_name}</span>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-surface-hover)] rounded-full">
+            <X size={24} className="text-[var(--text-secondary)]" />
+          </button>
         </div>
 
-        {/* Details */}
-        <div className="w-full md:w-80 flex flex-col border-l border-[var(--border-color)]">
-          {/* Header */}
-          <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)] flex items-center justify-center text-white font-bold text-sm">
-                {item.user_name?.[0]?.toUpperCase() || '?'}
-              </div>
-              <span className="font-medium text-[var(--text-primary)]">{item.user_name}</span>
-            </div>
-            <button onClick={onClose} className="p-1 hover:bg-[var(--bg-surface-hover)] rounded">
-              <X size={20} className="text-[var(--text-secondary)]" />
-            </button>
-          </div>
-
-          {/* Caption & Comments */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {item.caption && (
-              <div className="text-sm text-[var(--text-primary)]">
-                <span className="font-medium">{item.user_name}</span> {item.caption}
-              </div>
-            )}
-            
-            {comments.map((c) => (
-              <div key={c.id} className="text-sm">
-                <span className="font-medium text-[var(--text-primary)]">{c.user_name}</span>
-                <span className="text-[var(--text-secondary)] ml-2">{c.content}</span>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
-                  {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="p-4 border-t border-[var(--border-color)]">
-            <div className="flex items-center gap-4 mb-3">
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-1"
-                data-testid="gallery-modal-like"
-              >
-                <Heart 
-                  size={24} 
-                  weight={isLiked ? "fill" : "regular"} 
-                  className={isLiked ? "text-red-500" : "text-[var(--text-primary)]"}
-                />
-              </button>
-              <ChatCircle size={24} className="text-[var(--text-primary)]" />
-            </div>
-            <p className="text-sm font-medium text-[var(--text-primary)] mb-3">
-              {likeCount} {likeCount === 1 ? 'like' : 'likes'}
-            </p>
-            
-            {/* Comment input */}
-            <form onSubmit={handleComment} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-                data-testid="gallery-comment-input"
+        {/* Content - Scrollable on mobile */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* Media */}
+          <div className="flex-1 bg-black flex items-center justify-center min-h-[200px] max-h-[50vh] md:max-h-none md:min-h-[400px]">
+            {item.is_video ? (
+              <video
+                ref={videoRef}
+                src={`${API_URL}${item.url}`}
+                className="w-full h-full object-contain"
+                controls
+                autoPlay
+                playsInline
               />
+            ) : (
+              <img
+                src={`${API_URL}${item.url}`}
+                alt={item.caption || 'Gallery item'}
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+
+          {/* Details sidebar */}
+          <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-[var(--border-color)] max-h-[40vh] md:max-h-none">
+            {/* Caption & Comments */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {item.caption && (
+                <div className="text-sm text-[var(--text-primary)]">
+                  <span className="font-medium">{item.user_name}</span> {item.caption}
+                </div>
+              )}
+              
+              {comments.map((c) => (
+                <div key={c.id} className="text-sm">
+                  <span className="font-medium text-[var(--text-primary)]">{c.user_name}</span>
+                  <span className="text-[var(--text-secondary)] ml-2">{c.content}</span>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="p-3 border-t border-[var(--border-color)] shrink-0">
+              <div className="flex items-center gap-4 mb-2">
+                <button
+                  onClick={handleLike}
+                  className="flex items-center gap-1"
+                  data-testid="gallery-modal-like"
+                >
+                  <Heart 
+                    size={24} 
+                    weight={isLiked ? "fill" : "regular"} 
+                    className={isLiked ? "text-red-500" : "text-[var(--text-primary)]"}
+                  />
+                </button>
+                <ChatCircle size={24} className="text-[var(--text-primary)]" />
+              </div>
+              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
+                {likeCount} {likeCount === 1 ? 'like' : 'likes'}
+              </p>
+              
+              {/* Comment input */}
+              <form onSubmit={handleComment} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+                  data-testid="gallery-comment-input"
+                />
               <button
                 type="submit"
                 disabled={!comment.trim() || submitting}
@@ -227,6 +230,7 @@ function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
                 <PaperPlaneTilt size={20} />
               </button>
             </form>
+            </div>
           </div>
         </div>
       </div>
