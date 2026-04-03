@@ -8,7 +8,6 @@ import {
   MapPin,
   Tag,
   ArrowsLeftRight,
-  PaperPlaneTilt,
   Trash,
   CaretDown,
   CaretUp,
@@ -21,6 +20,7 @@ import {
   X
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
+import ThreadedComments from './ThreadedComments';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -203,9 +203,7 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade, 
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState(post.comments || []);
-  const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
-  const [submittingComment, setSubmittingComment] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -239,22 +237,16 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade, 
     setShowComments(!showComments);
   };
 
-  const handleSubmitComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    
-    setSubmittingComment(true);
+  const handleAddComment = async (content, parentId) => {
     try {
       const res = await axios.post(`${API_URL}/api/posts/${post._id}/comments`, 
-        { content: newComment },
+        { content, parent_id: parentId },
         { withCredentials: true }
       );
       setComments([...comments, res.data]);
-      setNewComment('');
     } catch (error) {
       console.error('Error posting comment:', error);
-    } finally {
-      setSubmittingComment(false);
+      throw error;
     }
   };
 
@@ -540,80 +532,23 @@ function PostCard({ post, onLike, currentUserId, onViewProfile, onProposeTrade, 
       {/* Comments Section */}
       {showComments && (
         <div className="mt-4 pt-4 border-t border-[var(--border-color)]" data-testid={`comments-section-${post._id}`}>
-          {/* Comment Input */}
-          <form onSubmit={handleSubmitComment} className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-1 bg-[var(--bg-main)] border border-[var(--bg-surface-active)] text-[var(--text-primary)] px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)] outline-none"
-              data-testid={`comment-input-${post._id}`}
-            />
-            <button 
-              type="submit"
-              disabled={submittingComment || !newComment.trim()}
-              className="btn-primary px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid={`submit-comment-${post._id}`}
-            >
-              <PaperPlaneTilt size={18} weight="fill" />
-            </button>
-          </form>
-
-          {/* Comments List */}
           {loadingComments ? (
             <div className="flex items-center justify-center py-4">
               <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : comments.length === 0 ? (
-            <p className="text-[var(--text-muted)] text-sm text-center py-4">No comments yet. Be the first to comment!</p>
           ) : (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {comments.map((comment) => (
-                <CommentItem 
-                  key={comment.id} 
-                  comment={comment} 
-                  currentUserId={currentUserId}
-                  postUserId={post.user_id}
-                  onDelete={handleDeleteComment}
-                />
-              ))}
+            <div className="max-h-80 overflow-y-auto">
+              <ThreadedComments
+                comments={comments}
+                onAddComment={handleAddComment}
+                onDeleteComment={handleDeleteComment}
+                currentUserId={currentUserId}
+                maxDepth={2}
+              />
             </div>
           )}
         </div>
       )}
     </article>
-  );
-}
-
-function CommentItem({ comment, currentUserId, postUserId, onDelete }) {
-  const timeAgo = comment.created_at 
-    ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })
-    : 'recently';
-  
-  const canDelete = comment.user_id === currentUserId || postUserId === currentUserId;
-
-  return (
-    <div className="flex gap-3 group" data-testid={`comment-${comment.id}`}>
-      <div className="w-8 h-8 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-xs flex-shrink-0">
-        {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-primary)]">{comment.user_name}</span>
-          <span className="text-xs text-[var(--text-muted)]">{timeAgo}</span>
-          {canDelete && (
-            <button 
-              onClick={() => onDelete(comment.id)}
-              className="ml-auto opacity-0 group-hover:opacity-100 text-[var(--brand-danger)] hover:text-red-400 transition-opacity"
-              data-testid={`delete-comment-${comment.id}`}
-            >
-              <Trash size={14} />
-            </button>
-          )}
-        </div>
-        <p className="text-sm text-[var(--text-secondary)] break-words">{comment.content}</p>
-      </div>
-    </div>
   );
 }

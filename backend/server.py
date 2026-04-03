@@ -234,6 +234,11 @@ class MessageCreate(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str
+    parent_id: Optional[str] = None  # For reply threading
+
+class CommentReplyCreate(BaseModel):
+    content: str
+    parent_id: str  # Required for replies
 
 class PushSubscription(BaseModel):
     endpoint: str
@@ -269,6 +274,7 @@ class GalleryItemCreate(BaseModel):
     
 class GalleryCommentCreate(BaseModel):
     content: str
+    parent_id: Optional[str] = None  # For reply threading
 
 # ========================
 # Predefined Categories Data
@@ -1221,12 +1227,28 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request,
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
+    # Validate parent_id if provided (for replies)
+    parent_user_id = None
+    parent_user_name = None
+    if comment.parent_id:
+        parent_comment = None
+        for c in post.get("comments", []):
+            if c.get("id") == comment.parent_id:
+                parent_comment = c
+                break
+        if not parent_comment:
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+        parent_user_id = parent_comment.get("user_id")
+        parent_user_name = parent_comment.get("user_name")
+    
     comment_doc = {
         "id": str(ObjectId()),
         "user_id": user["_id"],
         "user_name": user.get("name", "Anonymous"),
         "user_avatar": user.get("avatar", ""),
         "content": encrypt_data(comment.content),
+        "parent_id": comment.parent_id,  # None for top-level, comment_id for replies
+        "replies": [],  # Will store reply IDs for quick lookup
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -1234,6 +1256,13 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request,
         {"_id": ObjectId(post_id)},
         {"$push": {"comments": comment_doc}}
     )
+    
+    # If this is a reply, update parent comment's replies array
+    if comment.parent_id:
+        await db.posts.update_one(
+            {"_id": ObjectId(post_id), "comments.id": comment.parent_id},
+            {"$push": {"comments.$.replies": comment_doc["id"]}}
+        )
     
     # Send push notification to post owner (if not self-comment)
     if post["user_id"] != user["_id"]:
@@ -1245,6 +1274,16 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request,
             data={"type": "comment", "post_id": post_id, "url": "/"}
         )
     
+    # Send notification to parent comment author (if replying and not self-reply)
+    if comment.parent_id and parent_user_id and parent_user_id != user["_id"]:
+        background_tasks.add_task(
+            send_push_notification,
+            user_id=parent_user_id,
+            title=f"{user.get('name', 'Someone')} replied to your comment",
+            body=comment.content[:100] + ("..." if len(comment.content) > 100 else ""),
+            data={"type": "reply", "post_id": post_id, "url": "/"}
+        )
+    
     # Return decrypted content for frontend
     return {
         "id": comment_doc["id"],
@@ -1252,6 +1291,8 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request,
         "user_name": comment_doc["user_name"],
         "user_avatar": comment_doc["user_avatar"],
         "content": comment.content,
+        "parent_id": comment.parent_id,
+        "replies": [],
         "created_at": comment_doc["created_at"]
     }
 
@@ -1263,13 +1304,18 @@ async def get_comments(post_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Post not found")
     
     comments = post.get("comments", [])
-    # Decrypt comment content
+    # Decrypt comment content and ensure threading fields exist
     for comment in comments:
         if comment.get("content"):
             try:
                 comment["content"] = decrypt_data(comment["content"])
             except Exception:
                 pass
+        # Ensure threading fields exist for older comments
+        if "parent_id" not in comment:
+            comment["parent_id"] = None
+        if "replies" not in comment:
+            comment["replies"] = []
     
     return comments
 
@@ -1652,7 +1698,7 @@ async def get_gallery_item(item_id: str, request: Request):
     # Get user info
     owner = await db.users.find_one({"_id": ObjectId(item["user_id"])})
     
-    # Format comments with user info
+    # Format comments with user info and threading fields
     comments = []
     for comment in item.get("comments", []):
         comments.append({
@@ -1660,6 +1706,8 @@ async def get_gallery_item(item_id: str, request: Request):
             "user_id": comment["user_id"],
             "user_name": comment["user_name"],
             "content": comment["content"],
+            "parent_id": comment.get("parent_id"),
+            "replies": comment.get("replies", []),
             "created_at": comment["created_at"]
         })
     
@@ -1722,11 +1770,23 @@ async def comment_on_gallery_item(
     if not item:
         raise HTTPException(status_code=404, detail="Gallery item not found")
     
+    # Validate parent_id if provided (for replies)
+    if comment.parent_id:
+        parent_found = False
+        for c in item.get("comments", []):
+            if c.get("id") == comment.parent_id:
+                parent_found = True
+                break
+        if not parent_found:
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+    
     comment_doc = {
         "id": str(uuid.uuid4()),
         "user_id": user_id,
         "user_name": user_name,
         "content": comment.content,
+        "parent_id": comment.parent_id,
+        "replies": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -1738,11 +1798,20 @@ async def comment_on_gallery_item(
         }
     )
     
+    # If this is a reply, update parent comment's replies array
+    if comment.parent_id:
+        await db.gallery.update_one(
+            {"id": item_id, "comments.id": comment.parent_id},
+            {"$push": {"comments.$.replies": comment_doc["id"]}}
+        )
+    
     return {
         "id": comment_doc["id"],
         "user_id": user_id,
         "user_name": user_name,
         "content": comment.content,
+        "parent_id": comment.parent_id,
+        "replies": [],
         "created_at": comment_doc["created_at"]
     }
 

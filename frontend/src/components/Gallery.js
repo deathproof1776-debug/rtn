@@ -5,16 +5,14 @@ import {
   Images, 
   Heart, 
   ChatCircle, 
-  PaperPlaneTilt,
   X,
   Play,
   Plus,
   Camera,
-  Trash,
   CaretLeft
 } from '@phosphor-icons/react';
-import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import ThreadedComments from './ThreadedComments';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -81,11 +79,9 @@ function GalleryGrid({ items, onItemClick, onLike, currentUserId }) {
 
 // Gallery Item Detail Modal
 function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
-  const [comment, setComment] = useState('');
   const [comments, setComments] = useState(item.comments || []);
   const [isLiked, setIsLiked] = useState(item.is_liked);
   const [likeCount, setLikeCount] = useState(item.like_count);
-  const [submitting, setSubmitting] = useState(false);
   const videoRef = useRef(null);
 
   const handleLike = async () => {
@@ -103,25 +99,19 @@ function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
     }
   };
 
-  const handleComment = async (e) => {
-    e.preventDefault();
-    if (!comment.trim() || submitting) return;
-
-    setSubmitting(true);
+  const handleAddComment = async (content, parentId) => {
     try {
       const response = await axios.post(
         `${API_URL}/api/gallery/${item.id}/comment`,
-        { content: comment },
+        { content, parent_id: parentId },
         { withCredentials: true }
       );
       setComments([...comments, response.data]);
-      setComment('');
       onComment(item.id, response.data);
     } catch (error) {
       console.error('Error commenting:', error);
       toast.error('Failed to add comment');
-    } finally {
-      setSubmitting(false);
+      throw error;
     }
   };
 
@@ -172,64 +162,41 @@ function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
 
           {/* Details sidebar */}
           <div className="w-full md:w-80 flex flex-col border-t md:border-t-0 md:border-l border-[var(--border-color)] max-h-[40vh] md:max-h-none">
-            {/* Caption & Comments */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {item.caption && (
-                <div className="text-sm text-[var(--text-primary)]">
+            {/* Caption */}
+            {item.caption && (
+              <div className="p-3 border-b border-[var(--border-color)]">
+                <p className="text-sm text-[var(--text-primary)]">
                   <span className="font-medium">{item.user_name}</span> {item.caption}
-                </div>
-              )}
-              
-              {comments.map((c) => (
-                <div key={c.id} className="text-sm">
-                  <span className="font-medium text-[var(--text-primary)]">{c.user_name}</span>
-                  <span className="text-[var(--text-secondary)] ml-2">{c.content}</span>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">
-                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="p-3 border-t border-[var(--border-color)] shrink-0">
-              <div className="flex items-center gap-4 mb-2">
-                <button
-                  onClick={handleLike}
-                  className="flex items-center gap-1"
-                  data-testid="gallery-modal-like"
-                >
-                  <Heart 
-                    size={24} 
-                    weight={isLiked ? "fill" : "regular"} 
-                    className={isLiked ? "text-red-500" : "text-[var(--text-primary)]"}
-                  />
-                </button>
-                <ChatCircle size={24} className="text-[var(--text-primary)]" />
+                </p>
               </div>
-              <p className="text-sm font-medium text-[var(--text-primary)] mb-2">
-                {likeCount} {likeCount === 1 ? 'like' : 'likes'}
-              </p>
-              
-              {/* Comment input */}
-              <form onSubmit={handleComment} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-                  data-testid="gallery-comment-input"
-                />
+            )}
+
+            {/* Like button */}
+            <div className="p-3 border-b border-[var(--border-color)] flex items-center gap-4">
               <button
-                type="submit"
-                disabled={!comment.trim() || submitting}
-                className="text-[var(--brand-primary)] font-medium text-sm disabled:opacity-50"
-                data-testid="gallery-comment-submit"
+                onClick={handleLike}
+                className="flex items-center gap-1"
+                data-testid="gallery-modal-like"
               >
-                <PaperPlaneTilt size={20} />
+                <Heart 
+                  size={24} 
+                  weight={isLiked ? "fill" : "regular"} 
+                  className={isLiked ? "text-red-500" : "text-[var(--text-primary)]"}
+                />
+                <span className="text-sm text-[var(--text-primary)]">
+                  {likeCount} {likeCount === 1 ? 'like' : 'likes'}
+                </span>
               </button>
-            </form>
+            </div>
+              
+            {/* Threaded Comments */}
+            <div className="flex-1 overflow-y-auto p-3">
+              <ThreadedComments
+                comments={comments}
+                onAddComment={handleAddComment}
+                currentUserId={currentUserId}
+                maxDepth={2}
+              />
             </div>
           </div>
         </div>
