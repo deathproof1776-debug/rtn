@@ -256,17 +256,34 @@ export default function CommunityPostCard({
         )}
       </div>
 
-      {/* Images */}
+      {/* Images and Videos */}
       {post.images?.length > 0 && (
         <div className="mb-3 grid grid-cols-2 gap-2">
-          {post.images.slice(0, 4).map((img, i) => (
-            <img 
-              key={`img-${i}`} 
-              src={img.startsWith('/api') ? `${API_URL}${img}` : img} 
-              alt={`Post image ${i + 1}`}
-              className="w-full h-32 md:h-40 object-cover rounded border border-[var(--border-color)]"
-            />
-          ))}
+          {post.images.slice(0, 4).map((item, i) => {
+            // Handle both string URLs and media objects
+            const url = typeof item === 'string' ? item : item.url;
+            const isVideo = typeof item === 'object' ? item.isVideo : 
+              (url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm') || url.endsWith('.mpeg'));
+            const fullUrl = url.startsWith('/api') ? `${API_URL}${url}` : url;
+            
+            return isVideo ? (
+              <div key={`media-${i}`} className="relative">
+                <video 
+                  src={fullUrl}
+                  className="w-full h-32 md:h-40 object-cover rounded border border-[var(--border-color)]"
+                  controls
+                  preload="metadata"
+                />
+              </div>
+            ) : (
+              <img 
+                key={`media-${i}`} 
+                src={fullUrl} 
+                alt={`Post image ${i + 1}`}
+                className="w-full h-32 md:h-40 object-cover rounded border border-[var(--border-color)]"
+              />
+            );
+          })}
         </div>
       )}
 

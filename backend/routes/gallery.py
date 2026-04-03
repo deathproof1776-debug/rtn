@@ -85,7 +85,32 @@ async def get_gallery(request: Request, user_id: str = None, skip: int = 0, limi
     return items
 
 
-@router.get("/{item_id}")
+@router.get("/user/{user_id}")
+async def get_user_gallery(user_id: str, request: Request, skip: int = 0, limit: int = 20):
+    """Get gallery items for a specific user"""
+    current_user = await get_current_user(request)
+
+    # Get user info
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    items = await db.gallery.find(
+        {"user_id": user_id, "is_deleted": False},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+
+    for item in items:
+        item["url"] = f"/api/files/{item['storage_path']}"
+        item["is_liked"] = current_user["_id"] in item.get("likes", [])
+
+    return {
+        "items": items,
+        "user_name": user.get("name", "Unknown")
+    }
+
+
+@router.get("/item/{item_id}")
 async def get_gallery_item(item_id: str, request: Request):
     """Get a single gallery item"""
     await get_current_user(request)

@@ -207,6 +207,14 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - Trade ratings/reviews after completed trades
 
 ## What Was Completed (April 3, 2026)
+- [x] **Bug Fix: Video Upload on Community Board** - Community Board now supports video uploads
+  - Updated CreateCommunityPostModal to accept both image/* and video/* file types
+  - Updated CommunityPostCard to detect and render videos with <video> element and controls
+  - Videos detected by extension (.mp4, .mov, .webm, .mpeg) or is_video flag
+- [x] **Bug Fix: Gallery Failing to Load** - Fixed gallery routing conflict
+  - Added new endpoint GET /api/gallery/user/{user_id} for fetching user galleries
+  - Returns {items: [], user_name: ""} structure with is_liked flag for each item
+  - Fixed frontend Gallery.js to call correct endpoint
 - [x] **Post Delete Feature** - Users can delete their own posts, admins can delete any post
   - Added DELETE /api/posts/{post_id} endpoint with authorization checks
   - PostCard.js shows "Delete Post" option in dropdown menu for own posts or admins

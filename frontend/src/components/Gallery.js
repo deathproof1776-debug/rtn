@@ -374,7 +374,7 @@ export default function Gallery({ userId, isOwnProfile = false, onBack }) {
 
   const fetchGallery = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/gallery/${userId}`, {
+      const response = await axios.get(`${API_URL}/api/gallery/user/${userId}`, {
         withCredentials: true
       });
       setItems(response.data.items);

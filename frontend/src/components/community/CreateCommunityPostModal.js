@@ -1,9 +1,10 @@
 /**
  * CreateCommunityPostModal - Modal for creating new community posts
+ * Supports both image and video uploads
  */
 import { useState } from 'react';
 import axios from 'axios';
-import { X, Image as ImageIcon, Upload } from '@phosphor-icons/react';
+import { X, Image as ImageIcon, Upload, VideoCamera, Play } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -11,17 +12,17 @@ export default function CreateCommunityPostModal({ topics, onClose, onPostCreate
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [topic, setTopic] = useState('general');
-  const [images, setImages] = useState([]);
+  const [media, setMedia] = useState([]); // [{url, isVideo, type}]
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleImageUpload = async (e) => {
+  const handleMediaUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
     
-    if (images.length + files.length > 5) {
-      setError('Maximum 5 images allowed');
+    if (media.length + files.length > 5) {
+      setError('Maximum 5 media files allowed');
       return;
     }
 
@@ -39,18 +40,23 @@ export default function CreateCommunityPostModal({ topics, onClose, onPostCreate
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
-        setImages(prev => [...prev, res.data.url]);
+        const isVideo = res.data.is_video || file.type.startsWith('video/');
+        setMedia(prev => [...prev, {
+          url: res.data.url,
+          isVideo: isVideo,
+          type: file.type
+        }]);
       } catch (err) {
         console.error('Upload error:', err);
-        setError('Failed to upload image');
+        setError(err.response?.data?.detail || 'Failed to upload file');
       }
     }
 
     setUploading(false);
   };
 
-  const removeImage = (index) => {
-    setImages(images.filter((_, i) => i !== index));
+  const removeMedia = (index) => {
+    setMedia(media.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -64,11 +70,13 @@ export default function CreateCommunityPostModal({ topics, onClose, onPostCreate
     setError('');
 
     try {
+      // Send media as array of objects with url and isVideo flag
       const res = await axios.post(`${API_URL}/api/community`, {
         title: title.trim(),
         content: content.trim(),
         topic,
-        images
+        images: media.map(m => m.url), // Backend still uses 'images' field
+        media: media // Send full media info for future use
       }, { withCredentials: true });
 
       // Fetch the created post to get full data
@@ -154,53 +162,69 @@ export default function CreateCommunityPostModal({ topics, onClose, onPostCreate
             />
           </div>
 
-          {/* Image Upload */}
+          {/* Media Upload - Images and Videos */}
           <div>
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-              Images (optional, max 5)
+              Media (optional, max 5 images or videos)
             </label>
             
-            {images.length > 0 && (
+            {media.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
-                {images.map((img, i) => (
+                {media.map((item, i) => (
                   <div key={i} className="relative">
-                    <img 
-                      src={img.startsWith('/api') ? `${API_URL}${img}` : img} 
-                      alt={`Upload ${i + 1}`}
-                      className="w-20 h-20 object-cover rounded border border-[var(--border-color)]"
-                    />
+                    {item.isVideo ? (
+                      <div className="w-20 h-20 bg-[var(--bg-surface-hover)] rounded border border-[var(--border-color)] flex items-center justify-center">
+                        <Play size={24} className="text-[var(--brand-primary)]" weight="fill" />
+                      </div>
+                    ) : (
+                      <img 
+                        src={item.url.startsWith('/api') ? `${API_URL}${item.url}` : item.url} 
+                        alt={`Upload ${i + 1}`}
+                        className="w-20 h-20 object-cover rounded border border-[var(--border-color)]"
+                      />
+                    )}
                     <button
                       type="button"
-                      onClick={() => removeImage(i)}
+                      onClick={() => removeMedia(i)}
                       className="absolute -top-2 -right-2 p-1 bg-red-600 rounded-full text-white"
                     >
                       <X size={12} />
                     </button>
+                    {item.isVideo && (
+                      <span className="absolute bottom-1 left-1 text-[8px] bg-black/70 text-white px-1 rounded">
+                        VIDEO
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {images.length < 5 && (
+            {media.length < 5 && (
               <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--border-color)] rounded cursor-pointer hover:border-[var(--brand-primary)] transition-colors">
                 {uploading ? (
                   <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <ImageIcon size={20} className="text-[var(--text-muted)]" />
-                    <span className="text-sm text-[var(--text-muted)]">Add images</span>
+                    <VideoCamera size={20} className="text-[var(--text-muted)]" />
+                    <span className="text-sm text-[var(--text-muted)]">Add images or videos</span>
                   </>
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
-                  onChange={handleImageUpload}
+                  onChange={handleMediaUpload}
                   className="hidden"
                   disabled={uploading}
+                  data-testid="community-media-upload"
                 />
               </label>
             )}
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              Supported: JPEG, PNG, GIF, WebP, MP4, MOV, WebM (max 10MB images, 100MB videos)
+            </p>
           </div>
 
           {/* Submit */}
