@@ -84,7 +84,16 @@ function AppRoutes() {
   );
 }
 
+import { useEffect } from "react";
+
 function App() {
+  // Set environment attribute for CSS watermark clearance
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const isPreview = hostname.includes('.preview.emergentagent.com');
+    document.documentElement.setAttribute('data-env', isPreview ? 'preview' : 'deployed');
+  }, []);
+
   return (
     <div className="App">
       <ThemeProvider>
