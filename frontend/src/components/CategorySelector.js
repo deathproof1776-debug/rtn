@@ -313,7 +313,7 @@ export default function CategorySelector({
                     const isSelected = isItemSelected(selectedItems, item);
                     return (
                       <button
-                        key={`cat-item-${category}-${item}`}
+                        key={`cat-item-${catKey}-${item}`}
                         onClick={() => isSelected ? handleRemoveItem(item) : handleSelectItem(item)}
                         className={`text-[11px] px-2 py-1 border transition-colors ${
                           isSelected 
