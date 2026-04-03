@@ -211,6 +211,22 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 - [x] **Frontend Refactoring** - Component modularization
   - Extracted PostCard.js from Feed.js for better reusability
   - Feed.js reduced from 554 lines to ~170 lines
+- [x] **Community Board** - New general discussion forum
+  - 15 topic categories (Homesteading, Off-Grid, Prepping, DIY, Gardening, Livestock, Food Preservation, Energy, Water, Security, Health, Finance, Community, News, General)
+  - Full media support (images)
+  - Likes, threaded comments, topic badges
+  - /api/community/* endpoints
+- [x] **Admin System Messages** - Scrolling banner announcements
+  - Create, edit, toggle active, delete messages
+  - 4 message types: Info (blue), Warning (yellow), Success (green), Urgent (red)
+  - Priority ordering
+  - Displays on Barter Feed and Community Board
+  - /api/admin/system-messages/* endpoints
+- [x] **Filterable Feeds**
+  - Barter Feed: Nearby, Network, Verified, Category (Goods/Services/Skills)
+  - Community Board: Nearby, Network, Verified, Topic filter
+  - Clear filters button
+  - Filter pill UI with active state styling
   - All UI flows verified working
 
 ## What Was Completed (April 2, 2026)
