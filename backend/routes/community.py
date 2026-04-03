@@ -3,7 +3,7 @@ Community Board routes: general discussion posts for homesteading/off-grid commu
 """
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from database import db, encrypt_data, decrypt_data
@@ -113,7 +113,11 @@ async def get_community_posts(
     topic: Optional[str] = None,
     nearby_only: bool = False,
     network_only: bool = False,
-    verified_only: bool = False
+    verified_only: bool = False,
+    has_media: bool = False,
+    time_range: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    search: Optional[str] = None
 ):
     """Get community posts with optional filters"""
     user = await get_current_user(request)
@@ -123,6 +127,30 @@ async def get_community_posts(
     query = {"is_deleted": False}
     if topic and topic != "all":
         query["topic"] = topic
+    if has_media:
+        query["images"] = {"$exists": True, "$ne": []}
+    
+    # Time range filter
+    if time_range and time_range != "all":
+        now = datetime.now(timezone.utc)
+        if time_range == "today":
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif time_range == "week":
+            start_date = now - timedelta(days=7)
+        elif time_range == "month":
+            start_date = now - timedelta(days=30)
+        else:
+            start_date = None
+        if start_date:
+            query["created_at"] = {"$gte": start_date.isoformat()}
+    
+    # Search filter
+    if search and search.strip():
+        search_term = search.strip()
+        query["$or"] = [
+            {"title": {"$regex": search_term, "$options": "i"}},
+            {"user_name": {"$regex": search_term, "$options": "i"}}
+        ]
     
     # Get user's network connections
     network_user_ids = set()
@@ -207,6 +235,13 @@ async def get_community_posts(
             continue
         
         result_posts.append(post)
+    
+    # Apply sorting based on sort_by parameter
+    if sort_by == "popular":
+        result_posts.sort(key=lambda x: len(x.get("likes", [])), reverse=True)
+    elif sort_by == "commented":
+        result_posts.sort(key=lambda x: len(x.get("comments", [])), reverse=True)
+    # Default is already sorted by is_pinned and created_at from DB query
     
     return result_posts[:limit]
 

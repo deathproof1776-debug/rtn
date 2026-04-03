@@ -27,7 +27,11 @@ export default function CommunityBoard({ onViewProfile }) {
     nearby: false,
     network: false,
     verified: false,
-    category: 'all'
+    hasMedia: false,
+    category: 'all',
+    timeRange: 'all',
+    sortBy: 'recent',
+    search: ''
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,8 +58,18 @@ export default function CommunityBoard({ onViewProfile }) {
       if (filters.nearby) params.append('nearby_only', 'true');
       if (filters.network) params.append('network_only', 'true');
       if (filters.verified) params.append('verified_only', 'true');
+      if (filters.hasMedia) params.append('has_media', 'true');
       if (filters.category && filters.category !== 'all') {
         params.append('topic', filters.category);
+      }
+      if (filters.timeRange && filters.timeRange !== 'all') {
+        params.append('time_range', filters.timeRange);
+      }
+      if (filters.sortBy && filters.sortBy !== 'recent') {
+        params.append('sort_by', filters.sortBy);
+      }
+      if (filters.search && filters.search.trim()) {
+        params.append('search', filters.search.trim());
       }
       
       const res = await axios.get(`${API_URL}/api/community?${params.toString()}`, {

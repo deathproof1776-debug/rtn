@@ -3,7 +3,7 @@ Posts routes: create posts, list feed, comments, likes.
 """
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from database import db, encrypt_data, decrypt_data
 from auth import get_current_user
@@ -77,7 +77,11 @@ async def get_posts(
     nearby_only: bool = False,
     network_only: bool = False,
     verified_only: bool = False,
-    category: str = None
+    has_media: bool = False,
+    category: str = None,
+    time_range: str = None,
+    sort_by: str = None,
+    search: str = None
 ):
     user = await get_current_user(request)
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
@@ -111,12 +115,46 @@ async def get_posts(
         query["category"] = category
     if network_only:
         query["user_id"] = {"$in": list(network_user_ids)}
+    if has_media:
+        query["images"] = {"$exists": True, "$ne": []}
+    
+    # Time range filter
+    if time_range and time_range != "all":
+        now = datetime.now(timezone.utc)
+        if time_range == "today":
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif time_range == "week":
+            start_date = now - timedelta(days=7)
+        elif time_range == "month":
+            start_date = now - timedelta(days=30)
+        else:
+            start_date = None
+        if start_date:
+            query["created_at"] = {"$gte": start_date.isoformat()}
+    
+    # Search filter
+    if search and search.strip():
+        search_term = search.strip()
+        query["$or"] = [
+            {"title": {"$regex": search_term, "$options": "i"}},
+            {"user_name": {"$regex": search_term, "$options": "i"}}
+        ]
+
+    # Determine sort order
+    sort_field = "created_at"
+    sort_direction = -1
+    if sort_by == "popular":
+        # Will sort by likes count in memory
+        pass
+    elif sort_by == "commented":
+        # Will sort by comments count in memory
+        pass
 
     posts = await db.posts.find(
         query,
         {"_id": 1, "user_id": 1, "user_name": 1, "user_avatar": 1, "title": 1, "description": 1,
          "category": 1, "offering": 1, "looking_for": 1, "images": 1, "created_at": 1, "likes": 1, "comments": 1}
-    ).sort("created_at", -1).skip(skip).limit(100 if nearby_only else limit * 3).to_list(100 if nearby_only else limit * 3)
+    ).sort(sort_field, sort_direction).skip(skip).limit(100 if nearby_only else limit * 3).to_list(100 if nearby_only else limit * 3)
 
     # Get user locations and verification status
     user_ids = list(set([p["user_id"] for p in posts]))
@@ -172,8 +210,15 @@ async def get_posts(
         
         result_posts.append(post)
 
-    result_posts.sort(key=lambda x: (-x.get("feed_score", 0), x.get("created_at", "")), reverse=False)
-    result_posts.sort(key=lambda x: -x.get("feed_score", 0))
+    # Apply sorting based on sort_by parameter
+    if sort_by == "popular":
+        result_posts.sort(key=lambda x: len(x.get("likes", [])), reverse=True)
+    elif sort_by == "commented":
+        result_posts.sort(key=lambda x: len(x.get("comments", [])), reverse=True)
+    else:
+        # Default: sort by feed_score then created_at
+        result_posts.sort(key=lambda x: (-x.get("feed_score", 0), x.get("created_at", "")), reverse=False)
+        result_posts.sort(key=lambda x: -x.get("feed_score", 0))
 
     return result_posts[:limit]
 

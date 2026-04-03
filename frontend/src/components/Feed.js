@@ -38,7 +38,11 @@ export default function Feed({
     nearby: false,
     network: false,
     verified: false,
-    category: 'all'
+    hasMedia: false,
+    category: 'all',
+    timeRange: 'all',
+    sortBy: 'recent',
+    search: ''
   });
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -67,8 +71,18 @@ export default function Feed({
       if (filters.nearby) params.append('nearby_only', 'true');
       if (filters.network) params.append('network_only', 'true');
       if (filters.verified) params.append('verified_only', 'true');
+      if (filters.hasMedia) params.append('has_media', 'true');
       if (filters.category && filters.category !== 'all') {
         params.append('category', filters.category);
+      }
+      if (filters.timeRange && filters.timeRange !== 'all') {
+        params.append('time_range', filters.timeRange);
+      }
+      if (filters.sortBy && filters.sortBy !== 'recent') {
+        params.append('sort_by', filters.sortBy);
+      }
+      if (filters.search && filters.search.trim()) {
+        params.append('search', filters.search.trim());
       }
       
       const res = await axios.get(`${API_URL}/api/posts?${params.toString()}`, {
@@ -86,7 +100,11 @@ export default function Feed({
   useEffect(() => {
     // Only fetch if filters are not all default
     const hasActiveFilters = filters.nearby || filters.network || filters.verified || 
-                            (filters.category && filters.category !== 'all');
+                            filters.hasMedia ||
+                            (filters.category && filters.category !== 'all') ||
+                            (filters.timeRange && filters.timeRange !== 'all') ||
+                            (filters.sortBy && filters.sortBy !== 'recent') ||
+                            (filters.search && filters.search.trim());
     if (hasActiveFilters) {
       fetchFilteredPosts();
     } else if (onRefresh) {
