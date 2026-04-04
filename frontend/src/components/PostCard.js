@@ -113,11 +113,19 @@ export default function PostCard({
         <div className="flex items-center gap-2 md:gap-3">
           <button 
             onClick={handleProfileClick}
-            className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0 hover:ring-2 hover:ring-[var(--brand-primary)] transition-all cursor-pointer"
+            className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0 hover:ring-2 hover:ring-[var(--brand-primary)] transition-all cursor-pointer overflow-hidden"
             data-testid={`post-avatar-${post._id}`}
             title={`View ${post.user_name}'s profile`}
           >
-            {post.user_name?.charAt(0)?.toUpperCase() || 'U'}
+            {post.user_avatar ? (
+              <img 
+                src={post.user_avatar} 
+                alt={post.user_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              post.user_name?.charAt(0)?.toUpperCase() || 'U'
+            )}
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">

@@ -171,9 +171,9 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
     if (userId) {
       fetchProfile();
       fetchNetworkStatus();
-      // Fetch gallery count
-      axios.get(`${API_URL}/api/gallery/${userId}`, { withCredentials: true })
-        .then(res => setGalleryCount(res.data.total || 0))
+      // Fetch gallery count - using correct endpoint
+      axios.get(`${API_URL}/api/gallery/user/${userId}`, { withCredentials: true })
+        .then(res => setGalleryCount(res.data.items?.length || 0))
         .catch(() => setGalleryCount(0));
     }
   }, [userId, fetchProfile, fetchNetworkStatus]);

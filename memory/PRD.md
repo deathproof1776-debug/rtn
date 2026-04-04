@@ -1,5 +1,9 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (April 4, 2026)
+- **Bug Fix**: PostCard.js now displays user avatars when available (previously only showed initials)
+- **Bug Fix**: UserProfileView.js gallery endpoint corrected from `/api/gallery/{userId}` to `/api/gallery/user/{user_id}`
+
 ## Original Problem Statement
 Social media platform for homesteaders, survivalists, and those exiting corporate control. Features Facebook aesthetics with LinkedIn functionality. Profiles include location, skills, goods/services for barter. Photo/video uploads, direct messaging, main feed with matching algorithm. Full encryption.
 
