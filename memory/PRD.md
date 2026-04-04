@@ -1,6 +1,9 @@
 # Rebel Trade Network - Bartering Platform
 
 ## Latest Updates (April 4, 2026)
+- **Feature**: Edit Post - users can now edit their own barter posts (title, description, category, offering, looking_for)
+- **Feature**: Edit Comment - users can edit their own comments with inline editor, shows "(edited)" indicator
+- **Feature**: CreatePostModal now uses CategorySelector dropdowns for Offering/Looking For (same as profile)
 - **Bug Fix**: PostCard.js now displays user avatars when available (previously only showed initials)
 - **Bug Fix**: UserProfileView.js gallery endpoint corrected from `/api/gallery/{userId}` to `/api/gallery/user/{user_id}`
 
