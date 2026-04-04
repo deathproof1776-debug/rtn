@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [tradeTarget, setTradeTarget] = useState(null);
   const [chatUserId, setChatUserId] = useState(null);
   const [viewingGallery, setViewingGallery] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -99,8 +100,24 @@ export default function Dashboard() {
   }, [user, fetchPosts, fetchMatches, fetchNetworkRequests, fetchTradeDealsCount]);
 
   const handlePostCreated = (newPost) => {
-    setPosts([newPost, ...posts]);
+    // Check if this is an update (post already exists in the list)
+    const existingIndex = posts.findIndex(p => p._id === newPost._id);
+    if (existingIndex >= 0) {
+      // Update existing post
+      const updatedPosts = [...posts];
+      updatedPosts[existingIndex] = newPost;
+      setPosts(updatedPosts);
+    } else {
+      // Add new post
+      setPosts([newPost, ...posts]);
+    }
     setShowCreatePost(false);
+    setEditingPost(null);
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setShowCreatePost(true);
   };
 
   const handleViewProfile = (userId) => {
@@ -191,6 +208,7 @@ export default function Dashboard() {
             onViewProfile={handleViewProfile}
             onProposeTrade={handleProposeTrade}
             onStartChat={handleStartChat}
+            onEditPost={handleEditPost}
           />
         )}
         {activeView === 'community' && (
@@ -249,8 +267,12 @@ export default function Dashboard() {
 
       {showCreatePost && (
         <CreatePostModal 
-          onClose={() => setShowCreatePost(false)}
+          onClose={() => {
+            setShowCreatePost(false);
+            setEditingPost(null);
+          }}
           onPostCreated={handlePostCreated}
+          editPost={editingPost}
         />
       )}
 

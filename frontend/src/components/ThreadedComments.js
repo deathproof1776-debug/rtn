@@ -6,7 +6,10 @@ import {
   PaperPlaneTilt,
   CaretDown,
   CaretUp,
-  Trash
+  Trash,
+  PencilSimple,
+  Check,
+  X
 } from '@phosphor-icons/react';
 
 /**
@@ -16,6 +19,7 @@ import {
  * - comments: Array of comment objects with { id, user_id, user_name, content, parent_id, replies, created_at }
  * - onAddComment: Function(content, parentId) - Called when adding a new comment or reply
  * - onDeleteComment: Function(commentId) - Called when deleting a comment (optional)
+ * - onEditComment: Function(commentId, newContent) - Called when editing a comment (optional)
  * - currentUserId: String - Current logged in user's ID
  * - maxDepth: Number - Maximum nesting depth (default: 2)
  */
@@ -23,6 +27,7 @@ export default function ThreadedComments({
   comments = [], 
   onAddComment, 
   onDeleteComment,
+  onEditComment,
   currentUserId,
   maxDepth = 2
 }) {
@@ -31,6 +36,8 @@ export default function ThreadedComments({
   const [replyContent, setReplyContent] = useState('');
   const [expandedThreads, setExpandedThreads] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editContent, setEditContent] = useState('');
 
   // Build a map of comments by ID for quick lookup
   const commentMap = {};
@@ -108,9 +115,62 @@ export default function ThreadedComments({
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                 </span>
               </div>
-              <p className="text-sm text-[var(--text-secondary)] mt-0.5 break-words">
-                {comment.content}
-              </p>
+              
+              {/* Comment content - show input when editing */}
+              {editingCommentId === comment.id ? (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <input
+                    type="text"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="flex-1 px-2 py-1 text-sm bg-[var(--bg-main)] border border-[var(--border-color)] rounded text-[var(--text-primary)]"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (onEditComment && editContent.trim()) {
+                          onEditComment(comment.id, editContent.trim());
+                        }
+                        setEditingCommentId(null);
+                        setEditContent('');
+                      } else if (e.key === 'Escape') {
+                        setEditingCommentId(null);
+                        setEditContent('');
+                      }
+                    }}
+                    data-testid={`edit-comment-input-${comment.id}`}
+                  />
+                  <button
+                    onClick={() => {
+                      if (onEditComment && editContent.trim()) {
+                        onEditComment(comment.id, editContent.trim());
+                      }
+                      setEditingCommentId(null);
+                      setEditContent('');
+                    }}
+                    className="text-[var(--brand-primary)]"
+                    data-testid={`save-comment-edit-${comment.id}`}
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(null);
+                      setEditContent('');
+                    }}
+                    className="text-[var(--text-muted)]"
+                    data-testid={`cancel-comment-edit-${comment.id}`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--text-secondary)] mt-0.5 break-words">
+                  {comment.content}
+                  {comment.updated_at && comment.updated_at !== comment.created_at && (
+                    <span className="text-xs text-[var(--text-muted)] ml-1">(edited)</span>
+                  )}
+                </p>
+              )}
               
               {/* Comment actions */}
               <div className="flex items-center gap-3 mt-1">
@@ -131,6 +191,19 @@ export default function ThreadedComments({
                   >
                     {isExpanded ? <CaretUp size={12} /> : <CaretDown size={12} />}
                     {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                  </button>
+                )}
+                {isOwn && onEditComment && editingCommentId !== comment.id && (
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(comment.id);
+                      setEditContent(comment.content);
+                    }}
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--brand-primary)] flex items-center gap-1"
+                    data-testid={`edit-comment-${comment.id}`}
+                  >
+                    <PencilSimple size={12} />
+                    Edit
                   </button>
                 )}
                 {isOwn && onDeleteComment && (

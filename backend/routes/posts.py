@@ -475,6 +475,85 @@ async def delete_comment(post_id: str, comment_id: str, request: Request):
     return {"message": "Comment deleted"}
 
 
+@router.put("/posts/{post_id}")
+async def update_post(post_id: str, request: Request):
+    """Update a post - user can only edit their own posts"""
+    user = await get_current_user(request)
+    data = await request.json()
+    
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Only owner can edit
+    if post.get("user_id") != user["_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this post")
+    
+    # Build update document
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if "title" in data and data["title"].strip():
+        update_data["title"] = data["title"].strip()
+    if "description" in data:
+        update_data["description"] = encrypt_data(data["description"].strip()) if data["description"] else ""
+    if "category" in data:
+        update_data["category"] = data["category"]
+    if "offering" in data:
+        update_data["offering"] = normalize_items(data["offering"])
+    if "looking_for" in data:
+        update_data["looking_for"] = normalize_items(data["looking_for"])
+    if "images" in data:
+        update_data["images"] = data["images"]
+    
+    await db.posts.update_one({"_id": ObjectId(post_id)}, {"$set": update_data})
+    
+    return {"message": "Post updated successfully"}
+
+
+@router.put("/posts/{post_id}/comments/{comment_id}")
+async def update_comment(post_id: str, comment_id: str, request: Request):
+    """Update a comment - user can only edit their own comments"""
+    user = await get_current_user(request)
+    data = await request.json()
+    
+    post = await db.posts.find_one({"_id": ObjectId(post_id)})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Find the comment
+    comment_to_update = None
+    for comment in post.get("comments", []):
+        if comment.get("id") == comment_id:
+            comment_to_update = comment
+            break
+    
+    if not comment_to_update:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Only owner can edit
+    if comment_to_update["user_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this comment")
+    
+    new_content = data.get("content", "").strip()
+    if not new_content:
+        raise HTTPException(status_code=400, detail="Comment content cannot be empty")
+    
+    # Update the comment in the array
+    await db.posts.update_one(
+        {"_id": ObjectId(post_id), "comments.id": comment_id},
+        {"$set": {
+            "comments.$.content": encrypt_data(new_content),
+            "comments.$.updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "message": "Comment updated successfully",
+        "content": new_content,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
 @router.delete("/posts/{post_id}")
 async def delete_post(post_id: str, request: Request):
     """Delete a post - user can delete their own, admin can delete any"""

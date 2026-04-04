@@ -18,7 +18,8 @@ import {
   User,
   ChatText,
   Warning,
-  Trash
+  Trash,
+  PencilSimple
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import ThreadedComments from './ThreadedComments';
@@ -33,6 +34,7 @@ export default function PostCard({
   onProposeTrade, 
   onStartChat,
   onDelete,
+  onEdit,
   isAdmin
 }) {
   const [liked, setLiked] = useState(post.likes?.includes(currentUserId));
@@ -44,6 +46,7 @@ export default function PostCard({
   const [showMenu, setShowMenu] = useState(false);
 
   const isLongPost = post.description && post.description.length > 200;
+  const isOwner = post.user_id === currentUserId;
 
   const handleLikeClick = async () => {
     await onLike(post._id);
@@ -93,6 +96,22 @@ export default function PostCard({
       setComments(comments.filter(c => c.id !== commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
+    }
+  };
+
+  const handleEditComment = async (commentId, newContent) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/posts/${post._id}/comments/${commentId}`, 
+        { content: newContent },
+        { withCredentials: true }
+      );
+      setComments(comments.map(c => 
+        c.id === commentId 
+          ? { ...c, content: res.data.content, updated_at: res.data.updated_at }
+          : c
+      ));
+    } catch (error) {
+      console.error('Error editing comment:', error);
     }
   };
 
@@ -237,8 +256,22 @@ export default function PostCard({
                     Report Post
                   </button>
                 )}
+                {/* Edit option for own posts only */}
+                {isOwner && onEdit && (
+                  <button
+                    onClick={() => {
+                      onEdit(post);
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
+                    data-testid={`post-menu-edit-${post._id}`}
+                  >
+                    <PencilSimple size={16} />
+                    Edit Post
+                  </button>
+                )}
                 {/* Delete option for own posts or admin */}
-                {(post.user_id === currentUserId || isAdmin) && onDelete && (
+                {(isOwner || isAdmin) && onDelete && (
                   <button
                     onClick={() => {
                       if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
@@ -398,6 +431,7 @@ export default function PostCard({
                 comments={comments}
                 onAddComment={handleAddComment}
                 onDeleteComment={handleDeleteComment}
+                onEditComment={handleEditComment}
                 currentUserId={currentUserId}
                 maxDepth={2}
               />

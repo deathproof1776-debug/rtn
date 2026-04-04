@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Image, Tag, ArrowsLeftRight, PencilSimple, Check } from '@phosphor-icons/react';
+import { X, Image, Tag, ArrowsLeftRight } from '@phosphor-icons/react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import CategorySelector from './CategorySelector';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -11,90 +12,19 @@ const CATEGORIES = [
   { value: 'skills', label: 'Skills' },
 ];
 
-// Helper to get item name
-const getItemName = (item) => typeof item === 'string' ? item : item?.name || '';
-
-export default function CreatePostModal({ onClose, onPostCreated }) {
+export default function CreatePostModal({ onClose, onPostCreated, editPost = null }) {
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('goods');
-  const [offering, setOffering] = useState([]);  // Array of {name, description, quantity}
-  const [offeringInput, setOfferingInput] = useState('');
-  const [lookingFor, setLookingFor] = useState([]);
-  const [lookingForInput, setLookingForInput] = useState('');
-  const [images, setImages] = useState([]);
+  const [title, setTitle] = useState(editPost?.title || '');
+  const [description, setDescription] = useState(editPost?.description || '');
+  const [category, setCategory] = useState(editPost?.category || 'goods');
+  const [offering, setOffering] = useState(editPost?.offering || []);
+  const [lookingFor, setLookingFor] = useState(editPost?.looking_for || []);
+  const [images, setImages] = useState(editPost?.images || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
-  
-  // Item detail editing state
-  const [editingItem, setEditingItem] = useState(null); // {type: 'offering'|'lookingFor', index: number}
-  const [editQuantity, setEditQuantity] = useState('');
-  const [editItemDescription, setEditItemDescription] = useState('');
 
-  const handleAddOffering = () => {
-    const trimmed = offeringInput.trim();
-    if (trimmed && !offering.some(o => getItemName(o) === trimmed)) {
-      setOffering([...offering, { name: trimmed, description: '', quantity: '' }]);
-      setOfferingInput('');
-    }
-  };
-
-  const handleAddLookingFor = () => {
-    const trimmed = lookingForInput.trim();
-    if (trimmed && !lookingFor.some(l => getItemName(l) === trimmed)) {
-      setLookingFor([...lookingFor, { name: trimmed, description: '', quantity: '' }]);
-      setLookingForInput('');
-    }
-  };
-
-  const handleRemoveOffering = (index) => {
-    setOffering(offering.filter((_, i) => i !== index));
-    if (editingItem?.type === 'offering' && editingItem?.index === index) {
-      setEditingItem(null);
-    }
-  };
-
-  const handleRemoveLookingFor = (index) => {
-    setLookingFor(lookingFor.filter((_, i) => i !== index));
-    if (editingItem?.type === 'lookingFor' && editingItem?.index === index) {
-      setEditingItem(null);
-    }
-  };
-
-  const handleEditItem = (type, index) => {
-    const item = type === 'offering' ? offering[index] : lookingFor[index];
-    setEditingItem({ type, index });
-    setEditQuantity(item.quantity || '');
-    setEditItemDescription(item.description || '');
-  };
-
-  const handleSaveItemDetails = () => {
-    if (!editingItem) return;
-    
-    if (editingItem.type === 'offering') {
-      const updated = [...offering];
-      updated[editingItem.index] = {
-        ...updated[editingItem.index],
-        quantity: editQuantity,
-        description: editItemDescription
-      };
-      setOffering(updated);
-    } else {
-      const updated = [...lookingFor];
-      updated[editingItem.index] = {
-        ...updated[editingItem.index],
-        quantity: editQuantity,
-        description: editItemDescription
-      };
-      setLookingFor(updated);
-    }
-    
-    setEditingItem(null);
-    setEditQuantity('');
-    setEditItemDescription('');
-  };
+  const isEditing = !!editPost;
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -136,32 +66,56 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/posts`, {
-        title,
-        description,
-        category,
-        offering,
-        looking_for: lookingFor,
-        images
-      }, { withCredentials: true });
+      if (isEditing) {
+        // Update existing post
+        await axios.put(`${API_URL}/api/posts/${editPost._id}`, {
+          title,
+          description,
+          category,
+          offering,
+          looking_for: lookingFor,
+          images
+        }, { withCredentials: true });
 
-      onPostCreated({
-        _id: response.data.id,
-        user_id: user?.id,
-        user_name: user?.name || 'Anonymous',
-        user_avatar: user?.avatar || '',
-        title,
-        description,
-        category,
-        offering,
-        looking_for: lookingFor,
-        images,
-        created_at: new Date().toISOString(),
-        likes: [],
-        comments: []
-      });
+        onPostCreated({
+          ...editPost,
+          title,
+          description,
+          category,
+          offering,
+          looking_for: lookingFor,
+          images,
+          updated_at: new Date().toISOString()
+        });
+      } else {
+        // Create new post
+        const response = await axios.post(`${API_URL}/api/posts`, {
+          title,
+          description,
+          category,
+          offering,
+          looking_for: lookingFor,
+          images
+        }, { withCredentials: true });
+
+        onPostCreated({
+          _id: response.data.id,
+          user_id: user?.id,
+          user_name: user?.name || 'Anonymous',
+          user_avatar: user?.avatar || '',
+          title,
+          description,
+          category,
+          offering,
+          looking_for: lookingFor,
+          images,
+          created_at: new Date().toISOString(),
+          likes: [],
+          comments: []
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create post');
+      setError(err.response?.data?.detail || `Failed to ${isEditing ? 'update' : 'create'} post`);
     } finally {
       setLoading(false);
     }
@@ -172,7 +126,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
       <div className="bg-[var(--bg-surface)] border border-[var(--bg-surface-hover)] w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="flex items-center justify-between p-4 border-b border-[var(--bg-surface-hover)]">
           <h2 className="text-xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
-            Create Barter Post
+            {isEditing ? 'Edit Barter Post' : 'Create Barter Post'}
           </h2>
           <button onClick={onClose} className="btn-ghost p-2" data-testid="close-modal">
             <X size={24} />
@@ -230,140 +184,36 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
             </div>
           </div>
 
+          {/* Offering Section - Using CategorySelector */}
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">
-              <Tag size={16} className="inline mr-1 text-[var(--brand-accent)]" />
-              What You're Offering
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={offeringInput}
-                onChange={(e) => setOfferingInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOffering())}
-                className="input-field flex-1"
-                placeholder="e.g., Fresh eggs, Woodworking"
-                data-testid="offering-input"
-              />
-              <button type="button" onClick={handleAddOffering} className="btn-secondary px-3">
-                <Plus size={20} />
-              </button>
+            <div className="flex items-center gap-2 mb-2">
+              <Tag size={16} className="text-[var(--brand-accent)]" />
+              <label className="text-sm text-[var(--text-secondary)]">What You're Offering</label>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {offering.map((item, i) => {
-                const isEditing = editingItem?.type === 'offering' && editingItem?.index === i;
-                return (
-                  <div key={`offering-${item.name}-${i}`} className="bg-[var(--bg-main)] border border-[var(--bg-surface-hover)] p-2 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <span className="tag m-0">
-                        {item.name}
-                        {item.quantity && <span className="ml-1 opacity-75">({item.quantity})</span>}
-                      </span>
-                      <button 
-                        type="button" 
-                        onClick={() => isEditing ? handleSaveItemDetails() : handleEditItem('offering', i)}
-                        className="text-[var(--text-muted)] hover:text-[var(--brand-primary)]"
-                        title={isEditing ? "Save" : "Add details"}
-                      >
-                        {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
-                      </button>
-                      <button type="button" onClick={() => handleRemoveOffering(i)} className="text-[var(--text-muted)] hover:text-[var(--brand-danger)]">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    {isEditing && (
-                      <div className="mt-2 space-y-2">
-                        <input
-                          type="text"
-                          value={editQuantity}
-                          onChange={(e) => setEditQuantity(e.target.value)}
-                          className="input-field w-full text-xs py-1"
-                          placeholder="Qty: e.g., 2 dozen, 5 lbs"
-                        />
-                        <input
-                          type="text"
-                          value={editItemDescription}
-                          onChange={(e) => setEditItemDescription(e.target.value)}
-                          className="input-field w-full text-xs py-1"
-                          placeholder="Details: e.g., Free range, Organic"
-                        />
-                      </div>
-                    )}
-                    {!isEditing && item.description && (
-                      <div className="text-[10px] text-[var(--text-muted)] mt-1">{item.description}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <CategorySelector
+              type={category === 'skills' ? 'skills' : category === 'services' ? 'services' : 'goods'}
+              mode="offering"
+              selectedItems={offering}
+              onItemsChange={setOffering}
+              placeholder="Search or add items you're offering..."
+              maxDisplay={10}
+            />
           </div>
 
+          {/* Looking For Section - Using CategorySelector */}
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">
-              <ArrowsLeftRight size={16} className="inline mr-1 text-[var(--brand-primary)]" />
-              What You're Looking For
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={lookingForInput}
-                onChange={(e) => setLookingForInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLookingFor())}
-                className="input-field flex-1"
-                placeholder="e.g., Vegetables, Carpentry skills"
-                data-testid="looking-for-input"
-              />
-              <button type="button" onClick={handleAddLookingFor} className="btn-secondary px-3">
-                <Plus size={20} />
-              </button>
+            <div className="flex items-center gap-2 mb-2">
+              <ArrowsLeftRight size={16} className="text-[var(--brand-primary)]" />
+              <label className="text-sm text-[var(--text-secondary)]">What You're Looking For</label>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {lookingFor.map((item, i) => {
-                const isEditing = editingItem?.type === 'lookingFor' && editingItem?.index === i;
-                return (
-                  <div key={`lookingFor-${item.name}-${i}`} className="bg-[var(--bg-main)] border border-[var(--bg-surface-hover)] p-2 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <span className="tag m-0">
-                        {item.name}
-                        {item.quantity && <span className="ml-1 opacity-75">({item.quantity})</span>}
-                      </span>
-                      <button 
-                        type="button" 
-                        onClick={() => isEditing ? handleSaveItemDetails() : handleEditItem('lookingFor', i)}
-                        className="text-[var(--text-muted)] hover:text-[var(--brand-primary)]"
-                        title={isEditing ? "Save" : "Add details"}
-                      >
-                        {isEditing ? <Check size={14} /> : <PencilSimple size={14} />}
-                      </button>
-                      <button type="button" onClick={() => handleRemoveLookingFor(i)} className="text-[var(--text-muted)] hover:text-[var(--brand-danger)]">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    {isEditing && (
-                      <div className="mt-2 space-y-2">
-                        <input
-                          type="text"
-                          value={editQuantity}
-                          onChange={(e) => setEditQuantity(e.target.value)}
-                          className="input-field w-full text-xs py-1"
-                          placeholder="Qty: e.g., 2 dozen, 5 lbs"
-                        />
-                        <input
-                          type="text"
-                          value={editItemDescription}
-                          onChange={(e) => setEditItemDescription(e.target.value)}
-                          className="input-field w-full text-xs py-1"
-                          placeholder="Details: e.g., Preferably organic"
-                        />
-                      </div>
-                    )}
-                    {!isEditing && item.description && (
-                      <div className="text-[10px] text-[var(--text-muted)] mt-1">{item.description}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <CategorySelector
+              type={category === 'skills' ? 'skills' : category === 'services' ? 'services' : 'goods'}
+              mode="wanted"
+              selectedItems={lookingFor}
+              onItemsChange={setLookingFor}
+              placeholder="Search or add items you're looking for..."
+              maxDisplay={10}
+            />
           </div>
 
           <div>
@@ -411,7 +261,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
               Cancel
             </button>
             <button type="submit" disabled={loading} className="btn-primary flex-1" data-testid="submit-post">
-              {loading ? 'Creating...' : 'Create Post'}
+              {loading ? (isEditing ? 'Saving...' : 'Creating...') : (isEditing ? 'Save Changes' : 'Create Post')}
             </button>
           </div>
         </form>

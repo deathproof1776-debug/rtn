@@ -29,7 +29,8 @@ export default function Feed({
   onRefresh, 
   onViewProfile, 
   onProposeTrade, 
-  onStartChat 
+  onStartChat,
+  onEditPost
 }) {
   const { user } = useAuth();
   const [posts, setPosts] = useState(initialPosts || []);
@@ -286,6 +287,7 @@ export default function Feed({
               post={post} 
               onLike={handleLike} 
               onDelete={handleDelete}
+              onEdit={onEditPost}
               currentUserId={user?.id} 
               isAdmin={user?.role === 'admin'}
               onViewProfile={onViewProfile} 
