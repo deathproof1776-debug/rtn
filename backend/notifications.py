@@ -22,7 +22,7 @@ async def send_push_notification(
     title: str,
     body: str,
     data: dict = None,
-    icon: str = "/logo192.png"
+    icon: str = "/icons/icon-192x192.png"
 ):
     """Send push notification to all subscribed devices of a user"""
     if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:

@@ -1,5 +1,5 @@
 // Rebel Trade Network - Enhanced Service Worker for PWA
-const CACHE_NAME = 'rebel-trade-v1';
+const CACHE_NAME = 'rebel-trade-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache on install
@@ -103,7 +103,7 @@ self.addEventListener('push', function(event) {
   const title = data.title || 'Rebel Trade Network';
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/icons/icon-192x192.png',
+    icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-96x96.png',
     vibrate: [100, 50, 100],
     data: data.data || {},
