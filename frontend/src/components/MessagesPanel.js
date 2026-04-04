@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useWebSocket } from '../contexts/WebSocketContext';
 import axios from 'axios';
 import { 
   PaperPlaneRight, 
@@ -8,11 +9,13 @@ import {
   Circle
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function MessagesPanel({ initialChatUserId = null }) {
   const { user } = useAuth();
+  const { messages: wsMessages, clearMessages } = useWebSocket();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -84,6 +87,67 @@ export default function MessagesPanel({ initialChatUserId = null }) {
       fetchMessages(selectedConversation.user_id);
     }
   }, [selectedConversation]);
+
+  // Listen for incoming WebSocket messages
+  useEffect(() => {
+    if (wsMessages.length > 0) {
+      const lastMessage = wsMessages[wsMessages.length - 1];
+      
+      // If message is for the currently selected conversation, add it
+      if (selectedConversation && lastMessage.sender_id === selectedConversation.user_id) {
+        setMessages(prev => [...prev, {
+          id: lastMessage.id,
+          sender_id: lastMessage.sender_id,
+          receiver_id: user.id,
+          content: lastMessage.content,
+          created_at: lastMessage.created_at,
+          read: true
+        }]);
+      }
+      
+      // Update conversation list with new message
+      setConversations(prev => {
+        const updated = prev.map(conv => {
+          if (conv.user_id === lastMessage.sender_id) {
+            return {
+              ...conv,
+              last_message: lastMessage.content,
+              last_message_at: lastMessage.created_at,
+              unread_count: selectedConversation?.user_id === lastMessage.sender_id 
+                ? 0 
+                : (conv.unread_count || 0) + 1
+            };
+          }
+          return conv;
+        });
+        
+        // If conversation doesn't exist, add it
+        const exists = updated.some(c => c.user_id === lastMessage.sender_id);
+        if (!exists) {
+          updated.unshift({
+            user_id: lastMessage.sender_id,
+            user_name: lastMessage.sender_name || 'Unknown',
+            user_avatar: '',
+            last_message: lastMessage.content,
+            last_message_at: lastMessage.created_at,
+            unread_count: 1
+          });
+        }
+        
+        return updated;
+      });
+      
+      // Show toast notification for new message (if not in the active conversation)
+      if (!selectedConversation || selectedConversation.user_id !== lastMessage.sender_id) {
+        toast.info(`New message from ${lastMessage.sender_name || 'Someone'}`, {
+          description: lastMessage.content.slice(0, 50) + (lastMessage.content.length > 50 ? '...' : '')
+        });
+      }
+      
+      // Clear processed WebSocket messages
+      clearMessages();
+    }
+  }, [wsMessages, selectedConversation, user, clearMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
