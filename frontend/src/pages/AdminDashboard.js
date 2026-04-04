@@ -14,7 +14,6 @@ import {
   CaretUp,
   MagnifyingGlass,
   ChartBar,
-  UserCircle,
   Crown,
   ArrowLeft,
   Warning,
@@ -26,105 +25,69 @@ import {
   Plus,
   PencilSimple,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  UsersThree
 } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function StatCard({ icon: Icon, label, value, subValue, color }) {
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4" data-testid={`stat-${label.toLowerCase().replace(/\s+/g, '-')}`}>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
-          <Icon size={20} style={{ color }} weight="duotone" />
+    <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-3" data-testid={`stat-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+          <Icon size={16} style={{ color }} weight="duotone" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
-          <p className="text-xs text-[var(--text-muted)]">{label}</p>
+          <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">{label}</p>
         </div>
       </div>
       {subValue && (
-        <p className="text-[10px] text-[var(--text-muted)] mt-2 border-t border-[var(--border-color)] pt-2">{subValue}</p>
+        <p className="text-[9px] text-[var(--text-muted)] mt-1 pt-1 border-t border-[var(--border-color)]">{subValue}</p>
       )}
     </div>
   );
 }
 
-function UserRow({ user, onVerify, onChangeRole, onDelete, onViewProfile, currentUserId }) {
+function QuickUserRow({ user, onVerify, onChangeRole, onDelete, onViewProfile, currentUserId }) {
   const [showActions, setShowActions] = useState(false);
   const isSelf = user._id === currentUserId;
 
   return (
-    <div className="flex items-center gap-3 p-3 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)] transition-colors" data-testid={`admin-user-row-${user._id}`}>
-      <div className="w-9 h-9 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-sm font-bold flex-shrink-0">
-        {user.avatar ? (
-          <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-        ) : (
-          user.name?.charAt(0)?.toUpperCase() || 'U'
-        )}
+    <div className="flex items-center gap-2 p-2 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)] text-xs">
+      <div className="w-7 h-7 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-xs font-bold flex-shrink-0">
+        {user.name?.charAt(0)?.toUpperCase() || 'U'}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-sm font-medium text-[var(--text-primary)] truncate">{user.name}</span>
-          {user.is_verified && <SealCheck size={14} className="text-[var(--brand-primary)]" weight="fill" />}
-          {user.role === 'admin' && (
-            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] font-semibold uppercase tracking-wider">Admin</span>
-          )}
-          {isSelf && (
-            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--brand-accent)]/20 text-[var(--brand-accent)] font-semibold uppercase tracking-wider">You</span>
-          )}
+        <div className="flex items-center gap-1">
+          <span className="font-medium text-[var(--text-primary)] truncate">{user.name}</span>
+          {user.is_verified && <SealCheck size={12} className="text-[var(--brand-primary)]" weight="fill" />}
+          {user.role === 'admin' && <Crown size={12} className="text-[var(--brand-accent)]" />}
         </div>
-        <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
-        {user.location && <p className="text-[10px] text-[var(--text-muted)]">{user.location}</p>}
+        <p className="text-[10px] text-[var(--text-muted)] truncate">{user.email}</p>
       </div>
       <div className="relative flex-shrink-0">
-        <button
-          onClick={() => setShowActions(!showActions)}
-          className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)] transition-colors"
-          data-testid={`admin-user-actions-${user._id}`}
-        >
-          {showActions ? <CaretUp size={16} /> : <CaretDown size={16} />}
+        <button onClick={() => setShowActions(!showActions)} className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+          <CaretDown size={14} />
         </button>
         {showActions && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-            <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-lg min-w-[180px]" data-testid={`admin-user-menu-${user._id}`}>
-              <button
-                onClick={() => { 
-                  if (onViewProfile) onViewProfile(user._id); 
-                  setShowActions(false); 
-                }}
-                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
-                data-testid={`admin-view-profile-${user._id}`}
-              >
-                <Eye size={16} />
-                View Profile
+            <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-lg min-w-[150px]">
+              <button onClick={() => { onViewProfile?.(user._id); setShowActions(false); }} className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]">
+                <Eye size={14} /> View Profile
               </button>
-              <button
-                onClick={() => { onVerify(user._id, !user.is_verified); setShowActions(false); }}
-                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
-                data-testid={`admin-verify-${user._id}`}
-              >
-                <SealCheck size={16} />
-                {user.is_verified ? 'Remove Verification' : 'Verify Trader'}
+              <button onClick={() => { onVerify(user._id, !user.is_verified); setShowActions(false); }} className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]">
+                <SealCheck size={14} /> {user.is_verified ? 'Unverify' : 'Verify'}
               </button>
               {!isSelf && (
                 <>
-                  <button
-                    onClick={() => { onChangeRole(user._id, user.role === 'admin' ? 'user' : 'admin'); setShowActions(false); }}
-                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
-                    data-testid={`admin-role-${user._id}`}
-                  >
-                    <Crown size={16} />
-                    {user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                  <button onClick={() => { onChangeRole(user._id, user.role === 'admin' ? 'user' : 'admin'); setShowActions(false); }} className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]">
+                    <Crown size={14} /> {user.role === 'admin' ? 'Demote' : 'Promote'}
                   </button>
-                  <button
-                    onClick={() => { onDelete(user._id, user.name); setShowActions(false); }}
-                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-red-400"
-                    data-testid={`admin-delete-${user._id}`}
-                  >
-                    <Trash size={16} />
-                    Delete User
+                  <button onClick={() => { onDelete(user._id, user.name); setShowActions(false); }} className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-red-400">
+                    <Trash size={14} /> Delete
                   </button>
                 </>
               )}
@@ -136,169 +99,96 @@ function UserRow({ user, onVerify, onChangeRole, onDelete, onViewProfile, curren
   );
 }
 
-function PostRow({ post, onDelete }) {
-  const [expanded, setExpanded] = useState(false);
-
+function CommunityPostRow({ post, onDelete }) {
   return (
-    <div className="p-3 border-b border-[var(--border-color)]" data-testid={`admin-post-row-${post._id}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-[var(--text-primary)]">{post.title}</span>
-            <span className="text-[9px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)] uppercase">{post.category}</span>
-          </div>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">by {post.user_name} &middot; {new Date(post.created_at).toLocaleDateString()}</p>
-          {expanded && (
-            <p className="text-sm text-[var(--text-secondary)] mt-2">{post.description}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)] transition-colors"
-          >
-            <Eye size={16} />
-          </button>
-          <button
-            onClick={() => onDelete(post._id, post.title)}
-            className="p-1.5 text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-surface-active)] transition-colors"
-            data-testid={`admin-delete-post-${post._id}`}
-          >
-            <Trash size={16} />
-          </button>
-        </div>
+    <div className="flex items-start gap-2 p-2 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)] text-xs">
+      <div className="w-6 h-6 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] text-[10px] font-bold flex-shrink-0">
+        {post.user_name?.charAt(0)?.toUpperCase() || 'U'}
       </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="font-medium text-[var(--text-primary)]">{post.user_name}</span>
+          {post.category && <span className="text-[9px] px-1 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)]">{post.category}</span>}
+        </div>
+        <p className="text-[var(--text-secondary)] line-clamp-1">{post.content || post.title}</p>
+        <p className="text-[9px] text-[var(--text-muted)] mt-0.5">{new Date(post.created_at).toLocaleDateString()}</p>
+      </div>
+      <button onClick={() => onDelete(post._id, 'this community post')} className="p-1 text-[var(--text-muted)] hover:text-red-400 flex-shrink-0">
+        <Trash size={14} />
+      </button>
     </div>
   );
 }
 
 export default function AdminDashboard({ onBack, onViewProfile }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [communityPosts, setCommunityPosts] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-  const [auditTotal, setAuditTotal] = useState(0);
-  const [usersTotal, setUsersTotal] = useState(0);
-  const [postsTotal, setPostsTotal] = useState(0);
+  const [systemMessages, setSystemMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
-  const [systemMessages, setSystemMessages] = useState([]);
   const [showCreateMessage, setShowCreateMessage] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
 
-  const fetchStats = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/stats`, { withCredentials: true });
-      setStats(res.data);
+      const [statsRes, usersRes, postsRes, communityRes, logsRes, msgRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/stats`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/users?limit=50`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/posts?limit=20`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/community?limit=20`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/audit-log?limit=10`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/admin/system-messages`, { withCredentials: true })
+      ]);
+      setStats(statsRes.data);
+      setUsers(usersRes.data.users || []);
+      setPosts(postsRes.data.posts || []);
+      setCommunityPosts(communityRes.data || []);
+      setAuditLogs(logsRes.data.logs || []);
+      setSystemMessages(msgRes.data.messages || []);
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/admin/users?limit=100`, { withCredentials: true });
-      setUsers(res.data.users || []);
-      setUsersTotal(res.data.total || 0);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-    }
-  }, []);
-
-  const fetchPosts = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/admin/posts?limit=100`, { withCredentials: true });
-      setPosts(res.data.posts || []);
-      setPostsTotal(res.data.total || 0);
-    } catch (err) {
-      console.error('Error fetching posts:', err);
-    }
-  }, []);
-
-  const fetchAuditLogs = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/admin/audit-log?limit=100`, { withCredentials: true });
-      setAuditLogs(res.data.logs || []);
-      setAuditTotal(res.data.total || 0);
-    } catch (err) {
-      console.error('Error fetching audit logs:', err);
-    }
-  }, []);
-
-  const fetchSystemMessages = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/admin/system-messages`, { withCredentials: true });
-      setSystemMessages(res.data.messages || []);
-    } catch (err) {
-      console.error('Error fetching system messages:', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-    fetchUsers();
-    fetchPosts();
-    fetchAuditLogs();
-    fetchSystemMessages();
-  }, [fetchStats, fetchUsers, fetchPosts, fetchAuditLogs, fetchSystemMessages]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleVerify = async (userId, isVerified) => {
-    try {
-      await axios.post(`${API_URL}/api/admin/verify-trader`, { user_id: userId, is_verified: isVerified }, { withCredentials: true });
-      setUsers(users.map(u => u._id === userId ? { ...u, is_verified: isVerified } : u));
-      fetchAuditLogs();
-    } catch (err) {
-      console.error('Error updating verification:', err);
-    }
+    await axios.post(`${API_URL}/api/admin/verify-trader`, { user_id: userId, is_verified: isVerified }, { withCredentials: true });
+    setUsers(users.map(u => u._id === userId ? { ...u, is_verified: isVerified } : u));
   };
 
   const handleChangeRole = async (userId, role) => {
-    try {
-      await axios.put(`${API_URL}/api/admin/users/${userId}/role`, { role }, { withCredentials: true });
-      setUsers(users.map(u => u._id === userId ? { ...u, role } : u));
-      fetchAuditLogs();
-    } catch (err) {
-      console.error('Error updating role:', err);
-    }
+    await axios.put(`${API_URL}/api/admin/users/${userId}/role`, { role }, { withCredentials: true });
+    setUsers(users.map(u => u._id === userId ? { ...u, role } : u));
   };
 
-  const handleDeleteUser = (userId, userName) => {
-    setConfirmAction({
-      type: 'deleteUser',
-      id: userId,
-      label: `Delete user "${userName}"? This will remove all their posts, messages, and connections.`,
-    });
-  };
-
-  const handleDeletePost = (postId, postTitle) => {
-    setConfirmAction({
-      type: 'deletePost',
-      id: postId,
-      label: `Delete post "${postTitle}"?`,
-    });
+  const handleDelete = (id, label, type) => {
+    setConfirmAction({ type, id, label: `Delete ${label}? This cannot be undone.` });
   };
 
   const executeConfirmAction = async () => {
     if (!confirmAction) return;
     try {
-      if (confirmAction.type === 'deleteUser') {
+      if (confirmAction.type === 'user') {
         await axios.delete(`${API_URL}/api/admin/users/${confirmAction.id}`, { withCredentials: true });
         setUsers(users.filter(u => u._id !== confirmAction.id));
-        fetchStats();
-        fetchAuditLogs();
-      } else if (confirmAction.type === 'deletePost') {
+      } else if (confirmAction.type === 'post') {
         await axios.delete(`${API_URL}/api/admin/posts/${confirmAction.id}`, { withCredentials: true });
         setPosts(posts.filter(p => p._id !== confirmAction.id));
-        fetchStats();
-        fetchAuditLogs();
+      } else if (confirmAction.type === 'community') {
+        await axios.delete(`${API_URL}/api/community/${confirmAction.id}`, { withCredentials: true });
+        setCommunityPosts(communityPosts.filter(p => p._id !== confirmAction.id));
       }
+      fetchAll();
     } catch (err) {
-      console.error('Error executing action:', err);
+      console.error('Error:', err);
     }
     setConfirmAction(null);
   };
@@ -308,36 +198,26 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
     : users;
 
   const getTimeAgo = (dateStr) => {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const seconds = Math.floor((now - date) / 1000);
+    const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
     if (seconds < 60) return 'just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString();
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: ChartBar },
-    { id: 'users', label: 'Users', icon: Users, count: usersTotal },
-    { id: 'posts', label: 'Posts', icon: Article, count: postsTotal },
-    { id: 'announcements', label: 'Announcements', icon: Megaphone },
-    { id: 'activity', label: 'Activity Log', icon: ClockCounterClockwise, count: auditTotal },
-  ];
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-4 text-center">
+        <div className="w-8 h-8 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin mx-auto" />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto" data-testid="admin-dashboard">
+    <div className="max-w-6xl mx-auto" data-testid="admin-dashboard">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <button
-          onClick={onBack}
-          className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-          data-testid="admin-back-button"
-        >
+      <div className="flex items-center gap-3 mb-4">
+        <button onClick={onBack} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]">
           <ArrowLeft size={20} />
         </button>
         <ShieldCheck size={24} weight="duotone" className="text-[var(--brand-primary)]" />
@@ -346,242 +226,158 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
         </h2>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-5 border-b border-[var(--border-color)]">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.id
-                ? 'border-[var(--brand-primary)] text-[var(--brand-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
-            data-testid={`admin-tab-${tab.id}`}
-          >
-            <tab.icon size={18} />
-            {tab.label}
-            {tab.count !== undefined && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] rounded-full">{tab.count}</span>
-            )}
-          </button>
-        ))}
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+        <StatCard icon={Users} label="Users" value={stats?.total_users || 0} subValue={`+${stats?.new_users_week || 0} this week`} color="var(--brand-primary)" />
+        <StatCard icon={SealCheck} label="Verified" value={stats?.verified_users || 0} color="var(--brand-accent)" />
+        <StatCard icon={Article} label="Posts" value={stats?.total_posts || 0} color="#0369A1" />
+        <StatCard icon={ChatCircle} label="Messages" value={stats?.total_messages || 0} color="#7C3AED" />
+        <StatCard icon={Handshake} label="Connections" value={stats?.total_connections || 0} color="#DC2626" />
+        <StatCard icon={Envelope} label="Invites" value={stats?.total_invites || 0} subValue={`${stats?.used_invites || 0} used`} color="#059669" />
       </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-4" data-testid="admin-overview">
-          {loading ? (
-            <div className="text-center py-8 text-[var(--text-muted)]">Loading stats...</div>
-          ) : stats ? (
-            <>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <StatCard icon={Users} label="Total Users" value={stats.total_users} subValue={`+${stats.new_users_week} this week`} color="var(--brand-primary)" />
-                <StatCard icon={SealCheck} label="Verified Traders" value={stats.verified_users} color="var(--brand-accent)" />
-                <StatCard icon={Article} label="Total Posts" value={stats.total_posts} subValue={`+${stats.new_posts_week} this week`} color="#0369A1" />
-                <StatCard icon={ChatCircle} label="Messages" value={stats.total_messages} color="#7C3AED" />
-                <StatCard icon={Handshake} label="Connections" value={stats.total_connections} subValue={`${stats.pending_requests} pending requests`} color="#DC2626" />
-                <StatCard icon={Envelope} label="Invites" value={stats.total_invites} subValue={`${stats.used_invites} used`} color="#059669" />
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-[var(--text-muted)]">Failed to load stats</div>
-          )}
-        </div>
-      )}
-
-      {/* Users Tab */}
-      {activeTab === 'users' && (
-        <div data-testid="admin-users-tab">
-          <div className="relative mb-3">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-field w-full"
-              style={{ paddingLeft: '2.25rem' }}
-              placeholder="Search users by name or email..."
-              data-testid="admin-user-search"
-            />
-          </div>
+      {/* Main Grid - All sections on one page */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* LEFT COLUMN: Users */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Users Section */}
           <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
-            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center justify-between">
-              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">
-                {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'}
-              </span>
+            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+              <Users size={16} className="text-[var(--brand-primary)]" />
+              <span className="text-sm font-medium text-[var(--text-primary)]">Users</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)] ml-auto">{users.length}</span>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto">
-              {filteredUsers.map(u => (
-                <UserRow
+            <div className="p-2 border-b border-[var(--border-color)]">
+              <div className="relative">
+                <MagnifyingGlass size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-field w-full text-xs py-1.5 pl-7"
+                  placeholder="Search users..."
+                />
+              </div>
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              {filteredUsers.slice(0, 15).map(u => (
+                <QuickUserRow
                   key={u._id}
                   user={u}
                   currentUserId={user?.id}
                   onVerify={handleVerify}
                   onChangeRole={handleChangeRole}
-                  onDelete={handleDeleteUser}
+                  onDelete={(id, name) => handleDelete(id, `user "${name}"`, 'user')}
                   onViewProfile={onViewProfile}
                 />
               ))}
-              {filteredUsers.length === 0 && (
-                <div className="py-8 text-center text-[var(--text-muted)] text-sm">No users found</div>
-              )}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Posts Tab */}
-      {activeTab === 'posts' && (
-        <div data-testid="admin-posts-tab">
+          {/* Announcements Section */}
           <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
-            <div className="px-3 py-2 border-b border-[var(--border-color)]">
-              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">{postsTotal} posts</span>
+            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+              <Megaphone size={16} className="text-[var(--brand-accent)]" />
+              <span className="text-sm font-medium text-[var(--text-primary)]">Announcements</span>
+              <button onClick={() => setShowCreateMessage(true)} className="ml-auto p-1 text-[var(--brand-primary)] hover:bg-[var(--bg-surface-hover)]">
+                <Plus size={14} weight="bold" />
+              </button>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto">
-              {posts.map(p => (
-                <PostRow key={p._id} post={p} onDelete={handleDeletePost} />
-              ))}
-              {posts.length === 0 && (
-                <div className="py-8 text-center text-[var(--text-muted)] text-sm">No posts found</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Announcements Tab */}
-      {activeTab === 'announcements' && (
-        <div data-testid="admin-announcements-tab">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-[var(--text-muted)]">
-              System messages appear as banners on the Barter Feed and Community Board.
-            </p>
-            <button
-              onClick={() => setShowCreateMessage(true)}
-              className="btn-primary flex items-center gap-2"
-              data-testid="create-announcement-btn"
-            >
-              <Plus size={16} weight="bold" />
-              New Announcement
-            </button>
-          </div>
-          
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
-            <div className="px-3 py-2 border-b border-[var(--border-color)]">
-              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">
-                {systemMessages.length} announcement{systemMessages.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="max-h-[200px] overflow-y-auto">
               {systemMessages.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Megaphone size={32} className="text-[var(--text-muted)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-muted)]">No announcements yet.</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Create one to broadcast to all users.</p>
-                </div>
+                <div className="py-6 text-center text-xs text-[var(--text-muted)]">No announcements</div>
               ) : (
-                systemMessages.map((msg) => (
-                  <SystemMessageRow
-                    key={msg._id}
-                    message={msg}
-                    onEdit={() => setEditingMessage(msg)}
-                    onToggle={async () => {
-                      try {
-                        await axios.put(`${API_URL}/api/admin/system-messages/${msg._id}`, 
-                          { is_active: !msg.is_active }, 
-                          { withCredentials: true }
-                        );
-                        fetchSystemMessages();
-                      } catch (err) {
-                        console.error('Error toggling message:', err);
-                      }
-                    }}
-                    onDelete={async () => {
-                      if (window.confirm('Delete this announcement?')) {
-                        try {
-                          await axios.delete(`${API_URL}/api/admin/system-messages/${msg._id}`, { withCredentials: true });
-                          fetchSystemMessages();
-                        } catch (err) {
-                          console.error('Error deleting message:', err);
-                        }
-                      }
-                    }}
-                  />
+                systemMessages.map(msg => (
+                  <div key={msg._id} className="flex items-center gap-2 p-2 border-b border-[var(--border-color)] text-xs">
+                    <span className={`w-2 h-2 rounded-full ${msg.is_active ? 'bg-green-500' : 'bg-gray-500'}`} />
+                    <span className="flex-1 truncate text-[var(--text-primary)]">{msg.message}</span>
+                    <button onClick={() => setEditingMessage(msg)} className="p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)]">
+                      <PencilSimple size={12} />
+                    </button>
+                  </div>
                 ))
               )}
             </div>
           </div>
-
-          {/* Create/Edit Message Modal */}
-          {(showCreateMessage || editingMessage) && (
-            <SystemMessageModal
-              message={editingMessage}
-              onClose={() => {
-                setShowCreateMessage(false);
-                setEditingMessage(null);
-              }}
-              onSave={async (data) => {
-                try {
-                  if (editingMessage) {
-                    await axios.put(`${API_URL}/api/admin/system-messages/${editingMessage._id}`, data, { withCredentials: true });
-                  } else {
-                    await axios.post(`${API_URL}/api/admin/system-messages`, data, { withCredentials: true });
-                  }
-                  fetchSystemMessages();
-                  setShowCreateMessage(false);
-                  setEditingMessage(null);
-                } catch (err) {
-                  console.error('Error saving message:', err);
-                }
-              }}
-            />
-          )}
         </div>
-      )}
 
-      {/* Activity Log Tab */}
-      {activeTab === 'activity' && (
-        <div data-testid="admin-activity-tab">
+        {/* MIDDLE COLUMN: Posts */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Barter Posts Section */}
           <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
-            <div className="px-3 py-2 border-b border-[var(--border-color)]">
-              <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wider">{auditTotal} actions logged</span>
+            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+              <Article size={16} className="text-blue-500" />
+              <span className="text-sm font-medium text-[var(--text-primary)]">Barter Posts</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)] ml-auto">{posts.length}</span>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto">
-              {auditLogs.length === 0 ? (
-                <div className="py-12 text-center">
-                  <ClockCounterClockwise size={32} className="text-[var(--text-muted)] mx-auto mb-2" />
-                  <p className="text-sm text-[var(--text-muted)]">No admin actions recorded yet.</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Actions like verifying traders, changing roles, and deleting content will appear here.</p>
+            <div className="max-h-[250px] overflow-y-auto">
+              {posts.slice(0, 10).map(p => (
+                <div key={p._id} className="flex items-start gap-2 p-2 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)] text-xs">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-[var(--text-primary)] line-clamp-1">{p.title}</span>
+                    <p className="text-[10px] text-[var(--text-muted)]">by {p.user_name}</p>
+                  </div>
+                  <button onClick={() => handleDelete(p._id, `post "${p.title}"`, 'post')} className="p-1 text-[var(--text-muted)] hover:text-red-400">
+                    <Trash size={14} />
+                  </button>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Community Feed Section */}
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
+            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+              <UsersThree size={16} className="text-purple-500" />
+              <span className="text-sm font-medium text-[var(--text-primary)]">Community Feed</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)] ml-auto">{communityPosts.length}</span>
+            </div>
+            <div className="max-h-[250px] overflow-y-auto">
+              {communityPosts.length === 0 ? (
+                <div className="py-6 text-center text-xs text-[var(--text-muted)]">No community posts</div>
+              ) : (
+                communityPosts.slice(0, 10).map(p => (
+                  <CommunityPostRow key={p._id} post={p} onDelete={(id, label) => handleDelete(id, label, 'community')} />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Activity Log */}
+        <div className="lg:col-span-1">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
+            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+              <ClockCounterClockwise size={16} className="text-[var(--text-muted)]" />
+              <span className="text-sm font-medium text-[var(--text-primary)]">Activity Log</span>
+            </div>
+            <div className="max-h-[520px] overflow-y-auto">
+              {auditLogs.length === 0 ? (
+                <div className="py-8 text-center text-xs text-[var(--text-muted)]">No activity yet</div>
               ) : (
                 auditLogs.map((log, idx) => {
-                  const actionConfig = {
-                    verified: { icon: SealCheck, color: 'var(--brand-accent)', label: 'Verified trader' },
-                    unverified: { icon: SealCheck, color: '#DC2626', label: 'Removed verification from' },
-                    role_changed: { icon: Crown, color: 'var(--brand-primary)', label: 'Changed role of' },
-                    deleted_post: { icon: Trash, color: '#DC2626', label: 'Deleted post' },
-                    deleted_user: { icon: UserMinus, color: '#DC2626', label: 'Deleted user' },
+                  const icons = {
+                    verified: { icon: SealCheck, color: 'var(--brand-accent)' },
+                    unverified: { icon: SealCheck, color: '#DC2626' },
+                    role_changed: { icon: Crown, color: 'var(--brand-primary)' },
+                    deleted_post: { icon: Trash, color: '#DC2626' },
+                    deleted_user: { icon: UserMinus, color: '#DC2626' },
                   };
-                  const config = actionConfig[log.action] || { icon: Notepad, color: 'var(--text-muted)', label: log.action };
+                  const config = icons[log.action] || { icon: Notepad, color: 'var(--text-muted)' };
                   const ActionIcon = config.icon;
-                  const timeAgo = getTimeAgo(log.created_at);
 
                   return (
-                    <div key={log._id || `log-${log.action}-${log.created_at}`} className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0" data-testid={`audit-log-entry-${idx}`}>
-                      <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${config.color}20` }}>
-                        <ActionIcon size={16} style={{ color: config.color }} weight="fill" />
+                    <div key={log._id || idx} className="flex items-start gap-2 px-3 py-2 border-b border-[var(--border-color)] text-xs">
+                      <div className="w-6 h-6 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${config.color}20` }}>
+                        <ActionIcon size={12} style={{ color: config.color }} weight="fill" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[var(--text-primary)]">
+                        <p className="text-[var(--text-primary)]">
                           <span className="font-medium">{log.admin_name}</span>
-                          {' '}<span className="text-[var(--text-secondary)]">{config.label}</span>{' '}
+                          <span className="text-[var(--text-muted)]"> → </span>
                           <span className="font-medium">{log.target_name}</span>
                         </p>
-                        {log.details && (
-                          <p className="text-xs text-[var(--text-muted)] mt-0.5">{log.details}</p>
-                        )}
-                        <p className="text-[10px] text-[var(--text-muted)] mt-1">{timeAgo}</p>
+                        <p className="text-[10px] text-[var(--text-muted)]">{log.action.replace('_', ' ')} • {getTimeAgo(log.created_at)}</p>
                       </div>
                     </div>
                   );
@@ -590,89 +386,61 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Confirm Dialog */}
       {confirmAction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" data-testid="admin-confirm-dialog">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-5 max-w-sm mx-4 w-full">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 max-w-sm mx-4 w-full">
             <div className="flex items-center gap-2 mb-3">
-              <Warning size={20} className="text-red-400" />
-              <h3 className="text-base font-semibold text-[var(--text-primary)]">Confirm Action</h3>
+              <Warning size={18} className="text-red-400" />
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Confirm Action</h3>
             </div>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">{confirmAction.label}</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-4">{confirmAction.label}</p>
             <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setConfirmAction(null)}
-                className="btn-secondary px-4 py-2 text-sm"
-                data-testid="admin-confirm-cancel"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeConfirmAction}
-                className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
-                data-testid="admin-confirm-execute"
-              >
-                Confirm
-              </button>
+              <button onClick={() => setConfirmAction(null)} className="btn-secondary px-3 py-1.5 text-xs">Cancel</button>
+              <button onClick={executeConfirmAction} className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white">Confirm</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Announcement Modal */}
+      {(showCreateMessage || editingMessage) && (
+        <AnnouncementModal
+          message={editingMessage}
+          onClose={() => { setShowCreateMessage(false); setEditingMessage(null); }}
+          onSave={async (data) => {
+            try {
+              if (editingMessage) {
+                await axios.put(`${API_URL}/api/admin/system-messages/${editingMessage._id}`, data, { withCredentials: true });
+              } else {
+                await axios.post(`${API_URL}/api/admin/system-messages`, data, { withCredentials: true });
+              }
+              fetchAll();
+              setShowCreateMessage(false);
+              setEditingMessage(null);
+            } catch (err) {
+              console.error('Error saving announcement:', err);
+            }
+          }}
+          onDelete={editingMessage ? async () => {
+            await axios.delete(`${API_URL}/api/admin/system-messages/${editingMessage._id}`, { withCredentials: true });
+            fetchAll();
+            setEditingMessage(null);
+          } : null}
+          onToggle={editingMessage ? async () => {
+            await axios.put(`${API_URL}/api/admin/system-messages/${editingMessage._id}`, { is_active: !editingMessage.is_active }, { withCredentials: true });
+            fetchAll();
+            setEditingMessage({ ...editingMessage, is_active: !editingMessage.is_active });
+          } : null}
+        />
+      )}
     </div>
   );
 }
 
-// System Message Row Component
-function SystemMessageRow({ message, onEdit, onToggle, onDelete }) {
-  const typeColors = {
-    info: 'bg-blue-900/30 border-blue-600 text-blue-400',
-    warning: 'bg-yellow-900/30 border-yellow-600 text-yellow-400',
-    success: 'bg-green-900/30 border-green-600 text-green-400',
-    urgent: 'bg-red-900/30 border-red-600 text-red-400'
-  };
-
-  return (
-    <div className="flex items-start gap-3 p-3 border-b border-[var(--border-color)] hover:bg-[var(--bg-surface-hover)]" data-testid={`system-message-${message._id}`}>
-      <div className={`px-2 py-1 text-xs font-medium rounded border-l-2 ${typeColors[message.type] || typeColors.info}`}>
-        {message.type?.toUpperCase()}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-[var(--text-primary)] line-clamp-2">{message.message}</p>
-        <p className="text-xs text-[var(--text-muted)] mt-1">
-          Priority: {message.priority} • Created by {message.created_by_name}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={onToggle}
-          className={`p-1.5 rounded transition-colors ${message.is_active ? 'text-green-500 hover:bg-green-900/30' : 'text-[var(--text-muted)] hover:bg-[var(--bg-surface-hover)]'}`}
-          title={message.is_active ? 'Active - Click to disable' : 'Inactive - Click to enable'}
-        >
-          {message.is_active ? <ToggleRight size={20} weight="fill" /> : <ToggleLeft size={20} />}
-        </button>
-        <button
-          onClick={onEdit}
-          className="p-1.5 text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--bg-surface-hover)] rounded transition-colors"
-          title="Edit"
-        >
-          <PencilSimple size={16} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-900/30 rounded transition-colors"
-          title="Delete"
-        >
-          <Trash size={16} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// System Message Modal Component
-function SystemMessageModal({ message, onClose, onSave }) {
+function AnnouncementModal({ message, onClose, onSave, onDelete, onToggle }) {
   const [formData, setFormData] = useState({
     message: message?.message || '',
     type: message?.type || 'info',
@@ -684,87 +452,91 @@ function SystemMessageModal({ message, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.message.trim()) return;
-    
     setSaving(true);
     await onSave(formData);
     setSaving(false);
   };
 
+  const typeColors = {
+    info: 'border-blue-500 bg-blue-500/10',
+    warning: 'border-yellow-500 bg-yellow-500/10',
+    success: 'border-green-500 bg-green-500/10',
+    urgent: 'border-red-500 bg-red-500/10'
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-5 max-w-md mx-4 w-full">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 max-w-md mx-4 w-full">
+        <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">
           {message ? 'Edit Announcement' : 'New Announcement'}
         </h3>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Message</label>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Message</label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="input-field w-full h-24 resize-none"
-              placeholder="Enter announcement message..."
+              className="input-field w-full h-20 resize-none text-sm"
+              placeholder="Enter announcement..."
               required
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Type</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="input-field w-full"
+                className="input-field w-full text-sm"
               >
-                <option value="info">Info (Blue)</option>
-                <option value="success">Success (Green)</option>
-                <option value="warning">Warning (Yellow)</option>
-                <option value="urgent">Urgent (Red)</option>
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="urgent">Urgent</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Priority</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Priority</label>
               <input
                 type="number"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
-                className="input-field w-full"
-                min="0"
-                max="100"
+                className="input-field w-full text-sm"
+                min="0" max="100"
               />
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <label htmlFor="is_active" className="text-sm text-[var(--text-secondary)]">
-              Active (visible to users)
-            </label>
+
+          {/* Preview */}
+          <div className={`p-2 border-l-4 text-xs ${typeColors[formData.type]}`}>
+            <p className="text-[var(--text-primary)]">{formData.message || 'Preview...'}</p>
           </div>
           
-          <div className="flex gap-2 justify-end pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-secondary px-4 py-2 text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving || !formData.message.trim()}
-              className="btn-primary px-4 py-2 text-sm flex items-center gap-2"
-            >
-              {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {message ? 'Update' : 'Create'}
-            </button>
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <label htmlFor="is_active" className="text-xs text-[var(--text-secondary)]">Active</label>
+            </div>
+            
+            <div className="flex gap-2">
+              {message && onDelete && (
+                <button type="button" onClick={onDelete} className="text-xs text-red-400 hover:text-red-300 px-2">
+                  Delete
+                </button>
+              )}
+              <button type="button" onClick={onClose} className="btn-secondary px-3 py-1.5 text-xs">Cancel</button>
+              <button type="submit" disabled={saving || !formData.message.trim()} className="btn-primary px-3 py-1.5 text-xs">
+                {saving ? '...' : message ? 'Update' : 'Create'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
