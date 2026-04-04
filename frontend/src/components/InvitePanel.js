@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LinkSimple, Copy, Check, PaperPlaneTilt, Clock, UserPlus } from '@phosphor-icons/react';
+import { useAuth } from '../contexts/AuthContext';
+import { LinkSimple, Copy, Check, PaperPlaneTilt, Clock, UserPlus, SealCheck, ShieldWarning } from '@phosphor-icons/react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function InvitePanel() {
+  const { user } = useAuth();
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copiedToken, setCopiedToken] = useState(null);
+  const [error, setError] = useState('');
+
+  const isVerified = user?.is_verified || user?.role === 'admin';
 
   useEffect(() => {
     fetchInvites();
@@ -27,6 +32,7 @@ export default function InvitePanel() {
 
   const createInvite = async () => {
     setCreating(true);
+    setError('');
     try {
       const res = await axios.post(`${API_URL}/api/invites/create`, {}, { withCredentials: true });
       const newToken = res.data.token;
@@ -34,6 +40,7 @@ export default function InvitePanel() {
       copyToClipboard(newToken);
     } catch (err) {
       console.error('Error creating invite:', err);
+      setError(err.response?.data?.detail || 'Failed to create invite');
     } finally {
       setCreating(false);
     }
@@ -72,10 +79,37 @@ export default function InvitePanel() {
         </div>
       </div>
 
+      {/* Verification Required Notice */}
+      {!isVerified && (
+        <div className="bg-[var(--brand-accent)]/10 border border-[var(--brand-accent)]/30 p-4 mb-6 flex items-start gap-3" data-testid="verification-required-notice">
+          <ShieldWarning size={24} className="text-[var(--brand-accent)] flex-shrink-0 mt-0.5" weight="duotone" />
+          <div>
+            <p className="text-sm font-medium text-[var(--text-primary)]">Verification Required</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              Only verified traders can create invite links. Build your reputation in the community and an admin will verify your account.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Verified Badge */}
+      {isVerified && (
+        <div className="flex items-center gap-2 mb-4 text-sm text-[var(--brand-accent)]">
+          <SealCheck size={18} weight="fill" />
+          <span>You're a verified trader - you can invite others!</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/20 border border-red-800/50 text-red-400 px-4 py-3 mb-4 text-sm">
+          {error}
+        </div>
+      )}
+
       <button
         onClick={createInvite}
-        disabled={creating}
-        className="btn-primary flex items-center gap-2 mb-6"
+        disabled={creating || !isVerified}
+        className={`flex items-center gap-2 mb-6 ${isVerified ? 'btn-primary' : 'btn-secondary opacity-50 cursor-not-allowed'}`}
         data-testid="create-invite-button"
       >
         <PaperPlaneTilt size={18} weight="bold" />

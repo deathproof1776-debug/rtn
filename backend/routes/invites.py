@@ -15,9 +15,16 @@ router = APIRouter(prefix="/invites")
 
 @router.post("/create")
 async def create_invite(invite_data: InviteCreate, request: Request):
-    """Generate a unique invite link. Only authenticated users can create invites."""
+    """Generate a unique invite link. Only verified traders can create invites."""
     user = await get_current_user(request)
     user_id = user["_id"]
+    
+    # Check if user is verified (admins are always allowed)
+    if not user.get("is_verified") and user.get("role") != "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail="Only verified traders can create invite links. Get verified by an admin to unlock this feature."
+        )
 
     token = secrets.token_urlsafe(32)
     invite_doc = {
