@@ -236,6 +236,43 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
         <StatCard icon={Envelope} label="Invites" value={stats?.total_invites || 0} subValue={`${stats?.used_invites || 0} used`} color="#059669" />
       </div>
 
+      {/* Announcements Section - Full Width at Top */}
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] mb-4">
+        <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
+          <Megaphone size={16} className="text-[var(--brand-accent)]" />
+          <span className="text-sm font-medium text-[var(--text-primary)]">Announcements</span>
+          <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface-hover)] text-[var(--text-muted)]">{systemMessages.length}</span>
+          <button onClick={() => setShowCreateMessage(true)} className="ml-auto btn-primary px-3 py-1 text-xs flex items-center gap-1">
+            <Plus size={12} weight="bold" />
+            New
+          </button>
+        </div>
+        <div className="max-h-[120px] overflow-y-auto">
+          {systemMessages.length === 0 ? (
+            <div className="py-4 text-center text-xs text-[var(--text-muted)]">No announcements. Create one to broadcast to all users.</div>
+          ) : (
+            <div className="divide-y divide-[var(--border-color)]">
+              {systemMessages.map(msg => (
+                <div key={msg._id} className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--bg-surface-hover)] text-xs">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${msg.is_active ? 'bg-green-500' : 'bg-gray-500'}`} />
+                  <span className={`px-1.5 py-0.5 text-[9px] font-medium uppercase rounded ${
+                    msg.type === 'urgent' ? 'bg-red-900/30 text-red-400' :
+                    msg.type === 'warning' ? 'bg-yellow-900/30 text-yellow-400' :
+                    msg.type === 'success' ? 'bg-green-900/30 text-green-400' :
+                    'bg-blue-900/30 text-blue-400'
+                  }`}>{msg.type}</span>
+                  <span className="flex-1 text-[var(--text-primary)] truncate">{msg.message}</span>
+                  <span className="text-[var(--text-muted)] flex-shrink-0">Priority: {msg.priority}</span>
+                  <button onClick={() => setEditingMessage(msg)} className="p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)] flex-shrink-0">
+                    <PencilSimple size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Grid - All sections on one page */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT COLUMN: Users */}
@@ -259,8 +296,8 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
                 />
               </div>
             </div>
-            <div className="max-h-[300px] overflow-y-auto">
-              {filteredUsers.slice(0, 15).map(u => (
+            <div className="max-h-[400px] overflow-y-auto">
+              {filteredUsers.slice(0, 20).map(u => (
                 <QuickUserRow
                   key={u._id}
                   user={u}
@@ -271,32 +308,6 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
                   onViewProfile={onViewProfile}
                 />
               ))}
-            </div>
-          </div>
-
-          {/* Announcements Section */}
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]">
-            <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2">
-              <Megaphone size={16} className="text-[var(--brand-accent)]" />
-              <span className="text-sm font-medium text-[var(--text-primary)]">Announcements</span>
-              <button onClick={() => setShowCreateMessage(true)} className="ml-auto p-1 text-[var(--brand-primary)] hover:bg-[var(--bg-surface-hover)]">
-                <Plus size={14} weight="bold" />
-              </button>
-            </div>
-            <div className="max-h-[200px] overflow-y-auto">
-              {systemMessages.length === 0 ? (
-                <div className="py-6 text-center text-xs text-[var(--text-muted)]">No announcements</div>
-              ) : (
-                systemMessages.map(msg => (
-                  <div key={msg._id} className="flex items-center gap-2 p-2 border-b border-[var(--border-color)] text-xs">
-                    <span className={`w-2 h-2 rounded-full ${msg.is_active ? 'bg-green-500' : 'bg-gray-500'}`} />
-                    <span className="flex-1 truncate text-[var(--text-primary)]">{msg.message}</span>
-                    <button onClick={() => setEditingMessage(msg)} className="p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)]">
-                      <PencilSimple size={12} />
-                    </button>
-                  </div>
-                ))
-              )}
             </div>
           </div>
         </div>
