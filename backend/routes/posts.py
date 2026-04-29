@@ -160,7 +160,7 @@ async def get_posts(
     user_ids = list(set([p["user_id"] for p in posts]))
     users_map = {}
     if user_ids:
-        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1})
+        users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1, "is_trusted_trader": 1})
         async for u in users_cursor:
             uid = str(u["_id"])
             loc = ""
@@ -169,7 +169,11 @@ async def get_posts(
                     loc = decrypt_data(u["location"])
                 except Exception:
                     loc = u.get("location", "")
-            users_map[uid] = {"location": loc, "is_verified": u.get("is_verified", False)}
+            users_map[uid] = {
+                "location": loc, 
+                "is_verified": u.get("is_verified", False),
+                "is_trusted_trader": u.get("is_trusted_trader", False)
+            }
 
     result_posts = []
     for post in posts:
@@ -188,11 +192,12 @@ async def get_posts(
                     except Exception:
                         pass
 
-        user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False})
+        user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False, "is_trusted_trader": False})
         poster_location = user_data["location"]
         post["user_location"] = poster_location
         post["is_nearby"] = locations_match(user_location, poster_location) if user_location else False
         post["is_verified"] = user_data["is_verified"]
+        post["is_trusted_trader"] = user_data.get("is_trusted_trader", False)
         post["is_network"] = post["user_id"] in network_user_ids
 
         feed_score = 0

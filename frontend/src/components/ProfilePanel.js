@@ -30,7 +30,8 @@ export default function ProfilePanel() {
     services_offering: [],
     services_wanted: [],
     avatar: '',
-    is_verified: false
+    is_verified: false,
+    is_trusted_trader: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,7 +56,8 @@ export default function ProfilePanel() {
         services_offering: response.data.services_offering || [],
         services_wanted: response.data.services_wanted || [],
         avatar: response.data.avatar || '',
-        is_verified: response.data.is_verified || false
+        is_verified: response.data.is_verified || false,
+        is_trusted_trader: response.data.is_trusted_trader || false
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -185,7 +187,13 @@ export default function ProfilePanel() {
               {profile.is_verified && (
                 <span className="verified-badge verified-badge-lg" data-testid="profile-verified-badge">
                   <SealCheck size={12} weight="fill" />
-                  Verified Trader
+                  Verified
+                </span>
+              )}
+              {profile.is_trusted_trader && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-600/20 text-green-500 text-xs rounded-full" data-testid="profile-trusted-badge">
+                  <SealCheck size={12} weight="fill" />
+                  Trusted
                 </span>
               )}
             </div>

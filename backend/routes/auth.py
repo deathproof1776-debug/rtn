@@ -105,6 +105,7 @@ async def login(user_data: UserLogin):
         "location": location,
         "avatar": user.get("avatar", ""),
         "is_verified": user.get("is_verified", False),
+        "is_trusted_trader": user.get("is_trusted_trader", False),
         "role": user.get("role", "user"),
         "message": "Login successful"
     })

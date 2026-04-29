@@ -158,7 +158,13 @@ export default function PostCard({
               {post.is_verified && (
                 <span className="verified-badge" data-testid={`verified-badge-${post._id}`}>
                   <SealCheck size={10} weight="fill" />
-                  Verified Trader
+                  Verified
+                </span>
+              )}
+              {post.is_trusted_trader && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-600/20 text-green-500 text-[10px] md:text-xs rounded-full whitespace-nowrap" data-testid={`trusted-badge-${post._id}`}>
+                  <SealCheck size={10} weight="fill" />
+                  Trusted
                 </span>
               )}
               {post.is_network && (

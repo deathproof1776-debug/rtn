@@ -79,6 +79,23 @@ export default function TradeDealsPanel() {
     }
   };
 
+  const handleConfirmComplete = async (tradeId) => {
+    setActionLoading(tradeId);
+    try {
+      const res = await axios.post(`${API_URL}/api/trades/${tradeId}/confirm-complete`, {}, { withCredentials: true });
+      if (res.data.both_confirmed) {
+        toast.success('🎉 Trade completed! Both parties confirmed.');
+      } else {
+        toast.success('Confirmation recorded. Waiting for other party.');
+      }
+      await fetchTrades();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to confirm');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleCounterSubmitted = () => {
     setCounterModal(null);
     fetchTrades();
@@ -213,7 +230,9 @@ export default function TradeDealsPanel() {
                   <HistoryCard 
                     key={trade._id} 
                     trade={trade} 
-                    currentUserId={user?.id} 
+                    currentUserId={user?.id}
+                    onConfirmComplete={handleConfirmComplete}
+                    confirming={actionLoading === trade._id}
                   />
                 ))
               )}

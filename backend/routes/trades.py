@@ -200,11 +200,20 @@ async def respond_to_trade(trade_id: str, data: TradeOfferRespond, request: Requ
         raise HTTPException(status_code=400, detail="Action must be 'accept' or 'decline'")
 
     now = datetime.now(timezone.utc).isoformat()
+    
+    # If accepted, move to "accepted" status (awaiting completion confirmation)
+    # If declined, move to "declined" status
     new_status = "accepted" if data.action == "accept" else "declined"
 
     await db.trade_deals.update_one(
         {"_id": ObjectId(trade_id)},
-        {"$set": {"status": new_status, "updated_at": now, "completed_at": now}}
+        {"$set": {
+            "status": new_status, 
+            "updated_at": now, 
+            "completed_at": now if new_status == "declined" else None,
+            "proposer_confirmed": False,
+            "receiver_confirmed": False
+        }}
     )
 
     other_id = trade["proposer_id"] if is_receiver else trade["receiver_id"]
@@ -331,3 +340,111 @@ async def cancel_trade(trade_id: str, request: Request, background_tasks: Backgr
     )
 
     return {"message": "Trade offer cancelled", "status": "cancelled"}
+
+
+@router.post("/{trade_id}/confirm-complete")
+async def confirm_trade_complete(trade_id: str, request: Request, background_tasks: BackgroundTasks):
+    """Confirm that a trade was completed. Both parties must confirm for it to be fully completed."""
+    user = await get_current_user(request)
+
+    trade = await db.trade_deals.find_one({"_id": ObjectId(trade_id)})
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade offer not found")
+
+    is_proposer = trade["proposer_id"] == user["_id"]
+    is_receiver = trade["receiver_id"] == user["_id"]
+
+    if not is_proposer and not is_receiver:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if trade["status"] != "accepted":
+        raise HTTPException(status_code=400, detail="Can only confirm completion of accepted trades")
+
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Determine which confirmation field to update
+    confirm_field = "proposer_confirmed" if is_proposer else "receiver_confirmed"
+    
+    # Check if user already confirmed
+    if trade.get(confirm_field):
+        raise HTTPException(status_code=400, detail="You have already confirmed this trade")
+
+    # Update confirmation
+    update_data = {confirm_field: True, "updated_at": now}
+    
+    # Check if the other party has already confirmed
+    other_confirm_field = "receiver_confirmed" if is_proposer else "proposer_confirmed"
+    both_confirmed = trade.get(other_confirm_field, False)
+    
+    if both_confirmed:
+        # Both parties confirmed - mark as completed and update trusted trader status
+        update_data["status"] = "completed"
+        update_data["completed_at"] = now
+        
+    await db.trade_deals.update_one(
+        {"_id": ObjectId(trade_id)},
+        {"$set": update_data}
+    )
+
+    # Notify other party
+    other_id = trade["receiver_id"] if is_proposer else trade["proposer_id"]
+    
+    if both_confirmed:
+        # Trade fully completed - check and update trusted trader badges for both users
+        await check_and_award_trusted_trader(trade["proposer_id"])
+        await check_and_award_trusted_trader(trade["receiver_id"])
+        
+        background_tasks.add_task(
+            send_push_notification,
+            user_id=other_id,
+            title="Trade completed!",
+            body="Both parties have confirmed the trade as complete.",
+            data={"type": "trade_completed", "trade_id": trade_id, "url": "/"}
+        )
+        
+        return {"message": "Trade fully completed! Both parties confirmed.", "status": "completed", "both_confirmed": True}
+    else:
+        background_tasks.add_task(
+            send_push_notification,
+            user_id=other_id,
+            title="Trade confirmation received",
+            body=f"{user.get('name', 'Someone')} confirmed the trade. Please confirm to complete.",
+            data={"type": "trade_confirmation", "trade_id": trade_id, "url": "/"}
+        )
+        
+        return {"message": "Your confirmation recorded. Waiting for other party to confirm.", "status": "accepted", "both_confirmed": False}
+
+
+async def check_and_award_trusted_trader(user_id: str):
+    """Check if user has 5+ completed trades and award Trusted Trader badge"""
+    # Count completed trades where this user was involved
+    completed_count = await db.trade_deals.count_documents({
+        "$or": [
+            {"proposer_id": user_id},
+            {"receiver_id": user_id}
+        ],
+        "status": "completed"
+    })
+    
+    # Award badge if threshold reached
+    if completed_count >= 5:
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"is_trusted_trader": True, "trusted_trader_since": datetime.now(timezone.utc).isoformat()}}
+        )
+
+
+@router.get("/completed-count")
+async def get_completed_trade_count(request: Request):
+    """Get count of fully completed trades for the current user"""
+    user = await get_current_user(request)
+    
+    count = await db.trade_deals.count_documents({
+        "$or": [
+            {"proposer_id": user["_id"]},
+            {"receiver_id": user["_id"]}
+        ],
+        "status": "completed"
+    })
+    
+    return {"completed_trades": count, "trusted_trader_threshold": 5}

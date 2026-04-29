@@ -1,6 +1,14 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (April 4, 2026)
+## Latest Updates (April 28, 2026)
+- **Feature**: Trusted Trader Badge (green) - Auto-awarded after 5 mutually confirmed completed trades
+- **Feature**: Trade Completion Confirmation - Both parties must confirm trade completion
+- **Feature**: Invite restricted to verified traders only
+- **Feature**: Admin Dashboard consolidated - All functions on single page with Announcements at top
+- **Feature**: Community Feed added to Admin Dashboard
+- **Update**: PWA app icon updated to orange shield with "RTN" letters
+
+## Previous Updates (April 4, 2026)
 - **Feature**: Edit Post - users can now edit their own barter posts (title, description, category, offering, looking_for)
 - **Feature**: Edit Comment - users can edit their own comments with inline editor, shows "(edited)" indicator
 - **Feature**: CreatePostModal now uses CategorySelector dropdowns for Offering/Looking For (same as profile)
