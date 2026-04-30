@@ -58,8 +58,9 @@ export default function SystemBanner() {
         return 'bg-green-900/80 border-green-600 text-green-200';
       case 'urgent':
         return 'bg-red-900/80 border-red-600 text-red-200';
+      case 'info':
       default:
-        return 'bg-[var(--brand-primary)]/20 border-[var(--brand-primary)] text-[var(--brand-primary)]';
+        return 'bg-blue-900/80 border-blue-500 text-blue-200';
     }
   };
 
