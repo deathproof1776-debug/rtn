@@ -18,6 +18,7 @@ import AdminDashboard from './AdminDashboard';
 import CreateTradeModal from '../components/CreateTradeModal';
 import Gallery from '../components/Gallery';
 import CommunityBoard from '../components/CommunityBoard';
+import SecuritySettings from '../components/SecuritySettings';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -230,6 +231,7 @@ export default function Dashboard() {
         )}
         {activeView === 'invites' && <InvitePanel />}
         {activeView === 'profile' && <ProfilePanel />}
+        {activeView === 'security' && <SecuritySettings />}
         {activeView === 'gallery' && viewingGallery && (
           <Gallery 
             userId={viewingGallery.userId}

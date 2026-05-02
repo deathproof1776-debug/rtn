@@ -1,11 +1,12 @@
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  House, 
-  ChatCircle, 
-  User, 
-  Plus, 
-  SignOut, 
+import {
+  House,
+  ChatCircle,
+  User,
+  Plus,
+  SignOut,
   Shield,
+  ShieldCheck,
   X,
   Handshake,
   UserPlus,
@@ -27,6 +28,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
     { id: 'messages', label: 'Messages', icon: ChatCircle },
     { id: 'invites', label: 'Invite Members', icon: UserPlus },
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'security', label: 'Security', icon: ShieldCheck },
     ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Dashboard', icon: Shield }] : []),
   ];
 

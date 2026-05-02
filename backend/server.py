@@ -19,6 +19,9 @@ from auth import hash_password, verify_password
 from routes import api_router
 from websocket_manager import manager
 from storage import init_storage
+from security import limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -26,6 +29,10 @@ logger = logging.getLogger(__name__)
 
 # Create app
 app = FastAPI(title="Rebel Trade Network API")
+
+# Rate limiter setup
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Include the modular API router
 app.include_router(api_router)
@@ -173,6 +180,12 @@ async def startup():
     # System Messages indexes
     await db.system_messages.create_index("is_active")
     await db.system_messages.create_index("priority")
+    # Security collections
+    await db.login_attempts.create_index("email", unique=True)
+    await db.refresh_tokens.create_index("token_hash", unique=True)
+    await db.refresh_tokens.create_index("user_id")
+    await db.refresh_tokens.create_index("session_id")
+    await db.recovery_codes.create_index("user_id")
 
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")

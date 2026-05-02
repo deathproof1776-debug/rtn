@@ -32,7 +32,26 @@ export function AuthProvider({ children }) {
       { email, password },
       { withCredentials: true }
     );
-    // Store user ID for WebSocket auth
+    // 2FA required — return challenge to caller, do NOT set user
+    if (response.data?.two_factor_required) {
+      return { twoFactorRequired: true, challengeToken: response.data.challenge_token };
+    }
+    if (response.data.id) {
+      sessionStorage.setItem('ws_token', response.data.id);
+    }
+    setUser(response.data);
+    return response.data;
+  }, []);
+
+  const loginVerify2FA = useCallback(async (challengeToken, code, recoveryCode) => {
+    const body = { challenge_token: challengeToken };
+    if (code) body.code = code;
+    if (recoveryCode) body.recovery_code = recoveryCode;
+    const response = await axios.post(
+      `${API_URL}/api/auth/login/2fa`,
+      body,
+      { withCredentials: true }
+    );
     if (response.data.id) {
       sessionStorage.setItem('ws_token', response.data.id);
     }
@@ -68,11 +87,12 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    loginVerify2FA,
     register,
     logout,
     updateUser,
     checkAuth
-  }), [user, loading, login, register, logout, updateUser, checkAuth]);
+  }), [user, loading, login, loginVerify2FA, register, logout, updateUser, checkAuth]);
 
   return (
     <AuthContext.Provider value={value}>

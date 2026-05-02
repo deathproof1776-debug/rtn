@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Eye, EyeSlash, ArrowRight, MapPin, WarningCircle, FileText, CheckSquare, Square } from '@phosphor-icons/react';
 import axios from 'axios';
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -101,8 +102,8 @@ export default function Register() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -250,6 +251,7 @@ export default function Register() {
                   {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <PasswordStrengthMeter password={password} userInputs={[email, name].filter(Boolean)} />
             </div>
 
             <div>
