@@ -214,7 +214,7 @@ export default function MessagesPanel({ initialChatUserId = null }) {
       </div>
 
       {selectedConversation ? (
-        <div className="flex-1 flex flex-col theme-surface border theme-border -mx-4 md:mx-0">
+        <div className="flex-1 flex flex-col min-h-0 theme-surface border theme-border -mx-4 md:mx-0">
           <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 border-b theme-border">
             <button 
               onClick={() => setSelectedConversation(null)}
@@ -232,7 +232,7 @@ export default function MessagesPanel({ initialChatUserId = null }) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4" data-testid="messages-scroll-area">
             {messages.length === 0 ? (
               <div className="text-center text-[var(--text-muted)] py-8 text-sm">
                 Start the conversation by sending a message
