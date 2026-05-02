@@ -1,6 +1,17 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (April 28, 2026)
+## Latest Updates (May 2, 2026) — Security Hardening (P1 High Impact)
+- **Feature**: Rate limiting on `/api/auth/login` (10/min) and `/api/auth/register` (5/hr) via slowapi
+- **Feature**: Account lockout — 5 failed logins per email triggers 15-minute lockout (HTTP 429)
+- **Feature**: TOTP-based 2FA (pyotp + QR) with 8 one-time recovery codes; new login flow returns `{two_factor_required, challenge_token}` then completes via `/api/auth/login/2fa`
+- **Feature**: Password strength validation via zxcvbn; minimum 8 chars + score ≥2; live meter on Register and password change
+- **Feature**: Refresh-token rotation with server-side storage — users can list active sessions, sign out individual sessions, or "Sign out everywhere"
+- **Feature**: Self-service Password Change (revokes all other sessions on success)
+- **New routes**: `/api/security/2fa/{setup,confirm,disable,recovery-codes/regenerate}`, `/api/security/sessions`, `/api/security/sessions/{revoke,revoke-others}`, `/api/security/password/change`, `/api/auth/password/check`
+- **New components**: `SecuritySettings.js`, `PasswordStrengthMeter.js`; `Sidebar` gets new "Security" tab
+- **DB**: New collections `login_attempts`, `refresh_tokens`, `recovery_codes` with indexes
+
+## Previous Updates (April 28, 2026)
 - **Feature**: Trusted Trader Badge (green) - Auto-awarded after 5 mutually confirmed completed trades
 - **Feature**: Trade Completion Confirmation - Both parties must confirm trade completion
 - **Feature**: Invite restricted to verified traders only
