@@ -33,34 +33,54 @@ export function NotificationProvider({ children }) {
   // Check if push notifications are supported
   const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
-  // Initialize service worker
+  // Initialize service worker (uses the registration from index.js — does not double-register)
   useEffect(() => {
     if (!isSupported) {
       console.log('Push notifications not supported');
       return;
     }
 
-    // Register service worker
-    navigator.serviceWorker.register('/sw.js')
+    let cancelled = false;
+
+    // Wait for any existing/active SW registration (registered by index.js).
+    // navigator.serviceWorker.ready resolves once a SW is fully activated.
+    navigator.serviceWorker.ready
       .then((registration) => {
-        console.log('Service Worker registered:', registration.scope);
+        if (cancelled) return;
+        console.log('Service Worker ready:', registration.scope);
         setSwRegistration(registration);
-        
-        // Check current permission
         setPermission(Notification.permission);
-        
-        // Check if already subscribed
-        registration.pushManager.getSubscription()
-          .then((sub) => {
-            if (sub) {
-              setSubscription(sub);
-              setIsSubscribed(true);
-            }
-          });
+
+        return registration.pushManager.getSubscription();
+      })
+      .then((sub) => {
+        if (cancelled) return;
+        if (sub) {
+          setSubscription(sub);
+          setIsSubscribed(true);
+        }
       })
       .catch((error) => {
-        console.error('Service Worker registration failed:', error);
+        console.error('Service Worker not ready:', error);
       });
+
+    // Listen for permission changes (user updates browser settings)
+    let permStatus;
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        if (cancelled) return;
+        permStatus = status;
+        setPermission(status.state === 'prompt' ? 'default' : status.state);
+        const onChange = () => setPermission(status.state === 'prompt' ? 'default' : status.state);
+        status.addEventListener('change', onChange);
+        permStatus._cleanup = () => status.removeEventListener('change', onChange);
+      }).catch(() => {});
+    }
+
+    return () => {
+      cancelled = true;
+      if (permStatus?._cleanup) permStatus._cleanup();
+    };
   }, [isSupported]);
 
   // Subscribe to push notifications
@@ -69,12 +89,7 @@ export function NotificationProvider({ children }) {
       console.error('[Notifications] Push notifications not supported in this browser');
       return { success: false, error: 'Push notifications not supported in this browser' };
     }
-    
-    if (!swRegistration) {
-      console.error('[Notifications] Service Worker not registered yet');
-      return { success: false, error: 'Service Worker not ready. Please try again.' };
-    }
-    
+
     if (!user) {
       console.error('[Notifications] User not logged in');
       return { success: false, error: 'Please log in first' };
@@ -84,7 +99,7 @@ export function NotificationProvider({ children }) {
     console.log('[Notifications] Starting subscription process...');
 
     try {
-      // Request notification permission
+      // Request notification permission FIRST (must be in user-gesture call stack)
       console.log('[Notifications] Requesting permission...');
       const perm = await Notification.requestPermission();
       console.log('[Notifications] Permission result:', perm);
@@ -92,7 +107,20 @@ export function NotificationProvider({ children }) {
 
       if (perm !== 'granted') {
         setLoading(false);
-        return { success: false, error: 'Permission denied' };
+        return {
+          success: false,
+          error: perm === 'denied'
+            ? 'You blocked notifications for this site. Open your browser site settings and allow notifications, then try again.'
+            : 'Permission was not granted'
+        };
+      }
+
+      // Ensure SW is fully ready (covers cold start where registration is still activating)
+      let registration = swRegistration;
+      if (!registration || !registration.active) {
+        console.log('[Notifications] Waiting for SW to be ready...');
+        registration = await navigator.serviceWorker.ready;
+        setSwRegistration(registration);
       }
 
       // Get VAPID public key from backend
@@ -101,24 +129,25 @@ export function NotificationProvider({ children }) {
         withCredentials: true
       });
       const vapidPublicKey = keyResponse.data.publicKey;
-      console.log('[Notifications] VAPID key received:', vapidPublicKey ? 'Yes' : 'No');
 
       if (!vapidPublicKey) {
         setLoading(false);
         return { success: false, error: 'VAPID key not configured on server' };
       }
 
-      // Subscribe to push manager
-      console.log('[Notifications] Subscribing to push manager...');
-      const sub = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-      });
-      console.log('[Notifications] Push subscription created');
+      // If a stale subscription already exists, reuse or reset it
+      let sub = await registration.pushManager.getSubscription();
+      if (!sub) {
+        console.log('[Notifications] Subscribing to push manager...');
+        sub = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+        });
+      }
+      console.log('[Notifications] Push subscription ready');
 
       // Send subscription to backend
       const subJson = sub.toJSON();
-      console.log('[Notifications] Sending subscription to backend...');
       await axios.post(`${API_URL}/api/notifications/subscribe`, {
         endpoint: subJson.endpoint,
         keys: {

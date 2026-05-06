@@ -18,7 +18,7 @@ export default function NotificationBell() {
 
   const handleToggle = async () => {
     console.log('[NotificationBell] Toggle clicked, isSubscribed:', isSubscribed);
-    
+
     if (isSubscribed) {
       const result = await unsubscribe();
       if (result.success) {
@@ -30,18 +30,14 @@ export default function NotificationBell() {
       console.log('[NotificationBell] Attempting to subscribe...');
       const result = await subscribe();
       console.log('[NotificationBell] Subscribe result:', result);
-      
+
       if (result.success) {
         toast.success('Notifications enabled! You\'ll be alerted for messages, comments, and likes.');
-      } else if (result.error === 'Permission denied') {
-        toast.error('Please allow notifications in your browser settings');
-      } else if (result.error?.includes('Service Worker')) {
-        toast.error('Service Worker not ready. Please refresh the page and try again.');
       } else {
-        toast.error('Failed to enable notifications: ' + (result.error || 'Unknown error'));
+        toast.error(result.error || 'Failed to enable notifications');
       }
     }
-    setShowDropdown(false);
+    // Keep dropdown open so the user can see the new state / next action
   };
 
   const handleTest = async () => {

@@ -1,5 +1,9 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (May 6, 2026)
+- **Bug Fix**: Notifications toggle didn't subscribe — fixed in `NotificationContext.js` and `NotificationBell.js`. Now uses `navigator.serviceWorker.ready` to wait for SW activation, listens to permission-change events, keeps dropdown open after toggle so users see status, and reuses any existing push subscription.
+- **Backlog added**: NSFW image/video moderation (P2) — recommended `opennsfw2` server-side classifier on gallery + post images + avatars; auto-reject score > 0.85, blur + reveal toggle on 0.5–0.85; admin override.
+
 ## Latest Updates (May 2, 2026) — Security Hardening (P1 High Impact)
 - **Feature**: Rate limiting on `/api/auth/login` (10/min) and `/api/auth/register` (5/hr) via slowapi
 - **Feature**: Account lockout — 5 failed logins per email triggers 15-minute lockout (HTTP 429)
