@@ -6,8 +6,9 @@ from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
-from database import db, encrypt_data, decrypt_data
+from database import db, encrypt_data, safe_decrypt
 from auth import get_current_user
+from location import locations_match
 from notifications import send_push_notification
 
 router = APIRouter(prefix="/community")
@@ -30,32 +31,6 @@ COMMUNITY_TOPICS = [
     {"id": "news", "name": "News & Updates", "icon": "newspaper"},
     {"id": "general", "name": "General Discussion", "icon": "chat"}
 ]
-
-
-def normalize_location(location: str) -> str:
-    if not location:
-        return ""
-    return location.lower().strip()
-
-
-def locations_match(loc1: str, loc2: str) -> bool:
-    if not loc1 or not loc2:
-        return False
-    norm1 = normalize_location(loc1)
-    norm2 = normalize_location(loc2)
-    if not norm1 or not norm2:
-        return False
-    if norm1 == norm2:
-        return True
-    if norm1 in norm2 or norm2 in norm1:
-        return True
-    parts1 = [p.strip() for p in norm1.split(',')]
-    parts2 = [p.strip() for p in norm2.split(',')]
-    for p1 in parts1:
-        for p2 in parts2:
-            if p1 and p2 and (p1 == p2 or p1 in p2 or p2 in p1):
-                return True
-    return False
 
 
 @router.get("/topics")
@@ -169,12 +144,7 @@ async def get_community_posts(
         query["user_id"] = {"$in": list(network_user_ids)}
     
     # Decrypt user's location for nearby filter
-    user_location = ""
-    if user_doc.get("location"):
-        try:
-            user_location = decrypt_data(user_doc["location"])
-        except Exception:
-            user_location = user_doc.get("location", "")
+    user_location = safe_decrypt(user_doc.get("location"))
     
     # Fetch posts
     posts = await db.community_posts.find(
@@ -194,33 +164,17 @@ async def get_community_posts(
         )
         async for u in users_cursor:
             uid = str(u["_id"])
-            loc = ""
-            if u.get("location"):
-                try:
-                    loc = decrypt_data(u["location"])
-                except Exception:
-                    loc = u.get("location", "")
-            users_map[uid] = {"location": loc, "is_verified": u.get("is_verified", False)}
-    
+            users_map[uid] = {
+                "location": safe_decrypt(u.get("location")),
+                "is_verified": u.get("is_verified", False),
+            }
+
     result_posts = []
     for post in posts:
         post["_id"] = str(post["_id"])
-        
-        # Decrypt content
-        if post.get("content"):
-            try:
-                post["content"] = decrypt_data(post["content"])
-            except Exception:
-                pass
-        
-        # Decrypt comments
-        if post.get("comments"):
-            for comment in post["comments"]:
-                if comment.get("content"):
-                    try:
-                        comment["content"] = decrypt_data(comment["content"])
-                    except Exception:
-                        pass
+        post["content"] = safe_decrypt(post.get("content"))
+        for comment in post.get("comments") or []:
+            comment["content"] = safe_decrypt(comment.get("content"))
         
         user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False})
         post["user_location"] = user_data["location"]
@@ -256,20 +210,10 @@ async def get_community_post(post_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Post not found")
     
     post["_id"] = str(post["_id"])
-    if post.get("content"):
-        try:
-            post["content"] = decrypt_data(post["content"])
-        except Exception:
-            pass
-    
-    if post.get("comments"):
-        for comment in post["comments"]:
-            if comment.get("content"):
-                try:
-                    comment["content"] = decrypt_data(comment["content"])
-                except Exception:
-                    pass
-    
+    post["content"] = safe_decrypt(post.get("content"))
+    for comment in post.get("comments") or []:
+        comment["content"] = safe_decrypt(comment.get("content"))
+
     return post
 
 

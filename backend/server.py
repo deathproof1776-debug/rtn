@@ -6,22 +6,21 @@ This is the refactored entry point that imports modular routes from /routes/.
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from starlette.middleware.cors import CORSMiddleware
 from pathlib import Path
 import os
-import json
 import logging
 from datetime import datetime, timezone
 
-from database import db, client, encrypt_data
+from database import db, client
 from auth import hash_password, verify_password
 from routes import api_router
-from websocket_manager import manager
 from storage import init_storage
 from security import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from websocket_handlers import handle_websocket
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -50,80 +49,6 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 @app.websocket("/api/ws/{user_id}")
 async def api_websocket_endpoint(websocket: WebSocket, user_id: str):
     await handle_websocket(websocket, user_id)
-
-
-async def handle_websocket(websocket: WebSocket, user_id: str):
-    """Handle WebSocket connections for real-time messaging"""
-    from bson import ObjectId
-    import jwt as pyjwt
-    from auth import get_jwt_secret, JWT_ALGORITHM
-    
-    # Verify JWT token from query params
-    token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=4001)
-        return
-
-    # Validate JWT token
-    try:
-        payload = pyjwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access":
-            await websocket.close(code=4001)
-            return
-        token_user_id = payload.get("sub")
-        if token_user_id != user_id:
-            await websocket.close(code=4001)
-            return
-    except pyjwt.InvalidTokenError:
-        # Fallback to legacy user_id token for backwards compatibility
-        user = await db.users.find_one({"_id": ObjectId(user_id)})
-        if not user or token != user_id:
-            await websocket.close(code=4001)
-            return
-
-    await manager.connect(websocket, user_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message_data = json.loads(data)
-
-            if message_data.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
-            elif message_data.get("type") == "message":
-                receiver_id = message_data.get("receiver_id")
-                content = message_data.get("content")
-
-                if receiver_id and content:
-                    msg_doc = {
-                        "sender_id": user_id,
-                        "receiver_id": receiver_id,
-                        "content": encrypt_data(content),
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "read": False
-                    }
-                    result = await db.messages.insert_one(msg_doc)
-
-                    sender = await db.users.find_one({"_id": ObjectId(user_id)})
-                    sender_name = sender.get("name", "Unknown") if sender else "Unknown"
-
-                    await manager.send_personal_message({
-                        "type": "new_message",
-                        "id": str(result.inserted_id),
-                        "sender_id": user_id,
-                        "sender_name": sender_name,
-                        "content": content,
-                        "created_at": msg_doc["created_at"]
-                    }, receiver_id)
-
-                    await websocket.send_json({
-                        "type": "message_sent",
-                        "id": str(result.inserted_id),
-                        "receiver_id": receiver_id,
-                        "content": content,
-                        "created_at": msg_doc["created_at"]
-                    })
-    except WebSocketDisconnect:
-        manager.disconnect(user_id)
 
 
 # ========================

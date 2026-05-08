@@ -5,40 +5,13 @@ from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
-from database import db, encrypt_data, decrypt_data
+from database import db, encrypt_data, safe_decrypt
 from auth import get_current_user
+from location import locations_match
 from models import BarterPost, CommentCreate, normalize_items, get_item_names
 from notifications import send_push_notification
 
 router = APIRouter()
-
-
-def normalize_location(location: str) -> str:
-    """Normalize location string for comparison"""
-    if not location:
-        return ""
-    return location.lower().strip()
-
-
-def locations_match(loc1: str, loc2: str) -> bool:
-    """Check if two locations match (same city/state/region)"""
-    if not loc1 or not loc2:
-        return False
-    norm1 = normalize_location(loc1)
-    norm2 = normalize_location(loc2)
-    if not norm1 or not norm2:
-        return False
-    if norm1 == norm2:
-        return True
-    if norm1 in norm2 or norm2 in norm1:
-        return True
-    parts1 = [p.strip() for p in norm1.split(',')]
-    parts2 = [p.strip() for p in norm2.split(',')]
-    for p1 in parts1:
-        for p2 in parts2:
-            if p1 and p2 and (p1 == p2 or p1 in p2 or p2 in p1):
-                return True
-    return False
 
 
 @router.post("/posts", status_code=201)
@@ -101,13 +74,7 @@ async def get_posts(
         else:
             network_user_ids.add(conn["user_id"])
 
-    # Decrypt user's location
-    user_location = ""
-    if user_doc.get("location"):
-        try:
-            user_location = decrypt_data(user_doc["location"])
-        except Exception:
-            user_location = user_doc.get("location", "")
+    user_location = safe_decrypt(user_doc.get("location"))
 
     # Build query with filters
     query = {}
@@ -163,14 +130,8 @@ async def get_posts(
         users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1, "is_trusted_trader": 1})
         async for u in users_cursor:
             uid = str(u["_id"])
-            loc = ""
-            if u.get("location"):
-                try:
-                    loc = decrypt_data(u["location"])
-                except Exception:
-                    loc = u.get("location", "")
             users_map[uid] = {
-                "location": loc, 
+                "location": safe_decrypt(u.get("location")),
                 "is_verified": u.get("is_verified", False),
                 "is_trusted_trader": u.get("is_trusted_trader", False)
             }
@@ -178,19 +139,10 @@ async def get_posts(
     result_posts = []
     for post in posts:
         post["_id"] = str(post["_id"])
-        if post.get("description"):
-            try:
-                post["description"] = decrypt_data(post["description"])
-            except Exception:
-                pass
+        post["description"] = safe_decrypt(post.get("description"))
         # Decrypt comment content
-        if post.get("comments"):
-            for comment in post["comments"]:
-                if comment.get("content"):
-                    try:
-                        comment["content"] = decrypt_data(comment["content"])
-                    except Exception:
-                        pass
+        for comment in post.get("comments") or []:
+            comment["content"] = safe_decrypt(comment.get("content"))
 
         user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False, "is_trusted_trader": False})
         poster_location = user_data["location"]
@@ -248,12 +200,7 @@ async def get_matched_posts(request: Request):
         else:
             network_user_ids.add(conn["user_id"])
 
-    user_location = ""
-    if user_doc.get("location"):
-        try:
-            user_location = decrypt_data(user_doc["location"])
-        except Exception:
-            user_location = user_doc.get("location", "")
+    user_location = safe_decrypt(user_doc.get("location"))
 
     user_wants = (get_item_names(user_doc.get("goods_wanted", [])) +
                   get_item_names(user_doc.get("services_wanted", [])))
@@ -288,21 +235,14 @@ async def get_matched_posts(request: Request):
         users_cursor = db.users.find({"_id": {"$in": [ObjectId(uid) for uid in user_ids]}}, {"_id": 1, "location": 1, "is_verified": 1})
         async for u in users_cursor:
             uid = str(u["_id"])
-            loc = ""
-            if u.get("location"):
-                try:
-                    loc = decrypt_data(u["location"])
-                except Exception:
-                    loc = u.get("location", "")
-            users_map[uid] = {"location": loc, "is_verified": u.get("is_verified", False)}
+            users_map[uid] = {
+                "location": safe_decrypt(u.get("location")),
+                "is_verified": u.get("is_verified", False),
+            }
 
     for post in posts:
         post["_id"] = str(post["_id"])
-        if post.get("description"):
-            try:
-                post["description"] = decrypt_data(post["description"])
-            except Exception:
-                pass
+        post["description"] = safe_decrypt(post.get("description"))
 
         user_data = users_map.get(post["user_id"], {"location": "", "is_verified": False})
         poster_location = user_data["location"]
@@ -440,11 +380,7 @@ async def get_comments(post_id: str, request: Request):
 
     comments = post.get("comments", [])
     for comment in comments:
-        if comment.get("content"):
-            try:
-                comment["content"] = decrypt_data(comment["content"])
-            except Exception:
-                pass
+        comment["content"] = safe_decrypt(comment.get("content"))
         if "parent_id" not in comment:
             comment["parent_id"] = None
         if "replies" not in comment:

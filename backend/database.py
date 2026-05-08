@@ -31,3 +31,14 @@ def encrypt_data(data: str) -> str:
 def decrypt_data(encrypted_data: str) -> str:
     """Decrypt a Fernet-encrypted string."""
     return fernet.decrypt(encrypted_data.encode()).decode()
+
+
+def safe_decrypt(value, fallback: str = "") -> str:
+    """Decrypt a Fernet value silently. Returns the original value if decryption fails,
+    or `fallback` if the value is empty/None."""
+    if not value:
+        return fallback
+    try:
+        return fernet.decrypt(value.encode()).decode()
+    except Exception:
+        return value if isinstance(value, str) else fallback
