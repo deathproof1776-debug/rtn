@@ -1,5 +1,12 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (Feb 10, 2026) — Frontend Component Refactoring (P1)
+- **Refactor**: Split large frontend components for maintainability with zero regressions (tested via `iteration_26.json`, 100% frontend pass)
+  - `AdminDashboard.js`: 557 → 192 lines (−66%). Extracted into `components/admin/`: `StatsBar`, `StatCard`, `AnnouncementsSection`, `AnnouncementModal`, `UsersPanel`, `QuickUserRow`, `PostsPanel`, `CommunityPanel`, `CommunityPostRow`, `ActivityLogPanel`, `ConfirmDialog`.
+  - `PostCard.js`: 451 → 329 lines (−27%). Extracted `components/post/PostMedia`, `PostActions`, `PostMenu`.
+  - `Gallery.js`: 548 → 176 lines (−68%). Extracted `components/gallery/GalleryGrid`, `GalleryItemModal`, `UploadModal`.
+- **Cleanup**: Removed unused `onToggle` prop on AnnouncementModal and dead `handleDelete` function in Gallery.js.
+
 ## Latest Updates (May 6, 2026)
 - **Bug Fix**: Notifications toggle didn't subscribe — fixed in `NotificationContext.js` and `NotificationBell.js`. Now uses `navigator.serviceWorker.ready` to wait for SW activation, listens to permission-change events, keeps dropdown open after toggle so users see status, and reuses any existing push subscription.
 - **Backlog added**: NSFW image/video moderation (P2) — recommended `opennsfw2` server-side classifier on gallery + post images + avatars; auto-reject score > 0.85, blur + reveal toggle on 0.5–0.85; admin override.

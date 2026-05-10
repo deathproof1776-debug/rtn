@@ -137,7 +137,6 @@ export default function Gallery({ userId, isOwnProfile = false, onBack }) {
             items={items}
             onItemClick={handleItemClick}
             onLike={handleLike}
-            currentUserId={currentUser?.id}
           />
         </div>
       )}
