@@ -1,37 +1,31 @@
 /**
  * PostCard - Individual post display component
- * Extracted from Feed.js for better modularity
  */
 import { useState } from 'react';
 import axios from 'axios';
-import { 
-  Heart, 
-  ChatCircle, 
-  DotsThree,
+import {
   MapPin,
   Tag,
   ArrowsLeftRight,
   CaretDown,
   CaretUp,
   SealCheck,
-  Handshake,
-  User,
-  ChatText,
-  Warning,
-  Trash,
-  PencilSimple
+  Handshake
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import ThreadedComments from './ThreadedComments';
+import PostMedia from './post/PostMedia';
+import PostActions from './post/PostActions';
+import PostMenu from './post/PostMenu';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function PostCard({ 
-  post, 
-  onLike, 
-  currentUserId, 
-  onViewProfile, 
-  onProposeTrade, 
+export default function PostCard({
+  post,
+  onLike,
+  currentUserId,
+  onViewProfile,
+  onProposeTrade,
   onStartChat,
   onDelete,
   onEdit,
@@ -47,6 +41,7 @@ export default function PostCard({
 
   const isLongPost = post.description && post.description.length > 200;
   const isOwner = post.user_id === currentUserId;
+  const isOtherUser = post.user_id !== currentUserId;
 
   const handleLikeClick = async () => {
     await onLike(post._id);
@@ -77,7 +72,8 @@ export default function PostCard({
 
   const handleAddComment = async (content, parentId) => {
     try {
-      const res = await axios.post(`${API_URL}/api/posts/${post._id}/comments`, 
+      const res = await axios.post(
+        `${API_URL}/api/posts/${post._id}/comments`,
         { content, parent_id: parentId },
         { withCredentials: true }
       );
@@ -101,12 +97,13 @@ export default function PostCard({
 
   const handleEditComment = async (commentId, newContent) => {
     try {
-      const res = await axios.put(`${API_URL}/api/posts/${post._id}/comments/${commentId}`, 
+      const res = await axios.put(
+        `${API_URL}/api/posts/${post._id}/comments/${commentId}`,
         { content: newContent },
         { withCredentials: true }
       );
-      setComments(comments.map(c => 
-        c.id === commentId 
+      setComments(comments.map(c =>
+        c.id === commentId
           ? { ...c, content: res.data.content, updated_at: res.data.updated_at }
           : c
       ));
@@ -122,7 +119,7 @@ export default function PostCard({
     setShowMenu(false);
   };
 
-  const timeAgo = post.created_at 
+  const timeAgo = post.created_at
     ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
     : 'recently';
 
@@ -130,25 +127,21 @@ export default function PostCard({
     <article className="post-card animate-slide-up" data-testid={`post-${post._id}`}>
       <header className="flex items-start justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2 md:gap-3">
-          <button 
+          <button
             onClick={handleProfileClick}
             className="w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold text-base md:text-lg flex-shrink-0 hover:ring-2 hover:ring-[var(--brand-primary)] transition-all cursor-pointer overflow-hidden"
             data-testid={`post-avatar-${post._id}`}
             title={`View ${post.user_name}'s profile`}
           >
             {post.user_avatar ? (
-              <img 
-                src={post.user_avatar} 
-                alt={post.user_name}
-                className="w-full h-full object-cover"
-              />
+              <img src={post.user_avatar} alt={post.user_name} className="w-full h-full object-cover" />
             ) : (
               post.user_name?.charAt(0)?.toUpperCase() || 'U'
             )}
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-              <button 
+              <button
                 onClick={handleProfileClick}
                 className="font-medium text-[var(--text-primary)] text-sm md:text-base hover:text-[var(--brand-primary)] hover:underline transition-colors cursor-pointer"
                 data-testid={`post-username-${post._id}`}
@@ -194,117 +187,40 @@ export default function PostCard({
             </div>
           </div>
         </div>
-        
-        {/* 3 Dots Menu */}
-        <div className="relative">
-          <button 
-            onClick={() => setShowMenu(!showMenu)}
-            className="btn-ghost p-1.5 md:p-2 flex-shrink-0 hover:bg-[var(--bg-surface-hover)]"
-            data-testid={`post-menu-btn-${post._id}`}
-          >
-            <DotsThree size={18} weight="bold" />
-          </button>
-          
-          {showMenu && (
-            <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowMenu(false)}
-              />
-              <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-lg shadow-xl z-50 overflow-hidden" data-testid={`post-menu-dropdown-${post._id}`}>
-                <button
-                  onClick={handleProfileClick}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-                  data-testid={`post-menu-view-profile-${post._id}`}
-                >
-                  <User size={16} />
-                  View Profile
-                </button>
-                {post.user_id !== currentUserId && (
-                  <>
-                    <button
-                      onClick={() => {
-                        if (onProposeTrade) {
-                          onProposeTrade(post.user_id, post.user_name);
-                        }
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-                      data-testid={`post-menu-trade-${post._id}`}
-                    >
-                      <ArrowsLeftRight size={16} />
-                      Propose Trade
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (onStartChat) {
-                          onStartChat(post.user_id);
-                        }
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors"
-                      data-testid={`post-menu-message-${post._id}`}
-                    >
-                      <ChatText size={16} />
-                      Send Message
-                    </button>
-                  </>
-                )}
-                {post.user_id !== currentUserId && (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
-                    data-testid={`post-menu-report-${post._id}`}
-                  >
-                    <Warning size={16} />
-                    Report Post
-                  </button>
-                )}
-                {/* Edit option for own posts only */}
-                {isOwner && onEdit && (
-                  <button
-                    onClick={() => {
-                      onEdit(post);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
-                    data-testid={`post-menu-edit-${post._id}`}
-                  >
-                    <PencilSimple size={16} />
-                    Edit Post
-                  </button>
-                )}
-                {/* Delete option for own posts or admin */}
-                {(isOwner || isAdmin) && onDelete && (
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-                        onDelete(post._id);
-                      }
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
-                    data-testid={`post-menu-delete-${post._id}`}
-                  >
-                    <Trash size={16} />
-                    Delete Post
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+
+        <PostMenu
+          postId={post._id}
+          isOpen={showMenu}
+          setOpen={setShowMenu}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
+          isOtherUser={isOtherUser}
+          onViewProfile={handleProfileClick}
+          onProposeTrade={() => {
+            if (onProposeTrade) onProposeTrade(post.user_id, post.user_name);
+            setShowMenu(false);
+          }}
+          onStartChat={() => {
+            if (onStartChat) onStartChat(post.user_id);
+            setShowMenu(false);
+          }}
+          onEdit={onEdit ? () => { onEdit(post); setShowMenu(false); } : null}
+          onDelete={onDelete ? () => {
+            if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+              onDelete(post._id);
+            }
+            setShowMenu(false);
+          } : null}
+        />
       </header>
 
       <h3 className="text-base md:text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ fontFamily: 'Cabinet Grotesk, sans-serif' }}>
         {post.title}
       </h3>
-      
+
       {/* Expandable Post Content */}
       <div className="relative">
-        <p 
+        <p
           className={`text-sm md:text-base text-[var(--text-secondary)] mb-3 md:mb-4 leading-relaxed ${
             !expanded && isLongPost ? 'line-clamp-3' : ''
           }`}
@@ -312,22 +228,14 @@ export default function PostCard({
         >
           {post.description}
         </p>
-        
+
         {isLongPost && (
           <button
             onClick={() => setExpanded(!expanded)}
             className="text-sm text-[var(--brand-primary)] hover:underline font-medium flex items-center gap-1 -mt-2 mb-3"
             data-testid={`post-expand-btn-${post._id}`}
           >
-            {expanded ? (
-              <>
-                Show less <CaretUp size={14} />
-              </>
-            ) : (
-              <>
-                Read more <CaretDown size={14} />
-              </>
-            )}
+            {expanded ? (<>Show less <CaretUp size={14} /></>) : (<>Read more <CaretDown size={14} /></>)}
           </button>
         )}
       </div>
@@ -346,8 +254,8 @@ export default function PostCard({
             {post.offering?.map((item, i) => {
               const itemData = typeof item === 'string' ? { name: item } : item;
               return (
-                <span 
-                  key={`offer-${itemData.name || item}-${i}`} 
+                <span
+                  key={`offer-${itemData.name || item}-${i}`}
                   className="badge badge-offering text-[10px] md:text-xs"
                   title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
                 >
@@ -367,8 +275,8 @@ export default function PostCard({
             {post.looking_for?.map((item, i) => {
               const itemData = typeof item === 'string' ? { name: item } : item;
               return (
-                <span 
-                  key={`look-${itemData.name || item}-${i}`} 
+                <span
+                  key={`look-${itemData.name || item}-${i}`}
                   className="badge badge-looking text-[10px] md:text-xs"
                   title={itemData.description || itemData.quantity ? `${itemData.quantity || ''} ${itemData.description || ''}`.trim() : ''}
                 >
@@ -381,48 +289,19 @@ export default function PostCard({
         </div>
       </div>
 
-      {post.images?.length > 0 && (
-        <div className="mb-3 md:mb-4 grid grid-cols-2 gap-1.5 md:gap-2">
-          {post.images.slice(0, 4).map((img, i) => (
-            <img 
-              key={`img-${img.slice(-20)}-${i}`} 
-              src={img} 
-              alt={`Post image ${i + 1}`}
-              className="w-full h-24 md:h-32 object-cover border border-[var(--border-color)]"
-            />
-          ))}
-        </div>
-      )}
+      <PostMedia images={post.images} testId={`post-media-${post._id}`} />
 
-      <footer className="flex items-center gap-3 md:gap-4 pt-3 md:pt-4 border-t border-[var(--border-color)]">
-        <button 
-          onClick={handleLikeClick}
-          className={`btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3 ${liked ? 'text-[var(--brand-primary)]' : ''}`}
-          data-testid={`like-post-${post._id}`}
-        >
-          <Heart size={18} weight={liked ? 'fill' : 'regular'} />
-          <span className="text-xs md:text-sm">{likeCount}</span>
-        </button>
-        <button 
-          onClick={toggleComments}
-          className="btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3"
-          data-testid={`toggle-comments-${post._id}`}
-        >
-          <ChatCircle size={18} />
-          <span className="text-xs md:text-sm">{comments.length}</span>
-          {showComments ? <CaretUp size={12} /> : <CaretDown size={12} />}
-        </button>
-        {post.user_id !== currentUserId && onProposeTrade && (
-          <button 
-            onClick={() => onProposeTrade(post.user_id, post.user_name)}
-            className="btn-ghost flex items-center gap-1.5 md:gap-2 px-2 md:px-3 text-[var(--brand-primary)] ml-auto"
-            data-testid={`propose-trade-${post._id}`}
-          >
-            <ArrowsLeftRight size={18} />
-            <span className="text-xs md:text-sm hidden sm:inline">Propose Trade</span>
-          </button>
-        )}
-      </footer>
+      <PostActions
+        postId={post._id}
+        liked={liked}
+        likeCount={likeCount}
+        commentCount={comments.length}
+        showComments={showComments}
+        isOwnPost={isOwner}
+        onLikeClick={handleLikeClick}
+        onToggleComments={toggleComments}
+        onProposeTrade={onProposeTrade ? () => onProposeTrade(post.user_id, post.user_name) : null}
+      />
 
       {/* Comments Section */}
       {showComments && (
