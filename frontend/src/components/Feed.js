@@ -64,6 +64,17 @@ export default function Feed({
     setLoading(initialLoading);
   }, [initialLoading]);
 
+  // When a user is blocked anywhere in the app, drop their posts locally
+  useEffect(() => {
+    const handler = (e) => {
+      const blockedId = e.detail?.userId;
+      if (!blockedId) return;
+      setPosts(prev => prev.filter(p => p.user_id !== blockedId));
+    };
+    window.addEventListener('rtn:user-blocked', handler);
+    return () => window.removeEventListener('rtn:user-blocked', handler);
+  }, []);
+
   // Fetch posts with filters
   const fetchFilteredPosts = useCallback(async () => {
     setLoading(true);

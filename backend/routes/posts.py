@@ -10,6 +10,7 @@ from auth import get_current_user
 from location import locations_match
 from models import BarterPost, CommentCreate, normalize_items, get_item_names
 from notifications import send_push_notification
+from moderation_utils import get_blocked_user_ids
 
 router = APIRouter()
 
@@ -75,13 +76,18 @@ async def get_posts(
             network_user_ids.add(conn["user_id"])
 
     user_location = safe_decrypt(user_doc.get("location"))
+    blocked_ids = await get_blocked_user_ids(user["_id"])
 
     # Build query with filters
     query = {}
+    if blocked_ids:
+        query["user_id"] = {"$nin": list(blocked_ids)}
     if category and category != "all":
         query["category"] = category
     if network_only:
-        query["user_id"] = {"$in": list(network_user_ids)}
+        # Network filter takes precedence; intersect with non-blocked
+        allowed = network_user_ids - blocked_ids
+        query["user_id"] = {"$in": list(allowed)}
     if has_media:
         query["images"] = {"$exists": True, "$ne": []}
     
@@ -201,6 +207,7 @@ async def get_matched_posts(request: Request):
             network_user_ids.add(conn["user_id"])
 
     user_location = safe_decrypt(user_doc.get("location"))
+    blocked_ids = await get_blocked_user_ids(user["_id"])
 
     user_wants = (get_item_names(user_doc.get("goods_wanted", [])) +
                   get_item_names(user_doc.get("services_wanted", [])))
@@ -208,6 +215,8 @@ async def get_matched_posts(request: Request):
                       get_item_names(user_doc.get("services_offering", [])))
 
     query = {"user_id": {"$ne": user["_id"]}}
+    if blocked_ids:
+        query["user_id"] = {"$nin": list(blocked_ids) + [user["_id"]]}
     if user_wants or user_offerings:
         or_conditions = []
         if user_wants:
@@ -373,20 +382,26 @@ async def create_comment(post_id: str, comment: CommentCreate, request: Request,
 
 @router.get("/posts/{post_id}/comments")
 async def get_comments(post_id: str, request: Request):
-    await get_current_user(request)
+    user = await get_current_user(request)
     post = await db.posts.find_one({"_id": ObjectId(post_id)}, {"comments": 1})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
+    blocked_ids = await get_blocked_user_ids(user["_id"])
+
     comments = post.get("comments", [])
+    visible = []
     for comment in comments:
+        if comment.get("user_id") in blocked_ids:
+            continue
         comment["content"] = safe_decrypt(comment.get("content"))
         if "parent_id" not in comment:
             comment["parent_id"] = None
         if "replies" not in comment:
             comment["replies"] = []
+        visible.append(comment)
 
-    return comments
+    return visible
 
 
 @router.delete("/posts/{post_id}/comments/{comment_id}")

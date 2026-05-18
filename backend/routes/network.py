@@ -9,6 +9,7 @@ from database import db, decrypt_data
 from auth import get_current_user
 from models import NetworkRequest, NetworkRequestResponse, get_item_names
 from notifications import send_push_notification
+from moderation_utils import get_blocked_user_ids, is_blocked_between
 
 router = APIRouter(prefix="/network")
 
@@ -21,6 +22,9 @@ async def send_network_request(data: NetworkRequest, request: Request, backgroun
 
     if target_user_id == user["_id"]:
         raise HTTPException(status_code=400, detail="Cannot send network request to yourself")
+
+    if await is_blocked_between(user["_id"], target_user_id):
+        raise HTTPException(status_code=403, detail="You cannot connect with this user")
 
     target_user = await db.users.find_one({"_id": ObjectId(target_user_id)})
     if not target_user:
@@ -337,8 +341,10 @@ async def get_recommended_traders(request: Request, limit: int = 10):
             pending_ids.add(req["from_user_id"])
 
     exclude_ids = connected_ids | pending_ids | {user["_id"]}
+    blocked_ids = await get_blocked_user_ids(user["_id"])
+    exclude_ids = exclude_ids | blocked_ids
     all_users = await db.users.find(
-        {"_id": {"$nin": [ObjectId(uid) for uid in exclude_ids]}},
+        {"_id": {"$nin": [ObjectId(uid) for uid in exclude_ids if ObjectId.is_valid(uid)]}},
         {"password_hash": 0}
     ).limit(100).to_list(100)
 

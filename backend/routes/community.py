@@ -10,6 +10,7 @@ from database import db, encrypt_data, safe_decrypt
 from auth import get_current_user
 from location import locations_match
 from notifications import send_push_notification
+from moderation_utils import get_blocked_user_ids
 
 router = APIRouter(prefix="/community")
 
@@ -97,9 +98,12 @@ async def get_community_posts(
     """Get community posts with optional filters"""
     user = await get_current_user(request)
     user_doc = await db.users.find_one({"_id": ObjectId(user["_id"])})
-    
+    blocked_ids = await get_blocked_user_ids(user["_id"])
+
     # Build query
     query = {"is_deleted": False}
+    if blocked_ids:
+        query["user_id"] = {"$nin": list(blocked_ids)}
     if topic and topic != "all":
         query["topic"] = topic
     if has_media:
@@ -141,7 +145,7 @@ async def get_community_posts(
                 network_user_ids.add(conn["connected_user_id"])
             else:
                 network_user_ids.add(conn["user_id"])
-        query["user_id"] = {"$in": list(network_user_ids)}
+        query["user_id"] = {"$in": list(network_user_ids - blocked_ids)}
     
     # Decrypt user's location for nearby filter
     user_location = safe_decrypt(user_doc.get("location"))

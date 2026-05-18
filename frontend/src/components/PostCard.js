@@ -13,10 +13,12 @@ import {
   Handshake
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 import ThreadedComments from './ThreadedComments';
 import PostMedia from './post/PostMedia';
 import PostActions from './post/PostActions';
 import PostMenu from './post/PostMenu';
+import ReportModal from './moderation/ReportModal';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -38,6 +40,7 @@ export default function PostCard({
   const [loadingComments, setLoadingComments] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const isLongPost = post.description && post.description.length > 200;
   const isOwner = post.user_id === currentUserId;
@@ -117,6 +120,24 @@ export default function PostCard({
       onViewProfile(post.user_id);
     }
     setShowMenu(false);
+  };
+
+  const handleBlockUser = async () => {
+    setShowMenu(false);
+    if (!post.user_id) return;
+    if (!window.confirm(`Block ${post.user_name || 'this user'}? You will no longer see their posts and they won't see yours.`)) return;
+    try {
+      await axios.post(
+        `${API_URL}/api/moderation/block/${post.user_id}`,
+        {},
+        { withCredentials: true }
+      );
+      toast.success('User blocked');
+      // Hide locally via onDelete-style callback fallback: dispatch a custom event for parents to refresh
+      window.dispatchEvent(new CustomEvent('rtn:user-blocked', { detail: { userId: post.user_id } }));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to block');
+    }
   };
 
   const timeAgo = post.created_at
@@ -211,6 +232,8 @@ export default function PostCard({
             }
             setShowMenu(false);
           } : null}
+          onReport={() => { setShowReport(true); setShowMenu(false); }}
+          onBlock={handleBlockUser}
         />
       </header>
 
@@ -323,6 +346,14 @@ export default function PostCard({
             </div>
           )}
         </div>
+      )}
+
+      {showReport && (
+        <ReportModal
+          targetType="post"
+          targetId={post._id}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </article>
   );

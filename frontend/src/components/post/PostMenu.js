@@ -5,7 +5,8 @@ import {
   ChatText,
   Warning,
   PencilSimple,
-  Trash
+  Trash,
+  ShieldSlash
 } from '@phosphor-icons/react';
 
 export default function PostMenu({
@@ -19,7 +20,9 @@ export default function PostMenu({
   onProposeTrade,
   onStartChat,
   onEdit,
-  onDelete
+  onDelete,
+  onReport,
+  onBlock
 }) {
   return (
     <div className="relative">
@@ -64,14 +67,26 @@ export default function PostMenu({
                   <ChatText size={16} />
                   Send Message
                 </button>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
-                  data-testid={`post-menu-report-${postId}`}
-                >
-                  <Warning size={16} />
-                  Report Post
-                </button>
+                {onReport && (
+                  <button
+                    onClick={onReport}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors border-t border-[var(--border-color)]"
+                    data-testid={`post-menu-report-${postId}`}
+                  >
+                    <Warning size={16} />
+                    Report Post
+                  </button>
+                )}
+                {onBlock && (
+                  <button
+                    onClick={onBlock}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[var(--brand-danger)] hover:bg-[var(--bg-surface-hover)] transition-colors"
+                    data-testid={`post-menu-block-${postId}`}
+                  >
+                    <ShieldSlash size={16} />
+                    Block User
+                  </button>
+                )}
               </>
             )}
             {isOwner && onEdit && (

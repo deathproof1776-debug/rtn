@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { ShieldCheck, ShieldWarning, Key, Devices, X, Copy, Check } from '@phosphor-icons/react';
+import { ShieldCheck, ShieldWarning, Key, Devices, X, Copy, Check, ShieldSlash } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import PasswordStrengthMeter from './PasswordStrengthMeter';
+import BlockedUsersPanel from './moderation/BlockedUsersPanel';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -350,6 +351,18 @@ export default function SecuritySettings() {
           Active Sessions
         </h2>
         <SessionsList />
+      </section>
+
+      {/* Blocked Users */}
+      <section className="bg-[var(--bg-surface)] border border-[var(--bg-surface-active)] p-6">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2 mb-4">
+          <ShieldSlash size={22} className="text-red-400" />
+          Blocked Users
+        </h2>
+        <p className="text-sm text-[var(--text-muted)] mb-3">
+          Blocked users can't see your posts/profile and you won't see theirs.
+        </p>
+        <BlockedUsersPanel />
       </section>
 
       {showEnable && (

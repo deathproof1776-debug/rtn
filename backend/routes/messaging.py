@@ -10,6 +10,7 @@ from auth import get_current_user
 from models import MessageCreate
 from notifications import send_push_notification
 from websocket_manager import manager
+from moderation_utils import get_blocked_user_ids, is_blocked_between
 
 router = APIRouter()
 
@@ -31,9 +32,12 @@ async def get_conversations(request: Request):
     ]
 
     conversations = await db.messages.aggregate(pipeline).to_list(50)
+    blocked_ids = await get_blocked_user_ids(user_id)
 
     result = []
     for conv in conversations:
+        if conv["_id"] in blocked_ids:
+            continue
         other_user = await db.users.find_one({"_id": ObjectId(conv["_id"])}, {"password_hash": 0})
         if other_user:
             last_msg = conv.get("last_message", "")
@@ -94,6 +98,9 @@ async def get_messages(other_user_id: str, request: Request, skip: int = 0, limi
 @router.post("/messages")
 async def send_message(message: MessageCreate, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
+
+    if await is_blocked_between(user["_id"], message.receiver_id):
+        raise HTTPException(status_code=403, detail="You cannot message this user")
 
     msg_doc = {
         "sender_id": user["_id"],

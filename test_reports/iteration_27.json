@@ -1,0 +1,66 @@
+{
+  "summary": "Full end-to-end testing of Task 2 (User Blocking + Reporting). Backend: 9/9 pytest tests pass (block CRUD, idempotent re-block, self-block 400, invalid id 400, missing user 404, block list + check endpoints, report validation, duplicate-dedup, admin list/update/stats, non-admin 403). Mutual-block filtering verified on /api/posts (search-scoped), /api/messages (403 both directions), /api/network/request (403 both directions), and /api/conversations. Frontend: ReportModal opens from PostMenu with all 8 reason radios + details + submit/cancel; report submits successfully. Block from PostMenu fires rtn:user-blocked event and removes post from feed without refresh (verified). SecuritySettings BlockedUsersPanel lists blocked users, unblock-btn-<id> removes row immediately. UserProfileView shows report-user-btn + block-user-btn for other users. AdminDashboard ReportsPanel renders with filter buttons reports-filter-pending/resolved/dismissed/all showing counts (PENDING(1) RESOLVED(3) DISMISSED(0)); dismiss button reduces pending count and shows toast.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": {
+    "backend": [
+      "POST /api/moderation/block/{self_id} -> 400 (self-block rejected)",
+      "POST /api/moderation/block/not-an-objectid -> 400 (invalid id)",
+      "POST /api/moderation/block/000000000000000000000000 -> 404 (user not found)",
+      "POST /api/moderation/block/{user_id} -> 201 first time, then 'already blocked' on retry (idempotent)",
+      "GET /api/moderation/blocks returns list with user_id/name/avatar/blocked_at fields",
+      "GET /api/moderation/blocks/check/{user_id} returns is_blocked_either_way + i_blocked_them flags symmetric for both sides",
+      "DELETE /api/moderation/block/{user_id} -> 200 then 404 on second call",
+      "POST /api/moderation/report invalid target_type -> 400, invalid reason -> 400, missing target_id -> 400",
+      "POST /api/moderation/report valid + duplicate returns 'already submitted' (no extra row in admin list)",
+      "GET /api/admin/reports?status=pending|resolved|dismissed|all works, invalid status -> 400, non-admin -> 403",
+      "PUT /api/admin/reports/{id} resolves with note (verified persistence), invalid id -> 400, invalid status -> 400, non-admin -> 403",
+      "GET /api/admin/reports/stats returns {pending, resolved, dismissed} counts, non-admin -> 403",
+      "After block, demo's post no longer in admin's /api/posts feed (verified by title search)",
+      "POST /api/messages between blocked users -> 403 (both directions)",
+      "POST /api/network/request to blocked user -> 403 (both directions)",
+      "GET /api/conversations does not include blocked user partner"
+    ],
+    "frontend": [
+      "Login (demo) -> feed loads with 20 post-menu buttons",
+      "Other-user post menu shows post-menu-report-<id> + post-menu-block-<id>",
+      "ReportModal opens with data-testid=report-modal, all 8 reason radios (spam, harassment, hate_speech, nsfw, scam, impersonation, violence, other) present, report-details-input, report-submit-btn, report-cancel-btn",
+      "Submitting report closes modal; report visible to admin in ReportsPanel",
+      "Clicking post-menu-block-<id> triggers confirm, calls API, dispatches rtn:user-blocked, and the post is removed from feed without refresh",
+      "Security -> BlockedUsersPanel (data-testid=blocked-users-panel) lists blocked rows; unblock-btn-<id> click removes row immediately",
+      "Clicking another user's avatar opens TraderProfile with report-user-btn + block-user-btn",
+      "Admin Dashboard renders admin-reports-panel with filter buttons reports-filter-pending/resolved/dismissed/all showing counts in labels",
+      "report-resolve-<id> and report-dismiss-<id> buttons present on pending rows; dismiss action removes row from pending list and shows 'Report dismissed' toast"
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_moderation_block_report.py",
+    "/app/test_reports/pytest/moderation_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "moderation.py POST /block returns 201 the first time but 200 on idempotent re-block (status_code=201 decorator applies). Behaviour acceptable (both responses include message field) but consider unifying to 200 if the spec prefers idempotent semantics, or document that 201 only on first creation.",
+    "moderation.py POST /report uses @router.post decorator with status_code=201 even when duplicate path returns 'already submitted' (still 201). Functional but a 200 in the dedupe branch would be more accurate.",
+    "moderation.py list_my_blocks: unbounded loop over users_cursor could be expensive if a user has 500 blocks. Add an index on blocks.blocker_id and consider pagination.",
+    "moderation_utils.get_blocked_user_ids does a full $or scan on blocks per request on many feed endpoints. Recommend a compound index on (blocker_id) and (blocked_id) plus caching per-request to avoid duplicate DB hits if multiple routes call it in one request.",
+    "Reports collection lacks unique index on (reporter_id, target_type, target_id, status) - dedup is enforced at app level only; under race a duplicate could slip in.",
+    "PostCard handleBlockUser uses window.confirm (per system prompt this is flagged in style review). Works, but a styled Confirm modal would match the rest of the app."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_moderation_block_report.py (NEW)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% on tested flows"},
+  "test_credentials": {
+    "admin": {"email": "admin@homesteadhub.com", "password": "admin123"},
+    "demo": {"email": "demo@rebeltrade.net", "password": "demo123"}
+  },
+  "seed_data_creation": "Test created/deleted one post owned by demo user (cleaned up in test teardown). Test reports were created against synthetic target_ids (test-target-<uuid>) and were resolved/dismissed by admin during the run. One additional 'spam' report was submitted from the frontend flow against an admin post (TEST_ automated report) and dismissed via the admin UI. Block created during frontend flow was unblocked via BlockedUsersPanel.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Task 2 (Block + Report) end-to-end functional. Test file /app/backend/tests/test_moderation_block_report.py is the regression suite. Note that /api/posts has pagination at limit*3 default 100 so verifying feed visibility for a specific post requires search param. nav-security/nav-admin testids appear duplicated (desktop + mobile sidebar) - iterate visible ones. PostMenu Report/Block options only show for other users' posts (correct gating). rtn:user-blocked event triggers Feed.js handler to filter out posts client-side - confirmed working.",
+  "rca of the issue": "N/A - all features functional as specified."
+}

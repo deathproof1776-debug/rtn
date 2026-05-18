@@ -10,6 +10,7 @@ import PostsPanel from '../components/admin/PostsPanel';
 import CommunityPanel from '../components/admin/CommunityPanel';
 import ActivityLogPanel from '../components/admin/ActivityLogPanel';
 import ConfirmDialog from '../components/admin/ConfirmDialog';
+import ReportsPanel from '../components/admin/ReportsPanel';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -168,7 +169,8 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
           <CommunityPanel communityPosts={communityPosts} onDelete={handleDelete} />
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
+          <ReportsPanel onViewProfile={onViewProfile} />
           <ActivityLogPanel auditLogs={auditLogs} />
         </div>
       </div>

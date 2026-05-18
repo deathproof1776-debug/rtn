@@ -15,8 +15,12 @@ import {
   Handshake,
   CaretDown,
   CaretUp,
-  Images
+  Images,
+  ShieldSlash,
+  Warning
 } from '@phosphor-icons/react';
+import { toast } from 'sonner';
+import ReportModal from './moderation/ReportModal';
 
 // Expandable Bio component for long descriptions
 function ExpandableBio({ bio, charLimit = 150 }) {
@@ -142,6 +146,19 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
   const [networkStatus, setNetworkStatus] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [galleryCount, setGalleryCount] = useState(0);
+  const [showReport, setShowReport] = useState(false);
+
+  const handleBlockUser = async () => {
+    if (!window.confirm(`Block ${profile?.name || 'this user'}? You won't see each other's posts/profile/messages.`)) return;
+    try {
+      await axios.post(`${API_URL}/api/moderation/block/${userId}`, {}, { withCredentials: true });
+      toast.success('User blocked');
+      window.dispatchEvent(new CustomEvent('rtn:user-blocked', { detail: { userId } }));
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to block');
+    }
+  };
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -387,6 +404,22 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
                   Gallery ({galleryCount})
                 </button>
               )}
+              <button
+                onClick={() => setShowReport(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-red-500 hover:text-red-400"
+                data-testid="report-user-btn"
+              >
+                <Warning size={16} />
+                Report
+              </button>
+              <button
+                onClick={handleBlockUser}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--bg-surface-active)] text-[var(--text-secondary)] text-sm hover:border-red-500 hover:text-red-400"
+                data-testid="block-user-btn"
+              >
+                <ShieldSlash size={16} />
+                Block
+              </button>
             </div>
           )}
 
@@ -443,6 +476,13 @@ export default function UserProfileView({ userId, onClose, onStartChat, onPropos
           </div>
         </div>
       </div>
+      {showReport && (
+        <ReportModal
+          targetType="user"
+          targetId={userId}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }
