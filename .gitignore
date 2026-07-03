@@ -85,11 +85,3 @@ frontend/node_modules/.cache/default-development/0.pack
 # Local environment overrides (base .env files are required for deployment)
 .env.local
 .env.*.local
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
