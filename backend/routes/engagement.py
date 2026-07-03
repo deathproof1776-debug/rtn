@@ -32,6 +32,7 @@ async def acknowledge_achievement(request: Request):
         raise HTTPException(status_code=400, detail="Invalid achievement key")
     await db.users.update_one(
         {"_id": ObjectId(user["_id"])},
-        {"$pull": {"pending_achievements": key}}
+        {"$pull": {"pending_achievements": key},
+         "$addToSet": {"achievements_seen": key}}
     )
     return {"message": "Acknowledged"}

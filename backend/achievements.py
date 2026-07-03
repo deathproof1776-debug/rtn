@@ -51,3 +51,36 @@ async def grant_achievement(user_id: str, key: str) -> None:
         )
     except Exception:
         pass
+
+
+def qualifying_achievement_keys(user: dict) -> set:
+    """Achievement keys the user currently qualifies for based on their status."""
+    keys = set()
+    if user.get("is_verified"):
+        keys.add("verified")
+    if user.get("is_trusted_trader"):
+        keys.add("trusted_trader")
+    if user.get("role") == "moderator":
+        keys.add("moderator")
+    return keys
+
+
+async def backfill_pending_achievements(user_id: str, user: dict) -> list:
+    """Ensure existing users receive explainers for badges/roles they already
+    hold but never saw. Adds any qualifying key not already pending or seen.
+
+    Called lazily on login/`/me`, so it self-heals for all existing users on
+    their next session and never re-shows an acknowledged achievement.
+    """
+    seen = set(user.get("achievements_seen") or [])
+    pending = list(user.get("pending_achievements") or [])
+    pending_set = set(pending)
+    to_add = [k for k in qualifying_achievement_keys(user)
+              if k not in seen and k not in pending_set]
+    if to_add and ObjectId.is_valid(user_id):
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$addToSet": {"pending_achievements": {"$each": to_add}}}
+        )
+        pending = pending + to_add
+    return pending

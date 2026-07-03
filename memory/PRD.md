@@ -9,6 +9,7 @@
   - `trades.py check_and_award_trusted_trader` → grants `trusted_trader` (now transition-guarded)
 - `routes/engagement.py`: `POST /api/onboarding/complete`, `POST /api/achievements/ack` ({key}). `/api/auth/me` + login payload now return `has_seen_onboarding` + `pending_achievements`.
 - Wired into `Dashboard.js`: tour shows first for new users; achievement celebrations queue after (one at a time, acked to clear). Tested E2E (curl + screenshot): tour steps, moderator celebration, ack persistence all pass.
+- **Backfill for existing users (Jul 3, 2026)**: `backfill_pending_achievements()` runs lazily on login + `/api/auth/me`. Any existing user who already holds `verified`/`trusted_trader`/`moderator` but never saw its explainer gets it queued on their next session — deduped, and tracked via `users.achievements_seen` (recorded on ack) so it shows exactly once and never repeats. The onboarding tour already reaches existing users since a missing `has_seen_onboarding` is treated as unseen. Verified via curl: login/`/me` backfills, ack records `achievements_seen`, no re-adds after ack.
 
 ## Latest Updates (Jul 3, 2026) — Moderator Role Tier (P1) + P0 Security Hardening
 

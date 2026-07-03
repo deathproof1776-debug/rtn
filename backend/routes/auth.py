@@ -29,6 +29,7 @@ from security import (
 import jwt
 from pydantic import BaseModel
 from typing import Optional
+from achievements import backfill_pending_achievements
 
 router = APIRouter(prefix="/auth")
 
@@ -75,6 +76,7 @@ async def _issue_session(user: dict, email: str, request: Request) -> JSONRespon
     refresh_token = create_refresh_token(user_id, session_id=session_id)
     await store_refresh_token(user_id, refresh_token, request, session_id=session_id)
 
+    user["pending_achievements"] = await backfill_pending_achievements(user_id, user)
     payload = _user_response_payload(user)
     payload["message"] = "Login successful"
     response = JSONResponse(content=payload)
@@ -224,16 +226,18 @@ async def logout(request: Request):
 @router.get("/me")
 async def get_me(request: Request):
     user = await get_current_user(request)
+    user_id = user["_id"] if isinstance(user["_id"], str) else str(user["_id"])
     if user.get("location"):
         try:
             user["location"] = decrypt_data(user["location"])
         except Exception:
             pass
+    pending = await backfill_pending_achievements(user_id, user)
     if "_id" in user:
         user["id"] = user.pop("_id")
     user["two_factor_enabled"] = bool(user.get("two_factor_enabled", False))
     user["has_seen_onboarding"] = bool(user.get("has_seen_onboarding", False))
-    user["pending_achievements"] = user.get("pending_achievements", [])
+    user["pending_achievements"] = pending
     user.pop("totp_secret", None)
     return user
 
