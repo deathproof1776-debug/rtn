@@ -11,6 +11,7 @@ from auth import get_current_user
 from location import locations_match
 from notifications import send_push_notification
 from moderation_utils import get_blocked_user_ids
+from security import limiter, user_rate_limit_key
 
 router = APIRouter(prefix="/community")
 
@@ -41,6 +42,7 @@ async def get_community_topics():
 
 
 @router.post("", status_code=201)
+@limiter.limit("10/minute", key_func=user_rate_limit_key)
 async def create_community_post(request: Request):
     """Create a new community post"""
     user = await get_current_user(request)

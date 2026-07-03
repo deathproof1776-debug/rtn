@@ -11,11 +11,13 @@ from auth import get_current_user
 from models import GalleryCommentCreate
 from notifications import send_push_notification
 from storage import put_object, generate_storage_path, validate_file, get_content_type, is_video
+from security import limiter, user_rate_limit_key
 
 router = APIRouter(prefix="/gallery")
 
 
 @router.post("/upload")
+@limiter.limit("10/minute", key_func=user_rate_limit_key)
 async def upload_gallery_item(
     request: Request,
     file: UploadFile = File(...),

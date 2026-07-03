@@ -11,6 +11,7 @@ from models import MessageCreate
 from notifications import send_push_notification
 from websocket_manager import manager
 from moderation_utils import get_blocked_user_ids, is_blocked_between
+from security import limiter, user_rate_limit_key
 
 router = APIRouter()
 
@@ -96,6 +97,7 @@ async def get_messages(other_user_id: str, request: Request, skip: int = 0, limi
 
 
 @router.post("/messages")
+@limiter.limit("60/minute", key_func=user_rate_limit_key)
 async def send_message(message: MessageCreate, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
 

@@ -11,11 +11,13 @@ from location import locations_match
 from models import BarterPost, CommentCreate, normalize_items, get_item_names
 from notifications import send_push_notification
 from moderation_utils import get_blocked_user_ids
+from security import limiter, user_rate_limit_key
 
 router = APIRouter()
 
 
 @router.post("/posts", status_code=201)
+@limiter.limit("20/minute", key_func=user_rate_limit_key)
 async def create_post(post: BarterPost, request: Request):
     user = await get_current_user(request)
     
@@ -282,6 +284,7 @@ async def get_matched_posts(request: Request):
 
 
 @router.post("/posts/{post_id}/like")
+@limiter.limit("60/minute", key_func=user_rate_limit_key)
 async def like_post(post_id: str, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
     post = await db.posts.find_one({"_id": ObjectId(post_id)})
@@ -307,6 +310,7 @@ async def like_post(post_id: str, request: Request, background_tasks: Background
 
 
 @router.post("/posts/{post_id}/comments", status_code=201)
+@limiter.limit("30/minute", key_func=user_rate_limit_key)
 async def create_comment(post_id: str, comment: CommentCreate, request: Request, background_tasks: BackgroundTasks):
     user = await get_current_user(request)
 

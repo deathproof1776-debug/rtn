@@ -28,6 +28,24 @@ from database import db
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
+def user_rate_limit_key(request: Request) -> str:
+    """Rate-limit key by authenticated user id; falls back to client IP."""
+    token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if token:
+        try:
+            payload = jwt.decode(token, os.environ["JWT_SECRET"], algorithms=["HS256"])
+            sub = payload.get("sub")
+            if sub:
+                return f"user:{sub}"
+        except Exception:
+            pass
+    return get_remote_address(request)
+
+
 # ============================================================
 # Account lockout
 # ============================================================

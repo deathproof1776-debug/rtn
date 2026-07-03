@@ -15,7 +15,7 @@ db = client[os.environ['DB_NAME']]
 
 # Encryption setup
 def get_encryption_key():
-    key = os.environ.get("ENCRYPTION_KEY", "default-encryption-key-32b!")
+    key = os.environ["ENCRYPTION_KEY"]
     key_bytes = hashlib.sha256(key.encode()).digest()
     return base64.urlsafe_b64encode(key_bytes)
 

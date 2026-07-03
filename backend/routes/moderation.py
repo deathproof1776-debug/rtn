@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from database import db
 from auth import get_current_user, require_admin
 from moderation_utils import get_blocked_user_ids
+from security import limiter, user_rate_limit_key
 
 router = APIRouter(prefix="/moderation")
 
@@ -110,6 +111,7 @@ async def check_block(user_id: str, request: Request):
 # ----------------------- Reports -----------------------
 
 @router.post("/report", status_code=201)
+@limiter.limit("10/hour", key_func=user_rate_limit_key)
 async def submit_report(request: Request):
     """Submit a report against a user or piece of content."""
     me = await get_current_user(request)
