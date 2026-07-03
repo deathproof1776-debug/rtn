@@ -56,7 +56,8 @@ export default function Dashboard() {
   }, [user]);
 
   const pendingAchievements = (user && user.pending_achievements) || [];
-  const currentAchievement = !showOnboarding && pendingAchievements.length > 0
+  // Tour must complete first; then show achievements one-at-a-time in received order.
+  const currentAchievement = (user && user.has_seen_onboarding && !showOnboarding && pendingAchievements.length > 0)
     ? pendingAchievements[0]
     : null;
 

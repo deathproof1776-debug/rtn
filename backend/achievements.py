@@ -53,6 +53,11 @@ async def grant_achievement(user_id: str, key: str) -> None:
         pass
 
 
+# Canonical order used when queueing multiple achievements at once (backfill),
+# so they present one-at-a-time in a stable, sensible sequence.
+ACHIEVEMENT_ORDER = ["verified", "trusted_trader", "moderator"]
+
+
 def qualifying_achievement_keys(user: dict) -> set:
     """Achievement keys the user currently qualifies for based on their status."""
     keys = set()
@@ -70,17 +75,20 @@ async def backfill_pending_achievements(user_id: str, user: dict) -> list:
     hold but never saw. Adds any qualifying key not already pending or seen.
 
     Called lazily on login/`/me`, so it self-heals for all existing users on
-    their next session and never re-shows an acknowledged achievement.
+    their next session and never re-shows an acknowledged achievement. New keys
+    are appended AFTER any already-pending ones (received-order preserved) and
+    ordered by ACHIEVEMENT_ORDER among themselves.
     """
     seen = set(user.get("achievements_seen") or [])
     pending = list(user.get("pending_achievements") or [])
     pending_set = set(pending)
-    to_add = [k for k in qualifying_achievement_keys(user)
-              if k not in seen and k not in pending_set]
+    qualifies = qualifying_achievement_keys(user)
+    to_add = [k for k in ACHIEVEMENT_ORDER
+              if k in qualifies and k not in seen and k not in pending_set]
     if to_add and ObjectId.is_valid(user_id):
         await db.users.update_one(
             {"_id": ObjectId(user_id)},
-            {"$addToSet": {"pending_achievements": {"$each": to_add}}}
+            {"$push": {"pending_achievements": {"$each": to_add}}}
         )
         pending = pending + to_add
     return pending
