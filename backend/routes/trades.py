@@ -10,6 +10,7 @@ from auth import get_current_user
 from models import TradeOfferCreate, TradeOfferRespond, TradeCounterOffer
 from notifications import send_push_notification
 from websocket_manager import manager
+from achievements import grant_achievement
 
 router = APIRouter(prefix="/trades")
 
@@ -425,13 +426,18 @@ async def check_and_award_trusted_trader(user_id: str):
         ],
         "status": "completed"
     })
-    
-    # Award badge if threshold reached
+
+    # Award badge if threshold reached (only on transition to trusted)
     if completed_count >= 5:
-        await db.users.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"is_trusted_trader": True, "trusted_trader_since": datetime.now(timezone.utc).isoformat()}}
+        existing = await db.users.find_one(
+            {"_id": ObjectId(user_id)}, {"is_trusted_trader": 1}
         )
+        if existing and not existing.get("is_trusted_trader"):
+            await db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"is_trusted_trader": True, "trusted_trader_since": datetime.now(timezone.utc).isoformat()}}
+            )
+            await grant_achievement(user_id, "trusted_trader")
 
 
 @router.get("/completed-count")

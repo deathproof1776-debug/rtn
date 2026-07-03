@@ -20,13 +20,16 @@ import Gallery from '../components/Gallery';
 import CommunityBoard from '../components/CommunityBoard';
 import SecuritySettings from '../components/SecuritySettings';
 import ModerationDashboard from './ModerationDashboard';
+import OnboardingTour from '../components/OnboardingTour';
+import AchievementCelebration from '../components/AchievementCelebration';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function Dashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState('feed');
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [posts, setPosts] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -45,6 +48,21 @@ export default function Dashboard() {
       navigate('/login');
     }
   }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (user && !user.has_seen_onboarding) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
+
+  const pendingAchievements = (user && user.pending_achievements) || [];
+  const currentAchievement = !showOnboarding && pendingAchievements.length > 0
+    ? pendingAchievements[0]
+    : null;
+
+  const handleAckAchievement = (key) => {
+    updateUser({ pending_achievements: pendingAchievements.filter(k => k !== key) });
+  };
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -303,6 +321,23 @@ export default function Dashboard() {
           onTradeCreated={() => {
             fetchTradeDealsCount();
           }}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingTour
+          onComplete={() => {
+            setShowOnboarding(false);
+            updateUser({ has_seen_onboarding: true });
+          }}
+        />
+      )}
+
+      {currentAchievement && (
+        <AchievementCelebration
+          key={currentAchievement}
+          achievementKey={currentAchievement}
+          onAck={handleAckAchievement}
         />
       )}
     </div>

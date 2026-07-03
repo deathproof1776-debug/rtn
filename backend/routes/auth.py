@@ -57,6 +57,8 @@ def _user_response_payload(user: dict) -> dict:
         "is_trusted_trader": user.get("is_trusted_trader", False),
         "two_factor_enabled": bool(user.get("two_factor_enabled", False)),
         "role": user.get("role", "user"),
+        "has_seen_onboarding": bool(user.get("has_seen_onboarding", False)),
+        "pending_achievements": user.get("pending_achievements", []),
     }
 
 
@@ -230,6 +232,8 @@ async def get_me(request: Request):
     if "_id" in user:
         user["id"] = user.pop("_id")
     user["two_factor_enabled"] = bool(user.get("two_factor_enabled", False))
+    user["has_seen_onboarding"] = bool(user.get("has_seen_onboarding", False))
+    user["pending_achievements"] = user.get("pending_achievements", [])
     user.pop("totp_secret", None)
     return user
 

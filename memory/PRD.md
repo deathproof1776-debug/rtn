@@ -1,5 +1,15 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (Jul 3, 2026) — Onboarding Tour + Achievement Celebrations (P1 engagement)
+- **New-user onboarding tour** (`OnboardingTour.js`): one-time 4-step feature explainer (Welcome → Barter Feed/Matches → Trade Network/Deals → Community/Messages/Safety), shown once and gated by `users.has_seen_onboarding`. `POST /api/onboarding/complete` marks it seen. Skippable.
+- **Achievement celebration + explainer** (`AchievementCelebration.js`): one-time modal + push notification when a user earns a badge/role. Keys: `verified`, `trusted_trader`, `moderator`. Each modal explains what the badge/role unlocks (perks list).
+- **Backend** `achievements.py`: `ACHIEVEMENTS` config + `grant_achievement(user_id, key)` → `$addToSet` into `users.pending_achievements` + fires `send_push_notification`. Granted only on TRUE transitions (won't retro-fire for already-verified/trusted users):
+  - `admin.py verify_trader` → grants `verified`
+  - `admin.py update_user_role` → grants `moderator`
+  - `trades.py check_and_award_trusted_trader` → grants `trusted_trader` (now transition-guarded)
+- `routes/engagement.py`: `POST /api/onboarding/complete`, `POST /api/achievements/ack` ({key}). `/api/auth/me` + login payload now return `has_seen_onboarding` + `pending_achievements`.
+- Wired into `Dashboard.js`: tour shows first for new users; achievement celebrations queue after (one at a time, acked to clear). Tested E2E (curl + screenshot): tour steps, moderator celebration, ack persistence all pass.
+
 ## Latest Updates (Jul 3, 2026) — Moderator Role Tier (P1) + P0 Security Hardening
 
 ### P0 Security Hardening (DONE, tested)

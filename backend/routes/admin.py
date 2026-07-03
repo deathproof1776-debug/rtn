@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from database import db, safe_decrypt
 from auth import require_admin
 from models import VerifyTraderRequest, UpdateUserRole
+from achievements import grant_achievement
 
 router = APIRouter(prefix="/admin")
 
@@ -40,6 +41,9 @@ async def verify_trader(data: VerifyTraderRequest, admin: dict = Depends(require
         {"_id": ObjectId(data.user_id)},
         {"$set": {"is_verified": data.is_verified}}
     )
+    # Celebrate a newly-granted verification (only on transition to verified)
+    if data.is_verified and not target.get("is_verified"):
+        await grant_achievement(data.user_id, "verified")
     await log_admin_action(
         admin, "verified" if data.is_verified else "unverified", "user",
         data.user_id, target.get("name", "Unknown"),
@@ -132,6 +136,9 @@ async def update_user_role(user_id: str, data: UpdateUserRole,
             detail="Only verified traders can be promoted to moderator. Verify this user first."
         )
     await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": data.role}})
+    # Celebrate a newly-granted moderator role (only on transition)
+    if data.role == "moderator" and target.get("role") != "moderator":
+        await grant_achievement(user_id, "moderator")
     await log_admin_action(
         admin, "role_changed", "user", user_id, target.get("name", "Unknown"),
         f"Role changed from {target.get('role', 'user')} to {data.role}"
