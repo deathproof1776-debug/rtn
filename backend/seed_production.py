@@ -44,7 +44,7 @@ async def seed_production():
     print("=" * 50)
     
     # Use environment variables for admin credentials
-    admin_email = os.environ.get('PROD_ADMIN_EMAIL', 'admin@rebeltrade.network')
+    admin_email = os.environ.get('PROD_ADMIN_EMAIL', 'deathproofrebel@protonmail.com')
     admin_password = os.environ.get('PROD_ADMIN_PASSWORD')
     
     if not admin_password:
@@ -74,6 +74,11 @@ async def seed_production():
         "avatar": "",
         "role": "admin",
         "is_verified": True,
+        "is_trusted_trader": False,
+        "two_factor_enabled": False,
+        "has_seen_onboarding": True,
+        "pending_achievements": [],
+        "achievements_seen": ["verified"],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
