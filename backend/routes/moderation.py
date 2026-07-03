@@ -213,7 +213,10 @@ async def list_reports(request: Request, status: str = "pending", limit: int = 1
 
 @admin_router.put("/reports/{report_id}")
 async def update_report(report_id: str, request: Request):
-    """Moderator/Admin: resolve or dismiss a report."""
+    """Moderator/Admin: resolve or dismiss a report.
+
+    Once a report is escalated, only an admin may resolve/dismiss it.
+    """
     actor = await require_moderator(request)
     data = await request.json()
     new_status = (data.get("status") or "").strip()
@@ -227,6 +230,16 @@ async def update_report(report_id: str, request: Request):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid report id")
 
+    report = await db.reports.find_one({"_id": oid})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    if report.get("escalated") and actor.get("role") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="This report has been escalated and can only be actioned by an admin."
+        )
+
     update_doc = {
         "status": new_status,
         "resolution_note": note or None,
@@ -234,9 +247,7 @@ async def update_report(report_id: str, request: Request):
         "resolved_by": actor["_id"] if new_status != "pending" else None,
         "resolved_by_name": actor.get("name") if new_status != "pending" else None,
     }
-    result = await db.reports.update_one({"_id": oid}, {"$set": update_doc})
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Report not found")
+    await db.reports.update_one({"_id": oid}, {"$set": update_doc})
     await _log_mod_action(actor, f"report_{new_status}", report_id, note)
     return {"message": "Report updated"}
 

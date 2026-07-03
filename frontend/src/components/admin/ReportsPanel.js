@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Flag, Check, X as XIcon, Eye, ArrowFatUp } from '@phosphor-icons/react';
+import { Flag, Check, X as XIcon, Eye, ArrowFatUp, Lock } from '@phosphor-icons/react';
 import { toast } from 'sonner';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -25,6 +26,8 @@ const TARGET_LABELS = {
 };
 
 export default function ReportsPanel({ onViewProfile }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [filter, setFilter] = useState('pending');
   const [reports, setReports] = useState([]);
   const [stats, setStats] = useState({ pending: 0, resolved: 0, dismissed: 0, escalated: 0 });
@@ -159,22 +162,34 @@ export default function ReportsPanel({ onViewProfile }) {
                 )}
                 {r.status === 'pending' && (
                   <>
-                    <button
-                      onClick={() => updateReport(r._id, 'resolved')}
-                      className="px-2 py-1 text-[10px] font-medium bg-green-700 hover:bg-green-800 text-white flex items-center gap-1"
-                      data-testid={`report-resolve-${r._id}`}
-                    >
-                      <Check size={11} />
-                      Resolve
-                    </button>
-                    <button
-                      onClick={() => updateReport(r._id, 'dismissed')}
-                      className="px-2 py-1 text-[10px] font-medium bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-1"
-                      data-testid={`report-dismiss-${r._id}`}
-                    >
-                      <XIcon size={11} />
-                      Dismiss
-                    </button>
+                    {(!r.escalated || isAdmin) ? (
+                      <>
+                        <button
+                          onClick={() => updateReport(r._id, 'resolved')}
+                          className="px-2 py-1 text-[10px] font-medium bg-green-700 hover:bg-green-800 text-white flex items-center gap-1"
+                          data-testid={`report-resolve-${r._id}`}
+                        >
+                          <Check size={11} />
+                          Resolve
+                        </button>
+                        <button
+                          onClick={() => updateReport(r._id, 'dismissed')}
+                          className="px-2 py-1 text-[10px] font-medium bg-gray-600 hover:bg-gray-700 text-white flex items-center gap-1"
+                          data-testid={`report-dismiss-${r._id}`}
+                        >
+                          <XIcon size={11} />
+                          Dismiss
+                        </button>
+                      </>
+                    ) : (
+                      <span
+                        className="px-2 py-1 text-[10px] font-medium bg-amber-900/30 text-amber-400 flex items-center gap-1 rounded"
+                        data-testid={`report-admin-only-${r._id}`}
+                      >
+                        <Lock size={11} />
+                        Awaiting admin
+                      </span>
+                    )}
                     {!r.escalated && (
                       <button
                         onClick={() => escalateReport(r._id)}
