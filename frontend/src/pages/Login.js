@@ -41,7 +41,11 @@ export default function Login() {
         navigate('/');
       }
     } catch (err) {
-      setError(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+      if (err.response) {
+        setError(formatApiErrorDetail(err.response.data?.detail) || 'Login failed. Please try again.');
+      } else {
+        setError("Couldn't reach the server. It may still be starting up after a deployment — please wait a moment and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -59,7 +63,11 @@ export default function Login() {
       );
       navigate('/');
     } catch (err) {
-      setError(formatApiErrorDetail(err.response?.data?.detail) || err.message);
+      if (err.response) {
+        setError(formatApiErrorDetail(err.response.data?.detail) || 'Verification failed. Please try again.');
+      } else {
+        setError("Couldn't reach the server. It may still be starting up after a deployment — please wait a moment and try again.");
+      }
     } finally {
       setLoading(false);
     }

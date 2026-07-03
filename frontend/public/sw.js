@@ -1,5 +1,5 @@
 // Rebel Trade Network - Enhanced Service Worker for PWA
-const CACHE_NAME = 'rebel-trade-v2';
+const CACHE_NAME = 'rebel-trade-v3';
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache on install

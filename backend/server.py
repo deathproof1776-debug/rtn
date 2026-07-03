@@ -57,17 +57,25 @@ async def api_websocket_endpoint(websocket: WebSocket, user_id: str):
 
 cors_origins = os.environ.get("CORS_ORIGINS", "*")
 if cors_origins == "*":
-    allow_origins_list = ["*"]
+    # Credentialed (cookie) auth is NOT allowed with a literal "*" origin per the
+    # CORS spec — browsers block the response. Reflect the request origin instead
+    # so cross-origin cookie auth works for any deployment domain.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origin_regex=".*",
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 else:
     allow_origins_list = [origin.strip() for origin in cors_origins.split(",")]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=allow_origins_list,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=allow_origins_list,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 # ========================
