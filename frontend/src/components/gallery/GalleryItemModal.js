@@ -1,16 +1,31 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
-import { Heart, X } from '@phosphor-icons/react';
+import { Heart, X, Trash } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import ThreadedComments from '../ThreadedComments';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId }) {
+export default function GalleryItemModal({ item, onClose, onLike, onComment, currentUserId, canDelete, onDelete }) {
   const [comments, setComments] = useState(item.comments || []);
   const [isLiked, setIsLiked] = useState(item.is_liked);
   const [likeCount, setLikeCount] = useState(item.like_count);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const videoRef = useRef(null);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await axios.delete(`${API_URL}/api/gallery/${item.id}`, { withCredentials: true });
+      toast.success('Gallery item deleted');
+      onDelete?.(item.id);
+      onClose();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to delete item');
+      setDeleting(false);
+    }
+  };
 
   const handleLike = async () => {
     try {
@@ -61,10 +76,46 @@ export default function GalleryItemModal({ item, onClose, onLike, onComment, cur
             </div>
             <span className="font-medium text-[var(--text-primary)]">{item.user_name}</span>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-surface-hover)] rounded-full">
-            <X size={24} className="text-[var(--text-secondary)]" />
-          </button>
+          <div className="flex items-center gap-1">
+            {canDelete && (
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                className="p-2 hover:bg-red-500/10 rounded-full"
+                title="Delete"
+                data-testid="gallery-delete-btn"
+              >
+                <Trash size={22} className="text-red-400" />
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 hover:bg-[var(--bg-surface-hover)] rounded-full">
+              <X size={24} className="text-[var(--text-secondary)]" />
+            </button>
+          </div>
         </div>
+
+        {confirmingDelete && (
+          <div className="p-3 bg-red-500/10 border-b border-red-500/30 flex items-center justify-between gap-3 shrink-0">
+            <span className="text-sm text-[var(--text-primary)]">Delete this item permanently?</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                disabled={deleting}
+                className="px-3 py-1.5 text-xs border border-[var(--border-color)] text-[var(--text-secondary)] rounded hover:bg-[var(--bg-surface-hover)]"
+                data-testid="gallery-delete-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded disabled:opacity-60"
+                data-testid="gallery-delete-confirm"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">

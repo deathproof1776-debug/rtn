@@ -161,6 +161,15 @@ export default function Gallery({ userId, isOwnProfile = false, onBack }) {
             ));
           }}
           currentUserId={currentUser?.id}
+          canDelete={
+            selectedItem.user_id === currentUser?.id ||
+            currentUser?.role === 'admin' ||
+            currentUser?.role === 'moderator'
+          }
+          onDelete={(itemId) => {
+            setItems(items.filter((item) => item.id !== itemId));
+            setSelectedItem(null);
+          }}
         />
       )}
 
