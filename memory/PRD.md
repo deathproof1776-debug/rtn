@@ -1,5 +1,22 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (Jul 3, 2026) — Moderator Role Tier (P1) + P0 Security Hardening
+
+### P0 Security Hardening (DONE, tested)
+- **Per-user write rate-limits** via slowapi `user_rate_limit_key` (keyed by JWT `sub`, falls back to IP): posts 20/min, likes 60/min, comments 30/min, community 10/min, gallery upload 10/min, messages 60/min, report 10/hr, network request 20/hr. Verified 429 fires after limit.
+- **Removed `ENCRYPTION_KEY` fallback** in `database.py` → now `os.environ["ENCRYPTION_KEY"]` (fails loud). Key present in `.env`.
+- **Auth cookies audit**: HttpOnly ✅ + Secure ✅ confirmed. SameSite kept at `None` (REQUIRED for cross-origin preview/prod; Strict would break login — user approved).
+
+### Moderator Role Tier (Hybrid, DONE, tested)
+- New `moderator` role. `auth.py`: `is_staff()` helper + `require_moderator` dependency (moderator OR admin).
+- **Hybrid assignment**: admin promotes users via `PUT /api/admin/users/{id}/role` (now accepts `moderator`). Eligibility rule: only `is_verified` users can be promoted to moderator (400 otherwise).
+- **Moderator abilities**: view/resolve/dismiss reports, **escalate to admin** (`PUT /api/admin/reports/{id}/escalate`), delete flagged posts/comments/community posts/gallery items (via `is_staff` checks in delete routes + `isAdmin` prop extended to moderators in Feed/CommunityBoard).
+- **Moderator CANNOT**: verify users, change roles, send system announcements, block/ban (all admin-only, enforced via `require_admin`).
+- Report docs gained `escalated`, `escalated_by`, `escalated_by_name`, `escalated_at`, `resolved_by_name`. Report list supports `status=escalated` filter; stats include `escalated` count.
+- Moderator actions logged to `audit_log`.
+- **Frontend**: `ModerationDashboard.js` page (moderator-only, reuses `ReportsPanel`); Sidebar shows "Moderation" for moderators, "Admin Dashboard" for admins. `QuickUserRow` gets "Make/Remove Moderator" action (disabled unless verified) + moderator badge. `ReportsPanel` gets Escalate button + Escalated badge + Escalated filter tab. `StatsBar` gains Trusted + Moderators cards.
+- Test accounts: mod@homesteadhub.com / Modpass123!, verified@homesteadhub.com / Verified123! (see test_credentials.md).
+
 ## Latest Updates (Feb 10, 2026) — User Blocking & Reporting (P1 Task 2)
 - **Feature**: Mutual user blocking — if A blocks B, neither sees the other's posts, comments, community posts, messages, or network suggestions. `POST/DELETE /api/moderation/block/{user_id}`, `GET /api/moderation/blocks`, `GET /api/moderation/blocks/check/{user_id}`.
 - **Feature**: Content reporting with admin queue — `POST /api/moderation/report` (target_type: user/post/comment/community_post/gallery_item; 8 reasons: spam, harassment, hate_speech, nsfw, scam, impersonation, violence, other). Duplicate pending reports deduped.

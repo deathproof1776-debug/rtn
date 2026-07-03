@@ -12,6 +12,7 @@ from models import BarterPost, CommentCreate, normalize_items, get_item_names
 from notifications import send_push_notification
 from moderation_utils import get_blocked_user_ids
 from security import limiter, user_rate_limit_key
+from auth import is_staff
 
 router = APIRouter()
 
@@ -424,7 +425,7 @@ async def delete_comment(post_id: str, comment_id: str, request: Request):
     if not comment_to_delete:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    if comment_to_delete["user_id"] != user["_id"] and post["user_id"] != user["_id"]:
+    if comment_to_delete["user_id"] != user["_id"] and post["user_id"] != user["_id"] and not is_staff(user):
         raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
 
     await db.posts.update_one(
@@ -523,11 +524,10 @@ async def delete_post(post_id: str, request: Request):
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
-    # Check authorization - user can delete their own post, admin can delete any
+    # Check authorization - user can delete their own post, staff (mod/admin) can delete any
     is_owner = post.get("user_id") == user["_id"]
-    is_admin = user.get("role") == "admin"
-    
-    if not is_owner and not is_admin:
+
+    if not is_owner and not is_staff(user):
         raise HTTPException(status_code=403, detail="Not authorized to delete this post")
     
     # Delete the post

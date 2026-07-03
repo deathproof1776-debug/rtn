@@ -30,6 +30,7 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: ShieldCheck },
     ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Dashboard', icon: Shield }] : []),
+    ...(user?.role === 'moderator' ? [{ id: 'moderation', label: 'Moderation', icon: Shield }] : []),
   ];
 
   const handleLogout = async () => {

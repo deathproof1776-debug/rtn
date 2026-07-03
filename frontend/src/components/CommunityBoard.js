@@ -202,7 +202,7 @@ export default function CommunityBoard({ onViewProfile }) {
               currentUserId={user?.id}
               onViewProfile={onViewProfile}
               onDelete={handleDelete}
-              isAdmin={user?.role === 'admin'}
+              isAdmin={user?.role === 'admin' || user?.role === 'moderator'}
             />
           ))}
         </div>

@@ -11,6 +11,7 @@ import CommunityPanel from '../components/admin/CommunityPanel';
 import ActivityLogPanel from '../components/admin/ActivityLogPanel';
 import ConfirmDialog from '../components/admin/ConfirmDialog';
 import ReportsPanel from '../components/admin/ReportsPanel';
+import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -63,8 +64,13 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
   };
 
   const handleChangeRole = async (userId, role) => {
-    await axios.put(`${API_URL}/api/admin/users/${userId}/role`, { role }, { withCredentials: true });
-    setUsers(users.map(u => u._id === userId ? { ...u, role } : u));
+    try {
+      await axios.put(`${API_URL}/api/admin/users/${userId}/role`, { role }, { withCredentials: true });
+      setUsers(users.map(u => u._id === userId ? { ...u, role } : u));
+      toast.success(`Role updated to ${role}`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update role');
+    }
   };
 
   const handleDelete = (id, label, type) => {

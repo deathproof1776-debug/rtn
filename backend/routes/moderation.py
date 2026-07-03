@@ -6,7 +6,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 
 from database import db
-from auth import get_current_user, require_admin
+from auth import get_current_user, require_moderator
 from moderation_utils import get_blocked_user_ids
 from security import limiter, user_rate_limit_key
 
@@ -155,21 +155,39 @@ async def submit_report(request: Request):
     return {"message": "Report submitted"}
 
 
-# ----------------------- Admin -----------------------
+# ----------------------- Admin / Moderator -----------------------
 
 admin_router = APIRouter(prefix="/admin")
 
 
+async def _log_mod_action(actor: dict, action: str, report_id: str, note: str = ""):
+    await db.audit_log.insert_one({
+        "admin_id": actor["_id"],
+        "admin_name": actor.get("name", "Staff"),
+        "action": action,
+        "target_type": "report",
+        "target_id": report_id,
+        "target_name": f"report {report_id}",
+        "details": note,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 @admin_router.get("/reports")
 async def list_reports(request: Request, status: str = "pending", limit: int = 100):
-    """Admin: list reports filtered by status."""
-    await require_admin(request)
+    """Moderator/Admin: list reports filtered by status."""
+    await require_moderator(request)
 
-    valid_status = {"pending", "resolved", "dismissed", "all"}
+    valid_status = {"pending", "resolved", "dismissed", "escalated", "all"}
     if status not in valid_status:
         raise HTTPException(status_code=400, detail="Invalid status filter")
 
-    query = {} if status == "all" else {"status": status}
+    if status == "all":
+        query = {}
+    elif status == "escalated":
+        query = {"escalated": True}
+    else:
+        query = {"status": status}
     cursor = db.reports.find(query).sort("created_at", -1).limit(limit)
 
     reports = []
@@ -183,8 +201,11 @@ async def list_reports(request: Request, status: str = "pending", limit: int = 1
             "reason": r.get("reason"),
             "details": r.get("details", ""),
             "status": r.get("status"),
+            "escalated": bool(r.get("escalated", False)),
+            "escalated_by_name": r.get("escalated_by_name"),
             "created_at": r.get("created_at"),
             "resolved_at": r.get("resolved_at"),
+            "resolved_by_name": r.get("resolved_by_name"),
             "resolution_note": r.get("resolution_note")
         })
     return {"reports": reports}
@@ -192,8 +213,8 @@ async def list_reports(request: Request, status: str = "pending", limit: int = 1
 
 @admin_router.put("/reports/{report_id}")
 async def update_report(report_id: str, request: Request):
-    """Admin: resolve or dismiss a report."""
-    admin = await require_admin(request)
+    """Moderator/Admin: resolve or dismiss a report."""
+    actor = await require_moderator(request)
     data = await request.json()
     new_status = (data.get("status") or "").strip()
     note = (data.get("resolution_note") or "").strip()[:500]
@@ -210,19 +231,46 @@ async def update_report(report_id: str, request: Request):
         "status": new_status,
         "resolution_note": note or None,
         "resolved_at": datetime.now(timezone.utc).isoformat() if new_status != "pending" else None,
-        "resolved_by": admin["_id"] if new_status != "pending" else None
+        "resolved_by": actor["_id"] if new_status != "pending" else None,
+        "resolved_by_name": actor.get("name") if new_status != "pending" else None,
     }
     result = await db.reports.update_one({"_id": oid}, {"$set": update_doc})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Report not found")
+    await _log_mod_action(actor, f"report_{new_status}", report_id, note)
     return {"message": "Report updated"}
+
+
+@admin_router.put("/reports/{report_id}/escalate")
+async def escalate_report(report_id: str, request: Request):
+    """Moderator/Admin: escalate a report to admin attention."""
+    actor = await require_moderator(request)
+    try:
+        oid = ObjectId(report_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid report id")
+
+    result = await db.reports.update_one(
+        {"_id": oid},
+        {"$set": {
+            "escalated": True,
+            "escalated_by": actor["_id"],
+            "escalated_by_name": actor.get("name", "Moderator"),
+            "escalated_at": datetime.now(timezone.utc).isoformat(),
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+    await _log_mod_action(actor, "report_escalated", report_id)
+    return {"message": "Report escalated to admin"}
 
 
 @admin_router.get("/reports/stats")
 async def report_stats(request: Request):
-    """Admin: count of pending/resolved/dismissed reports for dashboard badge."""
-    await require_admin(request)
+    """Moderator/Admin: report counts for dashboard badges."""
+    await require_moderator(request)
     pending = await db.reports.count_documents({"status": "pending"})
     resolved = await db.reports.count_documents({"status": "resolved"})
     dismissed = await db.reports.count_documents({"status": "dismissed"})
-    return {"pending": pending, "resolved": resolved, "dismissed": dismissed}
+    escalated = await db.reports.count_documents({"escalated": True, "status": "pending"})
+    return {"pending": pending, "resolved": resolved, "dismissed": dismissed, "escalated": escalated}

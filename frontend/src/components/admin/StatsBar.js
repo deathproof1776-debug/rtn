@@ -1,4 +1,4 @@
-import { Users, SealCheck, Article, ChatCircle, Handshake, Envelope } from '@phosphor-icons/react';
+import { Users, SealCheck, Article, ChatCircle, Handshake, Envelope, Medal, ShieldStar } from '@phosphor-icons/react';
 import StatCard from './StatCard';
 
 export default function StatsBar({ stats }) {
@@ -12,6 +12,8 @@ export default function StatsBar({ stats }) {
         color="var(--brand-primary)"
       />
       <StatCard icon={SealCheck} label="Verified" value={stats?.verified_users || 0} color="var(--brand-accent)" />
+      <StatCard icon={Medal} label="Trusted" value={stats?.trusted_users || 0} color="#4D7C0F" />
+      <StatCard icon={ShieldStar} label="Moderators" value={stats?.moderator_users || 0} color="#0369A1" />
       <StatCard icon={Article} label="Posts" value={stats?.total_posts || 0} color="#0369A1" />
       <StatCard icon={ChatCircle} label="Messages" value={stats?.total_messages || 0} color="#7C3AED" />
       <StatCard icon={Handshake} label="Connections" value={stats?.total_connections || 0} color="#DC2626" />

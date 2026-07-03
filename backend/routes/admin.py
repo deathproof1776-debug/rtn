@@ -78,6 +78,8 @@ async def get_admin_stats(_: dict = Depends(require_admin)):
     return {
         "total_users": await db.users.count_documents({}),
         "verified_users": await db.users.count_documents({"is_verified": True}),
+        "trusted_users": await db.users.count_documents({"is_trusted_trader": True}),
+        "moderator_users": await db.users.count_documents({"role": "moderator"}),
         "total_posts": await db.posts.count_documents({}),
         "total_messages": await db.messages.count_documents({}),
         "total_connections": await db.network_connections.count_documents({}),
@@ -118,11 +120,17 @@ async def admin_delete_post(post_id: str, admin: dict = Depends(require_admin)):
 @router.put("/users/{user_id}/role")
 async def update_user_role(user_id: str, data: UpdateUserRole,
                            admin: dict = Depends(require_admin)):
-    if data.role not in ["admin", "user"]:
+    if data.role not in ["admin", "moderator", "user"]:
         raise HTTPException(status_code=400, detail="Invalid role")
     target = await db.users.find_one({"_id": ObjectId(user_id)})
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
+    # Hybrid rule: only verified traders are eligible to be moderators
+    if data.role == "moderator" and not target.get("is_verified"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only verified traders can be promoted to moderator. Verify this user first."
+        )
     await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": data.role}})
     await log_admin_action(
         admin, "role_changed", "user", user_id, target.get("name", "Unknown"),

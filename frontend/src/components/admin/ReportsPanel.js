@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Flag, Check, X as XIcon, Eye } from '@phosphor-icons/react';
+import { Flag, Check, X as XIcon, Eye, ArrowFatUp } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -27,7 +27,7 @@ const TARGET_LABELS = {
 export default function ReportsPanel({ onViewProfile }) {
   const [filter, setFilter] = useState('pending');
   const [reports, setReports] = useState([]);
-  const [stats, setStats] = useState({ pending: 0, resolved: 0, dismissed: 0 });
+  const [stats, setStats] = useState({ pending: 0, resolved: 0, dismissed: 0, escalated: 0 });
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
@@ -38,7 +38,7 @@ export default function ReportsPanel({ onViewProfile }) {
         axios.get(`${API_URL}/api/admin/reports/stats`, { withCredentials: true })
       ]);
       setReports(list.data?.reports || []);
-      setStats(s.data || { pending: 0, resolved: 0, dismissed: 0 });
+      setStats(s.data || { pending: 0, resolved: 0, dismissed: 0, escalated: 0 });
     } catch (err) {
       console.error('Failed to load reports', err);
     } finally {
@@ -62,13 +62,27 @@ export default function ReportsPanel({ onViewProfile }) {
     }
   };
 
+  const escalateReport = async (id) => {
+    try {
+      await axios.put(
+        `${API_URL}/api/admin/reports/${id}/escalate`,
+        {},
+        { withCredentials: true }
+      );
+      toast.success('Report escalated to admin');
+      fetchAll();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to escalate');
+    }
+  };
+
   return (
     <div className="bg-[var(--bg-surface)] border border-[var(--border-color)]" data-testid="admin-reports-panel">
       <div className="px-3 py-2 border-b border-[var(--border-color)] flex items-center gap-2 flex-wrap">
         <Flag size={16} className="text-red-400" />
         <span className="text-sm font-medium text-[var(--text-primary)]">Moderation Reports</span>
         <div className="ml-auto flex items-center gap-1">
-          {['pending', 'resolved', 'dismissed', 'all'].map(s => (
+          {['pending', 'escalated', 'resolved', 'dismissed', 'all'].map(s => (
             <button
               key={s}
               onClick={() => setFilter(s)}
@@ -108,6 +122,11 @@ export default function ReportsPanel({ onViewProfile }) {
                 <span className="px-1.5 py-0.5 text-[9px] font-medium uppercase bg-[var(--bg-surface-hover)] text-[var(--text-muted)] rounded">
                   {TARGET_LABELS[r.target_type] || r.target_type}
                 </span>
+                {r.escalated && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase bg-amber-900/40 text-amber-400 rounded" data-testid={`report-escalated-${r._id}`}>
+                    ⬆ Escalated{r.escalated_by_name ? ` by ${r.escalated_by_name}` : ''}
+                  </span>
+                )}
                 <span className="text-[10px] text-[var(--text-muted)] ml-auto">
                   {new Date(r.created_at).toLocaleString()}
                 </span>
@@ -156,6 +175,16 @@ export default function ReportsPanel({ onViewProfile }) {
                       <XIcon size={11} />
                       Dismiss
                     </button>
+                    {!r.escalated && (
+                      <button
+                        onClick={() => escalateReport(r._id)}
+                        className="px-2 py-1 text-[10px] font-medium bg-amber-700 hover:bg-amber-800 text-white flex items-center gap-1"
+                        data-testid={`report-escalate-${r._id}`}
+                      >
+                        <ArrowFatUp size={11} />
+                        Escalate
+                      </button>
+                    )}
                   </>
                 )}
                 {r.status !== 'pending' && (

@@ -19,6 +19,7 @@ import CreateTradeModal from '../components/CreateTradeModal';
 import Gallery from '../components/Gallery';
 import CommunityBoard from '../components/CommunityBoard';
 import SecuritySettings from '../components/SecuritySettings';
+import ModerationDashboard from './ModerationDashboard';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -252,6 +253,12 @@ export default function Dashboard() {
         {activeView === 'admin' && user?.role === 'admin' && (
           <AdminDashboard 
             onBack={() => setActiveView('feed')} 
+            onViewProfile={handleViewProfile}
+          />
+        )}
+        {activeView === 'moderation' && user?.role === 'moderator' && (
+          <ModerationDashboard
+            onBack={() => setActiveView('feed')}
             onViewProfile={handleViewProfile}
           />
         )}

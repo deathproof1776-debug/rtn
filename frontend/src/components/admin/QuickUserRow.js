@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SealCheck, Crown, CaretDown, Eye, Trash } from '@phosphor-icons/react';
+import { SealCheck, Crown, CaretDown, Eye, Trash, ShieldStar } from '@phosphor-icons/react';
 
 export default function QuickUserRow({ user, onVerify, onChangeRole, onDelete, onViewProfile, currentUserId }) {
   const [showActions, setShowActions] = useState(false);
@@ -15,6 +15,7 @@ export default function QuickUserRow({ user, onVerify, onChangeRole, onDelete, o
           <span className="font-medium text-[var(--text-primary)] truncate">{user.name}</span>
           {user.is_verified && <SealCheck size={12} className="text-[var(--brand-primary)]" weight="fill" />}
           {user.role === 'admin' && <Crown size={12} className="text-[var(--brand-accent)]" />}
+          {user.role === 'moderator' && <ShieldStar size={12} className="text-[#0369A1]" weight="fill" />}
         </div>
         <p className="text-[10px] text-[var(--text-muted)] truncate">{user.email}</p>
       </div>
@@ -22,6 +23,7 @@ export default function QuickUserRow({ user, onVerify, onChangeRole, onDelete, o
         <button
           onClick={() => setShowActions(!showActions)}
           className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          data-testid={`user-actions-${user._id}`}
         >
           <CaretDown size={14} />
         </button>
@@ -43,11 +45,22 @@ export default function QuickUserRow({ user, onVerify, onChangeRole, onDelete, o
               </button>
               {!isSelf && (
                 <>
+                  {user.role !== 'admin' && (
+                    <button
+                      onClick={() => { onChangeRole(user._id, user.role === 'moderator' ? 'user' : 'moderator'); setShowActions(false); }}
+                      disabled={!user.is_verified && user.role !== 'moderator'}
+                      title={(!user.is_verified && user.role !== 'moderator') ? 'Only verified traders can be moderators' : ''}
+                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed"
+                      data-testid={`toggle-moderator-${user._id}`}
+                    >
+                      <ShieldStar size={14} /> {user.role === 'moderator' ? 'Remove Moderator' : 'Make Moderator'}
+                    </button>
+                  )}
                   <button
                     onClick={() => { onChangeRole(user._id, user.role === 'admin' ? 'user' : 'admin'); setShowActions(false); }}
                     className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)]"
                   >
-                    <Crown size={14} /> {user.role === 'admin' ? 'Demote' : 'Promote'}
+                    <Crown size={14} /> {user.role === 'admin' ? 'Demote' : 'Promote to Admin'}
                   </button>
                   <button
                     onClick={() => { onDelete(user._id, user.name); setShowActions(false); }}

@@ -82,3 +82,16 @@ async def require_admin(request: Request) -> dict:
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
+
+
+def is_staff(user: dict) -> bool:
+    """True if the user is a moderator or admin (has moderation privileges)."""
+    return user.get("role") in ("moderator", "admin")
+
+
+async def require_moderator(request: Request) -> dict:
+    """Dependency: require a moderator OR admin (moderation queue access)."""
+    user = await get_current_user(request)
+    if not is_staff(user):
+        raise HTTPException(status_code=403, detail="Moderator access required")
+    return user

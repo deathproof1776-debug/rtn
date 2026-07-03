@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import uuid
 
 from database import db, encrypt_data, decrypt_data
-from auth import get_current_user
+from auth import get_current_user, is_staff
 from models import GalleryCommentCreate
 from notifications import send_push_notification
 from storage import put_object, generate_storage_path, validate_file, get_content_type, is_video
@@ -263,7 +263,7 @@ async def delete_gallery_item(item_id: str, request: Request):
     if not item:
         raise HTTPException(status_code=404, detail="Gallery item not found")
 
-    if item["user_id"] != user["_id"]:
+    if item["user_id"] != user["_id"] and not is_staff(user):
         raise HTTPException(status_code=403, detail="Not authorized")
 
     await db.gallery.update_one(

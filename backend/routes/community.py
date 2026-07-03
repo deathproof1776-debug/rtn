@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from database import db, encrypt_data, safe_decrypt
-from auth import get_current_user
+from auth import get_current_user, is_staff
 from location import locations_match
 from notifications import send_push_notification
 from moderation_utils import get_blocked_user_ids
@@ -347,8 +347,8 @@ async def delete_community_post(post_id: str, request: Request):
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
-    # Only post owner or admin can delete
-    if post["user_id"] != user["_id"] and user.get("role") != "admin":
+    # Only post owner, moderator, or admin can delete
+    if post["user_id"] != user["_id"] and not is_staff(user):
         raise HTTPException(status_code=403, detail="Not authorized")
     
     await db.community_posts.update_one(
@@ -377,10 +377,10 @@ async def delete_community_comment(post_id: str, comment_id: str, request: Reque
     if not comment_to_delete:
         raise HTTPException(status_code=404, detail="Comment not found")
     
-    # Only comment owner, post owner, or admin can delete
+    # Only comment owner, post owner, moderator, or admin can delete
     if (comment_to_delete["user_id"] != user["_id"] and 
         post["user_id"] != user["_id"] and 
-        user.get("role") != "admin"):
+        not is_staff(user)):
         raise HTTPException(status_code=403, detail="Not authorized")
     
     await db.community_posts.update_one(

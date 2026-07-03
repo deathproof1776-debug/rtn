@@ -300,7 +300,7 @@ export default function Feed({
               onDelete={handleDelete}
               onEdit={onEditPost}
               currentUserId={user?.id} 
-              isAdmin={user?.role === 'admin'}
+              isAdmin={user?.role === 'admin' || user?.role === 'moderator'}
               onViewProfile={onViewProfile} 
               onProposeTrade={onProposeTrade} 
               onStartChat={onStartChat} 
