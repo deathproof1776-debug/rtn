@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend hybrid-auth regression verification PASSED end-to-end on the production preview using mobile viewport (390x844). Login stores rtn_access_token/rtn_refresh_token in localStorage, /api/auth/me works with Bearer-only (credentials omit), profile bio+location edit persists after reload, gallery loads (empty then populated), image upload via both /api/upload (avatar) and /api/gallery/upload works with no 'Not authenticated' error, and session persists after page refresh with no infinite refresh/reload loop.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_results": {
+    "login_success_admin": "PASS - deathproofrebel@protonmail.com/Peaches1776@ -> 200, redirected to /",
+    "tokens_in_localStorage": "PASS - rtn_access_token (225 chars JWT) and rtn_refresh_token both present",
+    "bearer_only_me": "PASS - fetch /api/auth/me with Authorization: Bearer and credentials:'omit' returned 200 (no cookie needed)",
+    "profile_edit_save": "PASS - PUT /api/profile 200; bio and location persisted after full page reload (verified via re-read of inputs)",
+    "gallery_loads": "PASS - GET /api/gallery/user/{id} 200; empty-state 'Your gallery is empty' shown, no 'Not authenticated' error",
+    "avatar_upload": "PASS - POST /api/upload 200; new avatar visible; served via /api/files/... 200",
+    "gallery_upload": "PASS - POST /api/gallery/upload 200; new item appears (count 1); image renders in gallery",
+    "session_persists_on_refresh": "PASS - after reload token still in localStorage, still on /, only two /auth/me calls (no loop)",
+    "no_refresh_loop": "PASS - navigation counts stayed low across full flow",
+    "no_not_authenticated_errors": "PASS - body.innerText never contained 'Not authenticated' after any action"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AuthContext response interceptor correctly skips retry for /api/auth/login and /api/auth/refresh, and posts refresh_token via body — matches backend that now accepts refresh_token from body OR cookie.",
+    "Backend login response body now returns access_token+refresh_token in addition to setting cookies — safe hybrid; mobile PWA/cross-site production will work via bearer even when 3rd-party cookies are blocked.",
+    "get_current_user accepting Authorization: Bearer as fallback is verified end-to-end (bearer-only /me returned 200 with credentials:'omit').",
+    "Minor: two <input type=\"file\"> exist on profile page simultaneously (avatar hidden input + gallery modal input). Not a bug (both use dedicated buttons), but a data-testid on each file input would improve testability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend integration only, all API responses observed 200)", "frontend": "100%"},
+  "test_credentials": "deathproofrebel@protonmail.com / Peaches1776@ (admin, only user)",
+  "seed_data_creation": "During test: uploaded 1 avatar and 1 gallery image (1x1 PNG) for admin user; profile bio updated to 'Testing hybrid auth bio <ts>' and location to 'Rebel HQ - Idaho'. Main agent may want to reset these if a clean slate is required.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Preview is same-origin so both cookie and bearer auth paths work here. To simulate the original mobile production bug (3rd-party cookie blocked), we forced credentials:'omit' on /api/auth/me and it still returned 200 via Bearer — confirming the hybrid auth wiring. Bottom nav uses data-testid='mobile-nav-profile'; gallery upload uses data-testid='gallery-upload-btn' which opens an 'Upload to Gallery' modal — the second input[type=file] on the page is inside that modal, followed by clicking the 'Share' text button."
+}

@@ -5,15 +5,87 @@ const AuthContext = createContext(null);
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const ACCESS_KEY = 'rtn_access_token';
+const REFRESH_KEY = 'rtn_refresh_token';
+
+// Always send cookies (same-origin) AND restore a stored bearer token on load,
+// so auth survives environments where cross-site cookies are blocked (mobile/PWA).
+axios.defaults.withCredentials = true;
+const savedAccess = localStorage.getItem(ACCESS_KEY);
+if (savedAccess) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${savedAccess}`;
+}
+
+function setTokens(access, refresh) {
+  if (access) {
+    localStorage.setItem(ACCESS_KEY, access);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+  }
+  if (refresh) {
+    localStorage.setItem(REFRESH_KEY, refresh);
+  }
+}
+
+function clearTokens() {
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  delete axios.defaults.headers.common['Authorization'];
+}
+
+// Auto-refresh the access token on 401 (once), using the stored refresh token.
+let isRefreshing = false;
+let refreshPromise = null;
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    const status = error.response?.status;
+    const url = original?.url || '';
+    const isAuthCall =
+      url.includes('/api/auth/login') ||
+      url.includes('/api/auth/refresh') ||
+      url.includes('/api/auth/register') ||
+      url.includes('/api/auth/logout');
+
+    if (status === 401 && original && !original._retry && !isAuthCall) {
+      const refresh = localStorage.getItem(REFRESH_KEY);
+      if (!refresh) return Promise.reject(error);
+      original._retry = true;
+      try {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = axios
+            .post(`${API_URL}/api/auth/refresh`, { refresh_token: refresh }, { withCredentials: true })
+            .then((res) => {
+              setTokens(res.data.access_token, res.data.refresh_token);
+              return res.data.access_token;
+            })
+            .finally(() => {
+              isRefreshing = false;
+            });
+        }
+        const newAccess = await refreshPromise;
+        if (newAccess) {
+          original.headers = original.headers || {};
+          original.headers['Authorization'] = `Bearer ${newAccess}`;
+        }
+        return axios(original);
+      } catch (refreshErr) {
+        clearTokens();
+        return Promise.reject(error);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/auth/me`, {
-        withCredentials: true
-      });
+      const response = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
       setUser(response.data);
     } catch (error) {
       setUser(false);
@@ -36,6 +108,7 @@ export function AuthProvider({ children }) {
     if (response.data?.two_factor_required) {
       return { twoFactorRequired: true, challengeToken: response.data.challenge_token };
     }
+    setTokens(response.data.access_token, response.data.refresh_token);
     if (response.data.id) {
       sessionStorage.setItem('ws_token', response.data.id);
     }
@@ -47,11 +120,8 @@ export function AuthProvider({ children }) {
     const body = { challenge_token: challengeToken };
     if (code) body.code = code;
     if (recoveryCode) body.recovery_code = recoveryCode;
-    const response = await axios.post(
-      `${API_URL}/api/auth/login/2fa`,
-      body,
-      { withCredentials: true }
-    );
+    const response = await axios.post(`${API_URL}/api/auth/login/2fa`, body, { withCredentials: true });
+    setTokens(response.data.access_token, response.data.refresh_token);
     if (response.data.id) {
       sessionStorage.setItem('ws_token', response.data.id);
     }
@@ -65,7 +135,7 @@ export function AuthProvider({ children }) {
       { email, password, name, location, invite_token },
       { withCredentials: true }
     );
-    // Store user ID for WebSocket auth
+    setTokens(response.data.access_token, response.data.refresh_token);
     if (response.data.id) {
       sessionStorage.setItem('ws_token', response.data.id);
     }
@@ -74,31 +144,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    } catch (_) { /* ignore */ }
+    clearTokens();
     sessionStorage.removeItem('ws_token');
     setUser(false);
   }, []);
 
   const updateUser = useCallback((userData) => {
-    setUser(prev => ({ ...prev, ...userData }));
+    setUser((prev) => ({ ...prev, ...userData }));
   }, []);
 
-  const value = useMemo(() => ({
-    user,
-    loading,
-    login,
-    loginVerify2FA,
-    register,
-    logout,
-    updateUser,
-    checkAuth
-  }), [user, loading, login, loginVerify2FA, register, logout, updateUser, checkAuth]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, loading, login, loginVerify2FA, register, logout, updateUser, checkAuth }),
+    [user, loading, login, loginVerify2FA, register, logout, updateUser, checkAuth]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

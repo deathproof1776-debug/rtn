@@ -79,6 +79,10 @@ async def _issue_session(user: dict, email: str, request: Request) -> JSONRespon
     user["pending_achievements"] = await backfill_pending_achievements(user_id, user)
     payload = _user_response_payload(user)
     payload["message"] = "Login successful"
+    # Also return tokens in the body so SPAs can use Authorization: Bearer when
+    # cross-site cookies are blocked (e.g. installed PWA / mobile browsers).
+    payload["access_token"] = access_token
+    payload["refresh_token"] = refresh_token
     response = JSONResponse(content=payload)
     _set_auth_cookies(response, access_token, refresh_token)
     return response
@@ -249,6 +253,13 @@ async def get_me(request: Request):
 async def refresh_token_endpoint(request: Request):
     token = request.cookies.get("refresh_token")
     if not token:
+        # Cookie may be blocked (cross-site/mobile) — accept refresh token in body.
+        try:
+            body = await request.json()
+            token = (body or {}).get("refresh_token")
+        except Exception:
+            token = None
+    if not token:
         raise HTTPException(status_code=401, detail="No refresh token")
     try:
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
@@ -268,7 +279,11 @@ async def refresh_token_endpoint(request: Request):
         new_refresh = create_refresh_token(str(user["_id"]), session_id=session_id)
         await rotate_refresh_token(token, new_refresh)
 
-        response = JSONResponse(content={"message": "Token refreshed"})
+        response = JSONResponse(content={
+            "message": "Token refreshed",
+            "access_token": new_access,
+            "refresh_token": new_refresh,
+        })
         _set_auth_cookies(response, new_access, new_refresh)
         return response
     except jwt.ExpiredSignatureError:
