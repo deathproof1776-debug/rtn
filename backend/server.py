@@ -111,6 +111,11 @@ async def startup():
     await db.refresh_tokens.create_index("user_id")
     await db.refresh_tokens.create_index("session_id")
     await db.recovery_codes.create_index("user_id")
+    # Moderation collections
+    await db.blocks.create_index([("blocker_id", 1), ("blocked_id", 1)], unique=True)
+    await db.blocks.create_index("blocked_id")
+    await db.reports.create_index([("status", 1), ("created_at", -1)])
+    await db.reports.create_index([("reporter_id", 1), ("target_type", 1), ("target_id", 1), ("status", 1)])
 
     # Seed admin
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")

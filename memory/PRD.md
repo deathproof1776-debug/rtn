@@ -1,6 +1,21 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (Feb 10, 2026) — Frontend Component Refactoring (P1)
+## Latest Updates (Feb 10, 2026) — User Blocking & Reporting (P1 Task 2)
+- **Feature**: Mutual user blocking — if A blocks B, neither sees the other's posts, comments, community posts, messages, or network suggestions. `POST/DELETE /api/moderation/block/{user_id}`, `GET /api/moderation/blocks`, `GET /api/moderation/blocks/check/{user_id}`.
+- **Feature**: Content reporting with admin queue — `POST /api/moderation/report` (target_type: user/post/comment/community_post/gallery_item; 8 reasons: spam, harassment, hate_speech, nsfw, scam, impersonation, violence, other). Duplicate pending reports deduped.
+- **Admin**: `GET /api/admin/reports?status=`, `PUT /api/admin/reports/{id}` (resolve/dismiss/reopen with note), `GET /api/admin/reports/stats`.
+- **New collections**: `blocks` (unique idx blocker_id+blocked_id), `reports` (compound idx on status+created_at, and reporter+target dedup idx).
+- **Frontend**:
+  - `ReportModal.js` + `BlockedUsersPanel.js` in `components/moderation/`
+  - Admin `ReportsPanel.js` (filter tabs pending/resolved/dismissed/all with counts, resolve/dismiss actions)
+  - `PostMenu` now shows Report Post + Block User for other users' posts
+  - `UserProfileView` has Report + Block buttons
+  - `SecuritySettings` gets Blocked Users section
+  - `Feed` listens to `rtn:user-blocked` DOM event → drops blocked user's posts without refresh
+- **Filtering wired into**: `/api/posts`, `/api/posts/matches`, `/api/posts/{id}/comments`, `/api/community`, `/api/conversations`, `/api/messages` (403 on blocked), `/api/network/request` (403), `/api/network/recommended`.
+- **Tests**: `/app/backend/tests/test_moderation_block_report.py` — 9/9 pytest pass. E2E frontend flows 100% pass (`iteration_27.json`).
+
+## Latest Updates (Feb 10, 2026) — Frontend Component Refactoring (P1 Task 1)
 - **Refactor**: Split large frontend components for maintainability with zero regressions (tested via `iteration_26.json`, 100% frontend pass)
   - `AdminDashboard.js`: 557 → 192 lines (−66%). Extracted into `components/admin/`: `StatsBar`, `StatCard`, `AnnouncementsSection`, `AnnouncementModal`, `UsersPanel`, `QuickUserRow`, `PostsPanel`, `CommunityPanel`, `CommunityPostRow`, `ActivityLogPanel`, `ConfirmDialog`.
   - `PostCard.js`: 451 → 329 lines (−27%). Extracted `components/post/PostMedia`, `PostActions`, `PostMenu`.
