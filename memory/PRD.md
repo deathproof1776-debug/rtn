@@ -1,5 +1,15 @@
 # Rebel Trade Network - Bartering Platform
 
+## Latest Updates (Jul 3, 2026) — Production login troubleshooting + hardening
+- **Root-cause context**: user reported "Something went wrong. Please try again." on the installed PRODUCTION PWA. That message is the login fallback shown ONLY when there is no structured error response (network/CORS/server-unreachable), NOT for wrong credentials (which returns 401 `Invalid email or password`).
+- **CORS hardening** (`server.py`): when `CORS_ORIGINS="*"`, now uses `allow_origin_regex=".*"` with `allow_credentials=True` (spec-valid for credentialed cookie auth; a literal `*` is rejected by browsers on credentialed requests). Note: the Emergent ingress also injects CORS headers; preview is same-origin so CORS isn't enforced there.
+- **PWA service worker** (`public/sw.js`): bumped `CACHE_NAME` v2→v3 so a redeploy purges stale cached assets on activate (prevents installed PWAs being trapped on old bundles).
+- **Login error UX** (`Login.js`): `handleSubmit`/`handle2FA` now branch on `err.response` — real API errors show the server detail; a missing response shows "Couldn't reach the server. It may still be starting up after a deployment — please wait a moment and try again." (clarifies connectivity vs credential failures).
+- **seed_production.py**: removed `ENCRYPTION_KEY` default fallback (matches `database.py` fail-loud behavior).
+- Verified on preview (iteration_29.json, 100%): all 3 accounts log in, wrong password → specific error, session persists on refresh. Production bug NOT reproducible in preview (same-origin); requires redeploy + production env/DB check.
+
+## Latest Updates (Jul 3, 2026) — Escalated reports admin-only + richer explainers + all-user reset
+
 ## Latest Updates (Jul 3, 2026) — Onboarding Tour + Achievement Celebrations (P1 engagement)
 - **New-user onboarding tour** (`OnboardingTour.js`): one-time 4-step feature explainer (Welcome → Barter Feed/Matches → Trade Network/Deals → Community/Messages/Safety), shown once and gated by `users.has_seen_onboarding`. `POST /api/onboarding/complete` marks it seen. Skippable.
 - **Achievement celebration + explainer** (`AchievementCelebration.js`): one-time modal + push notification when a user earns a badge/role. Keys: `verified`, `trusted_trader`, `moderator`. Each modal explains what the badge/role unlocks (perks list).
