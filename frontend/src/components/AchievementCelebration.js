@@ -104,8 +104,8 @@ export default function AchievementCelebration({ achievementKey, onAck }) {
             What this unlocks
           </p>
           <div className="bg-[var(--bg-surface-hover)] border border-[var(--border-color)] p-3 space-y-2">
-            {cfg.perks.map((perk, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+            {cfg.perks.map((perk) => (
+              <div key={perk} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
                 <span className="mt-0.5" style={{ color: cfg.color }}>✦</span>
                 <span>{perk}</span>
               </div>

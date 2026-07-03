@@ -95,8 +95,8 @@ export default function OnboardingTour({ onComplete }) {
 
           {Current.points && (
             <div className="mt-4 text-left bg-[var(--bg-surface-hover)] border border-[var(--border-color)] p-3 space-y-2">
-              {Current.points.map((pt, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+              {Current.points.map((pt) => (
+                <div key={pt} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
                   <span className="mt-0.5 text-[var(--brand-primary)] font-bold">✦</span>
                   <span>{pt}</span>
                 </div>
@@ -107,9 +107,9 @@ export default function OnboardingTour({ onComplete }) {
 
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-2 pb-5">
-          {STEPS.map((_, i) => (
+          {STEPS.map((s, i) => (
             <span
-              key={i}
+              key={s.title}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === step ? 'w-6 bg-[var(--brand-primary)]' : 'w-1.5 bg-[var(--border-color)]'
               }`}

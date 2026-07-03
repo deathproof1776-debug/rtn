@@ -171,7 +171,7 @@ export default function CreateCommunityPostModal({ topics, onClose, onPostCreate
             {media.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {media.map((item, i) => (
-                  <div key={i} className="relative">
+                  <div key={item.url} className="relative">
                     {item.isVideo ? (
                       <div className="w-20 h-20 bg-[var(--bg-surface-hover)] rounded border border-[var(--border-color)] flex items-center justify-center">
                         <Play size={24} className="text-[var(--brand-primary)]" weight="fill" />
