@@ -249,14 +249,55 @@ Social media platform for homesteaders, survivalists, and those exiting corporat
 
 ## Prioritized Backlog
 
-### P1 (High Priority)
-- User blocking/reporting
+### 🔥 P0 — NEXT FORK STARTS HERE (Security Hardening Pass)
+1. **Broad write rate-limits** — Extend `slowapi` from just `/auth` to all write endpoints. Apply per-user (not just per-IP):
+   - `POST /api/posts` (20/min)
+   - `POST /api/posts/{id}/like` (60/min)
+   - `POST /api/posts/{id}/comments` (30/min)
+   - `POST /api/community` (10/min)
+   - `POST /api/gallery/upload` (10/min)
+   - `POST /api/messages` (60/min)
+   - `POST /api/moderation/report` (10/hour — prevent mod-queue flooding)
+   - `POST /api/network/request` (20/hour)
+2. **Remove `ENCRYPTION_KEY` fallback** in `backend/database.py:18` — currently defaults to `"default-encryption-key-32b!"` if env var missing. Change to `os.environ["ENCRYPTION_KEY"]` so missing config fails loudly instead of silently encrypting user data with a publicly-known key.
+3. **Verify auth cookies flags** — Ensure `/api/auth/login` sets `HttpOnly`, `Secure`, and `SameSite=Strict` on the access/refresh cookies. Audit current implementation.
 
-### P2 (Medium Priority)
-- Location radius settings (specify travel/trade distance)
+### 🔴 P1 — Critical App Deficiencies (from review)
+- **Frontend test coverage** — Zero `*.test.js` files exist. Add React Testing Library + Vitest/Jest suites for `Feed`, `PostCard`, `PostMenu`, `ReportModal`, `Login`, `Register`. ~2 hours.
+- **Admin push/email alerts on new reports** — Currently reports sit silently in the queue until an admin logs in. Wire web-push to all admins on new report + a daily email digest of pending reports.
+- **Moderator role tier** — Add a 3rd role (`moderator`) between `user` and `admin`. Can view/resolve reports and delete flagged content, but cannot verify users, change roles, or send system announcements.
+- **Unified `ConfirmDialog` replacing `window.confirm()`** — Currently used in `PostCard.handleBlockUser`, `PostMenu` delete, `Gallery.handleDelete`, `BlockedUsersPanel` unblock (native `confirm` is inconsistent with the styled dialog in AdminDashboard). Single reusable component.
+- **Sentry / error tracking** — 87 `console.error` calls in frontend + 46 backend `print()` statements go nowhere in production. Add error tracking to see real user issues.
 
-### P3 (Enhancement)
-- Trade ratings/reviews after completed trades
+### 🟠 P1 — Trust System Gaps (from review)
+- **Trusted Trader downgrade path** — Once earned, `is_trusted_trader` is permanent. Recalculate on trade dispute or admin action. Add `POST /api/admin/revoke-trusted` for manual admin action + auto-recalc job.
+- **Trade completion proof requirement** — Currently self-reported; both parties can collude to farm badges. Consider optional photo/receipt upload on trade completion, or geotagged meetup check-in.
+- **Documented verification criteria** — No documented criteria for `is_verified`. Add an admin-facing checklist (identity confirmed, community reference, no active reports, X days on platform) and store which criteria were met on verify action.
+- **Boost verified/trusted users in feed algorithm** — Currently only `is_network` (+200) and `is_nearby` (+100) affect `feed_score`. Add +50 for verified, +30 for trusted trader.
+- **"Trusted Trader unlocked!" push notification** — 5th completed trade auto-awards silently. Trigger a push to celebrate the milestone (engagement + retention).
+- **Admin stats: `trusted_users` count card** — Only `verified_users` is shown. Add matching card for consistency.
+- **Cold-start invite chicken-and-egg** — Unverified users can't send invites. Options: (a) allow 1 invite per new user regardless of verification, (b) auto-verify after N days + N posts, or (c) admin bulk-verify seed cohort.
+- **"Community Guardian" badge for good-faith reporters** — Award users whose reports get resolved (not dismissed) 3+ times. Incentivizes moderation participation.
+
+### 🟡 P2 — Scale & Consistency (from review)
+- **Feed denormalization** — Store `is_verified`, `is_trusted_trader`, and `location_hash` on each post at write time. Removes N+1 user lookup in `/api/posts`.
+- **Standardize soft-delete** — Community posts use `is_deleted: true`; barter posts hard-delete. Unify to soft-delete on both with 30-day admin-recoverable window + audit log.
+- **Object storage lifecycle cleanup** — When a post/gallery item is deleted, orphaned files stay in Emergent Object Storage. Add a background cleanup job on delete + a weekly orphan sweep.
+- **Per-user announcement dismissal persistence** — Dismissed system banners reappear on refresh. Persist per-user in DB.
+- **Account deletion + data export** — GDPR/CCPA. Currently no way to delete an account or download personal data. Values-inconsistent for an "exit the matrix" brand.
+- **Location radius settings** — Allow users to specify travel/trade distance (5mi, 25mi, 100mi, unlimited). Expand matching beyond exact city string comparison.
+
+### 🟢 P3 — Enhancements
+- **Trade ratings/reviews** — After a completed trade, both parties can leave 1–5 stars + optional comment. Aggregate onto user profile.
+- **AI NSFW image moderation** (`opennsfw2`) — Server-side classifier on gallery uploads + post images + avatars. Auto-reject > 0.85, blur + reveal on 0.5–0.85, admin override.
+- **Threaded reply notifications** — Currently notify the parent commenter; extend to notify the whole thread on a "watched" flag.
+- **Moderator activity leaderboard** — Show admin/mod who resolved most reports this month (accountability + gamification).
+
+### 🔵 Frontend Refactoring Backlog (from review)
+- `UserProfileView.js` (488 lines) — Extract `ProfileHeader`, `ProfileActions`, `ProfileSkills`, `ExpandableBio` into `components/profile/`.
+- `CategorySelector.js` (427 lines) — Split search + list + selected chips.
+- `FeedFilters.js` (410 lines) — Extract filter groups into sub-components.
+- `ProfilePanel.js` (386 lines) — Slim down; extract goods/services editor.
 
 ## What Was Completed (April 3, 2026)
 - [x] **Security Audit** - Comprehensive security review completed
