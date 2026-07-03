@@ -11,22 +11,45 @@ const STEPS = [
   {
     icon: Shield,
     title: 'Welcome to Rebel Trade Network',
-    body: 'A private, invite-only network where homesteaders and self-reliant folks barter goods, skills, and services — no corporate middlemen, no fees.'
+    body: 'A private, invite-only community where homesteaders, preppers, and self-reliant folks trade goods, skills, and services directly — no corporate middlemen, no listing fees, no algorithms selling your attention.',
+    points: [
+      'Membership is invite-only, so the network stays trusted and spam-free',
+      'Your profile, posts, and messages are encrypted end-to-end',
+      'You choose what to offer and what you need — barter, don\'t buy'
+    ]
   },
   {
     icon: House,
     title: 'Barter Feed & Smart Matches',
-    body: 'Post what you\'re offering and what you\'re looking for. The feed surfaces nearby traders and complementary matches so you find the right exchange faster.'
+    body: 'The Barter Feed is your home base. Post what you\'re offering and what you\'re looking for, then let the matching engine surface the most relevant trades.',
+    points: [
+      'Posts are ranked by proximity and your trade network — nearby & connected traders rise to the top',
+      'The "Potential Matches" panel finds people whose offers meet your wants (and vice-versa)',
+      'Filter by category (goods / skills / services), verified traders, media, and distance',
+      'Like, comment, and propose a trade directly from any post'
+    ]
   },
   {
     icon: ArrowsLeftRight,
-    title: 'Trade Network & Deals',
-    body: 'Connect with other traders, then propose formal trade deals with counter-offers. Complete 5 confirmed trades to earn your Trusted Trader badge.'
+    title: 'Trade Network & Formal Deals',
+    body: 'Build a reputation by connecting with reliable traders and completing real exchanges. Trades are structured so both sides stay protected.',
+    points: [
+      'Send connection requests to build your private trade network (LinkedIn-style)',
+      'Propose formal Trade Deals with counter-offers — negotiate until both agree',
+      'Both parties confirm completion, keeping trades honest',
+      'Complete 5 confirmed trades to earn the green Trusted Trader badge'
+    ]
   },
   {
     icon: Newspaper,
-    title: 'Community, Messages & Safety',
-    body: 'Join topic discussions on the Community Board, chat privately with end-to-end encrypted messages, and keep the network safe with report & block tools.'
+    title: 'Community, Messages & Staying Safe',
+    body: 'Beyond trading, connect and learn — and help keep the network clean. Everyone plays a part in safety.',
+    points: [
+      'Community Board: discuss homesteading, off-grid living, prepping, gardening & more',
+      'Encrypted direct messages with real-time chat and push notifications',
+      'Report or block bad actors — reports go straight to the moderation team',
+      'Earn badges and roles as you build trust; trusted members can invite others'
+    ]
   }
 ];
 
@@ -47,7 +70,7 @@ export default function OnboardingTour({ onComplete }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" data-testid="onboarding-tour">
-      <div className="relative w-full max-w-md bg-[var(--bg-surface)] border-2 border-[var(--brand-primary)] shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-[var(--bg-surface)] border-2 border-[var(--brand-primary)] shadow-2xl">
         <button
           onClick={finish}
           className="absolute top-3 right-3 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -69,6 +92,17 @@ export default function OnboardingTour({ onComplete }) {
             {Current.title}
           </h2>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{Current.body}</p>
+
+          {Current.points && (
+            <div className="mt-4 text-left bg-[var(--bg-surface-hover)] border border-[var(--border-color)] p-3 space-y-2">
+              {Current.points.map((pt, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                  <span className="mt-0.5 text-[var(--brand-primary)] font-bold">✦</span>
+                  <span>{pt}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Progress dots */}

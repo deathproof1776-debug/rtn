@@ -10,36 +10,45 @@ const ACHIEVEMENTS = {
     color: 'var(--brand-primary)',
     badge: 'Verified Trader',
     title: "You're Verified! ✓",
-    description: 'An admin has verified your account — a trust signal other traders can see on your posts and profile.',
+    earned: 'An admin reviewed and verified your account.',
+    description: 'Verification is a trust signal shown across the network. It tells other members you\'re a real, vetted trader — which means more responses, more matches, and smoother deals.',
     perks: [
-      'A verified badge appears across your posts & profile',
-      'You can now invite new members to the network',
-      'Higher visibility in the Barter Feed'
-    ]
+      'An orange Verified badge appears on your posts, profile, and comments',
+      'You can now send invite links to bring trusted people into the network',
+      'Verified traders rank higher in the Barter Feed and match suggestions',
+      'Other members are far more likely to accept your trade & connection requests'
+    ],
+    tip: 'Tip: Complete your profile — location, skills, and what you offer/need — to unlock the best matches.'
   },
   trusted_trader: {
     icon: Handshake,
     color: '#4D7C0F',
     badge: 'Trusted Trader',
     title: 'Trusted Trader Unlocked! 🤝',
-    description: "You've completed 5 confirmed trades. This green badge tells the community you're a reliable partner.",
+    earned: 'You completed 5 trades that both parties confirmed.',
+    description: 'The green Trusted Trader badge is the highest reputation signal on Rebel Trade Network. It\'s earned, not given — it tells everyone you follow through and trade fairly.',
     perks: [
-      'Exclusive green Trusted Trader badge',
-      'Stronger reputation on every trade',
-      'Boosted trust with new trading partners'
-    ]
+      'An exclusive green Trusted Trader badge on your profile and every post',
+      'Top priority placement in the feed and recommended-trader lists',
+      'Higher acceptance rates on connections, messages, and trade offers',
+      'A visible track record that builds instant credibility with new partners'
+    ],
+    tip: 'Keep it up: the badge reflects ongoing good standing — honor your agreements and confirm trades promptly.'
   },
   moderator: {
     icon: ShieldStar,
     color: '#0369A1',
     badge: 'Moderator',
     title: "You're now a Moderator 🛡",
-    description: 'You\'ve been trusted to help keep Rebel Trade Network safe. Find the Moderation queue in your sidebar.',
+    earned: 'An admin promoted you — a role reserved for verified, trusted members.',
+    description: 'You\'ve been entrusted to help keep Rebel Trade Network safe and welcoming. Look for the new "Moderation" tab in your sidebar to access the report queue.',
     perks: [
-      'Review, resolve & dismiss community reports',
-      'Escalate serious reports to an admin',
-      'Remove flagged posts and comments'
-    ]
+      'Review, resolve, and dismiss community reports from the Moderation queue',
+      'Escalate serious or unclear reports to an admin for a final decision',
+      'Remove flagged posts and comments directly from the feed',
+      'Help set the tone and standard for the whole community'
+    ],
+    tip: 'Please note: blocking/banning users, verifying members, and system announcements remain admin-only. Escalated reports can only be closed by an admin.'
   }
 };
 
@@ -60,7 +69,7 @@ export default function AchievementCelebration({ achievementKey, onAck }) {
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" data-testid="achievement-celebration">
       <div
-        className="relative w-full max-w-sm bg-[var(--bg-surface)] border-2 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-sm max-h-[92vh] overflow-y-auto bg-[var(--bg-surface)] border-2 shadow-2xl"
         style={{ borderColor: cfg.color }}
       >
         <div className="absolute -top-10 -right-10 opacity-10">
@@ -84,10 +93,16 @@ export default function AchievementCelebration({ achievementKey, onAck }) {
           >
             {cfg.title}
           </h2>
+          {cfg.earned && (
+            <p className="text-[11px] text-[var(--text-muted)] italic mb-2">{cfg.earned}</p>
+          )}
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{cfg.description}</p>
         </div>
 
-        <div className="px-6 pb-5">
+        <div className="px-6 pb-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+            What this unlocks
+          </p>
           <div className="bg-[var(--bg-surface-hover)] border border-[var(--border-color)] p-3 space-y-2">
             {cfg.perks.map((perk, i) => (
               <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
@@ -96,6 +111,9 @@ export default function AchievementCelebration({ achievementKey, onAck }) {
               </div>
             ))}
           </div>
+          {cfg.tip && (
+            <p className="mt-3 text-[11px] text-[var(--text-muted)] leading-relaxed">{cfg.tip}</p>
+          )}
         </div>
 
         <div className="px-6 pb-6">
