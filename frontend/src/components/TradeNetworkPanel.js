@@ -11,10 +11,12 @@ import {
   Handshake,
   Sparkle,
   Lightning,
-  ArrowRight
+  ArrowRight,
+  MagnifyingGlass
 } from '@phosphor-icons/react';
 
 import { RecommendedTraderCard, ConnectionCard, IncomingRequestCard, OutgoingRequestCard } from './network';
+import TraderSearchResultCard from './network/TraderSearchResultCard';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -26,10 +28,53 @@ export default function TradeNetworkPanel({ onViewProfile }) {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchMessage, setSearchMessage] = useState('');
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleSearch = async (query) => {
+    const q = (query || '').trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearchMessage(q.length > 0 ? 'Type at least 2 characters' : '');
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/network/search?q=${encodeURIComponent(q)}`, { withCredentials: true });
+      const results = res.data.results || [];
+      setSearchResults(results);
+      setSearchMessage(results.length === 0 ? 'No traders found matching that name or email' : '');
+    } catch (error) {
+      console.error('Error searching traders:', error);
+      setSearchMessage('Search failed. Please try again.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'search') return;
+    const t = setTimeout(() => handleSearch(searchQuery), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery, activeTab]);
+
+  const handleSearchConnect = async (userId) => {
+    setActionLoading(userId);
+    try {
+      await axios.post(`${API_URL}/api/network/request`, { target_user_id: userId }, { withCredentials: true });
+      setSearchResults((prev) => prev.map((r) => (r.id === userId ? { ...r, connection_status: 'pending' } : r)));
+    } catch (error) {
+      console.error('Error sending request:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -139,6 +184,18 @@ export default function TradeNetworkPanel({ onViewProfile }) {
       {/* Tabs */}
       <div className="flex gap-1 md:gap-2 mb-4 md:mb-6 border-b border-[var(--bg-surface-hover)] overflow-x-auto">
         <button
+          onClick={() => setActiveTab('search')}
+          className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'search'
+              ? 'text-[var(--brand-primary)] border-[var(--brand-primary)]'
+              : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-secondary)]'
+          }`}
+          data-testid="tab-search"
+        >
+          <MagnifyingGlass size={18} weight={activeTab === 'search' ? 'bold' : 'regular'} />
+          Search
+        </button>
+        <button
           onClick={() => setActiveTab('recommended')}
           className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px flex items-center gap-1.5 whitespace-nowrap ${
             activeTab === 'recommended'
@@ -186,6 +243,45 @@ export default function TradeNetworkPanel({ onViewProfile }) {
           )}
         </button>
       </div>
+
+      {/* Search Tab */}
+      {activeTab === 'search' && (
+        <div className="space-y-3" data-testid="search-section">
+          <div className="relative">
+            <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search traders by name or email…"
+              autoFocus
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
+              data-testid="trader-search-input"
+            />
+          </div>
+
+          {searching && (
+            <p className="text-sm text-[var(--text-muted)] text-center py-4">Searching…</p>
+          )}
+
+          {!searching && searchMessage && (
+            <div className="theme-surface border theme-border p-6 text-center" data-testid="search-message">
+              <MagnifyingGlass size={40} className="mx-auto theme-text-muted mb-3" />
+              <p className="text-sm theme-text-muted">{searchMessage}</p>
+            </div>
+          )}
+
+          {!searching && searchResults.map((result) => (
+            <TraderSearchResultCard
+              key={result.id}
+              result={result}
+              onConnect={handleSearchConnect}
+              onViewProfile={onViewProfile}
+              isLoading={actionLoading === result.id}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Recommended Tab */}
       {activeTab === 'recommended' && (

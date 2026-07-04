@@ -1,6 +1,7 @@
 """
 Trade Network routes: connections, requests, recommendations.
 """
+import re
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from bson import ObjectId
 from datetime import datetime, timezone
@@ -396,3 +397,74 @@ async def get_recommended_traders(request: Request, limit: int = 10):
         "recommendations": recommendations[:limit],
         "total_matches": len(recommendations)
     }
+
+
+@router.get("/search")
+async def search_traders(request: Request, q: str = "", limit: int = 20):
+    """Search other traders by name or email. Available to all authenticated users."""
+    user = await get_current_user(request)
+    query = (q or "").strip()
+    if len(query) < 2:
+        return {"results": [], "message": "Enter at least 2 characters to search"}
+
+    regex = {"$regex": re.escape(query), "$options": "i"}
+
+    blocked_ids = await get_blocked_user_ids(user["_id"])
+    exclude_oids = [ObjectId(uid) for uid in blocked_ids if ObjectId.is_valid(uid)]
+    if ObjectId.is_valid(user["_id"]):
+        exclude_oids.append(ObjectId(user["_id"]))
+
+    cursor = db.users.find(
+        {
+            "_id": {"$nin": exclude_oids},
+            "$or": [{"name": regex}, {"email": regex}],
+        },
+        {"password_hash": 0, "totp_secret": 0},
+    ).limit(min(max(limit, 1), 50))
+
+    # Build connection + pending sets to annotate each result with status
+    connections = await db.network_connections.find({
+        "$or": [{"user_id": user["_id"]}, {"connected_user_id": user["_id"]}]
+    }).to_list(500)
+    connected_ids = set()
+    for c in connections:
+        connected_ids.add(c["connected_user_id"] if c["user_id"] == user["_id"] else c["user_id"])
+
+    pendings = await db.network_requests.find({
+        "$or": [
+            {"from_user_id": user["_id"], "status": "pending"},
+            {"to_user_id": user["_id"], "status": "pending"},
+        ]
+    }).to_list(200)
+    pending_ids = set()
+    for p in pendings:
+        pending_ids.add(p["to_user_id"] if p["from_user_id"] == user["_id"] else p["from_user_id"])
+
+    results = []
+    async for u in cursor:
+        uid = str(u["_id"])
+        location = ""
+        if u.get("location"):
+            try:
+                location = decrypt_data(u["location"])
+            except Exception:
+                location = u.get("location", "")
+        if uid in connected_ids:
+            status = "connected"
+        elif uid in pending_ids:
+            status = "pending"
+        else:
+            status = "none"
+        results.append({
+            "id": uid,
+            "name": u.get("name", "Unknown"),
+            "email": u.get("email", ""),
+            "avatar": u.get("avatar", ""),
+            "location": location,
+            "is_verified": u.get("is_verified", False),
+            "is_trusted_trader": u.get("is_trusted_trader", False),
+            "skills": u.get("skills", [])[:3],
+            "connection_status": status,
+        })
+
+    return {"results": results, "count": len(results)}
