@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from bson import ObjectId
 from datetime import datetime, timezone
 
-from database import db, decrypt_data
+from database import db, decrypt_data, hash_email, safe_decrypt
 from auth import get_current_user
 from models import NetworkRequest, NetworkRequestResponse, get_item_names
 from notifications import send_push_notification
@@ -414,11 +414,14 @@ async def search_traders(request: Request, q: str = "", limit: int = 20):
     if ObjectId.is_valid(user["_id"]):
         exclude_oids.append(ObjectId(user["_id"]))
 
+    # Email search: if query looks like an email, use deterministic HMAC hash lookup
+    if "@" in query:
+        search_filter = {"$or": [{"email_hash": hash_email(query)}, {"public_id": query.upper()}]}
+    else:
+        search_filter = {"$or": [{"name": regex}, {"public_id": query.upper()}]}
+
     cursor = db.users.find(
-        {
-            "_id": {"$nin": exclude_oids},
-            "$or": [{"name": regex}, {"email": regex}, {"public_id": query.upper()}],
-        },
+        {"_id": {"$nin": exclude_oids}, **search_filter},
         {"password_hash": 0, "totp_secret": 0},
     ).limit(min(max(limit, 1), 50))
 
@@ -458,7 +461,7 @@ async def search_traders(request: Request, q: str = "", limit: int = 20):
         results.append({
             "id": uid,
             "name": u.get("name", "Unknown"),
-            "email": u.get("email", ""),
+            "email": safe_decrypt(u.get("email", "")),
             "avatar": u.get("avatar", ""),
             "location": location,
             "is_verified": u.get("is_verified", False),

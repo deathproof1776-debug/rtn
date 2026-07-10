@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 import os
 import base64
 import hashlib
+import hmac as hmac_module
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -42,3 +43,14 @@ def safe_decrypt(value, fallback: str = "") -> str:
         return fernet.decrypt(value.encode()).decode()
     except Exception:
         return value if isinstance(value, str) else fallback
+
+
+def hash_email(email: str) -> str:
+    """HMAC-SHA256 of normalised email for deterministic DB lookup.
+    Used so emails can be stored encrypted but still searched at login."""
+    key = os.environ["ENCRYPTION_KEY"]
+    return hmac_module.new(
+        key.encode(),
+        email.lower().strip().encode(),
+        hashlib.sha256
+    ).hexdigest()

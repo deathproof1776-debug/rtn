@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
-from database import db, encrypt_data, decrypt_data
+from database import db, encrypt_data, decrypt_data, hash_email, safe_decrypt
 from auth import (
     hash_password, verify_password,
     create_access_token, create_refresh_token,
@@ -57,7 +57,7 @@ def _user_response_payload(user: dict) -> dict:
             location = user.get("location", "")
     return {
         "id": str(user["_id"]),
-        "email": user.get("email", ""),
+        "email": safe_decrypt(user.get("email", "")),
         "name": user.get("name", ""),
         "location": location,
         "avatar": user.get("avatar", ""),
@@ -111,7 +111,9 @@ async def register(request: Request, user_data: UserRegister):
         raise HTTPException(status_code=403, detail="This invite link has expired. Please request a new one from a member.")
 
     email = user_data.email.lower()
-    existing = await db.users.find_one({"email": email})
+    # Check uniqueness via hash (works for both encrypted and plaintext legacy users)
+    email_lookup_hash = hash_email(email)
+    existing = await db.users.find_one({"$or": [{"email_hash": email_lookup_hash}, {"email": email}]})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -125,7 +127,8 @@ async def register(request: Request, user_data: UserRegister):
         if not await db.users.find_one({"public_id": pid}):
             break
     user_doc = {
-        "email": email,
+        "email": encrypt_data(email),
+        "email_hash": hash_email(email),
         "password_hash": hashed,
         "name": user_data.name,
         "location": encrypt_data(user_data.location) if user_data.location else "",
@@ -165,7 +168,17 @@ async def login(request: Request, user_data: UserLogin):
 
     await check_lockout(request, email)
 
-    user = await db.users.find_one({"email": email})
+    # Try HMAC-hash lookup first (new encrypted users), fall back to plaintext (legacy users)
+    email_hash = hash_email(email)
+    user = await db.users.find_one({"email_hash": email_hash})
+    if not user:
+        user = await db.users.find_one({"email": email})
+        if user:
+            # On-the-fly migration: encrypt email and store hash
+            await db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"email": encrypt_data(email), "email_hash": email_hash}}
+            )
     if not user:
         await record_failed_attempt(request, email)
         raise HTTPException(status_code=401, detail="Invalid email or password")

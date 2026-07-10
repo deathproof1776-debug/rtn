@@ -1,0 +1,80 @@
+{
+  "summary": "P2 feature testing: email encryption, auto sign-out (sessionStorage), screenshot prevention. Found 1 CRITICAL blocking bug (TDZ crash, fixed), 2 HIGH backend bugs, and 1 medium migration gap. All backend login/admin/network APIs pass (18/19 tests; 1 failure on /me email decryption).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/auth/me",
+        "issue": "Returns raw Fernet-encrypted email (gAAAAABq...) instead of decrypted email. The get_me() function decrypts 'location' but forgot to decrypt 'email'. Missing: user['email'] = safe_decrypt(user.get('email', '')). This affects any code in React that reads user.email from the auth context after page reload (checkAuth calls /me).",
+        "priority": "HIGH"
+      },
+      {
+        "endpoint": "server.py startup seeding",
+        "issue": "Seeding code does db.users.find_one({'email': admin_email}) with plaintext email. Since admin email is now Fernet-encrypted in DB, lookup returns None, and a NEW duplicate admin user 'Admin' is created with plaintext email on EVERY server restart. DB now has 2 admins with email deathproofrebel@protonmail.com. Fix: use $or with email_hash lookup: {'$or': [{'email_hash': hash_email(admin_email)}, {'email': admin_email}]}",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "GET /api/network/search",
+        "issue": "Email search (@-containing queries) uses ONLY email_hash lookup. Legacy users created BEFORE P2 encryption (e.g., TEST_P1_BanUser) have no email_hash and cannot be found by email. No fallback to plaintext email for legacy users in email search path. Consider adding: {'$or': [{'email_hash': hash_email(query)}, {'email': query.lower()}, {'public_id': query.upper()}]}",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p2_features.py",
+    "/app/test_reports/pytest/pytest_p2_features.xml"
+  ],
+  "action_items": [
+    "Fix GET /api/auth/me (routes/auth.py): add `user['email'] = safe_decrypt(user.get('email', ''))` before returning the user dict",
+    "Fix server.py startup seeding: change find_one({'email': admin_email}) to find_one({'$or': [{'email_hash': hash_email(admin_email)}, {'email': admin_email}]}) and import hash_email in server.py. Also clean up the duplicate 'Admin' user that was created.",
+    "Optional: add plaintext fallback in network search for legacy users without email_hash"
+  ],
+  "critical_code_review_comments": [
+    "AuthContext.js FIXED: TDZ crash - logout was declared AFTER the useEffect that referenced it in dependency array [user, logout]. Caused ReferenceError: Cannot access 'logout' before initialization → complete black screen. Fixed by moving logout declaration before the useEffect.",
+    "routes/auth.py get_me(): decrypts location but NOT email. Missing: user['email'] = safe_decrypt(user.get('email', '')).",
+    "server.py startup: find_one({'email': admin_email}) will always return None for encrypted email users, creating duplicate user every restart.",
+    "database.py hash_email() uses hmac_module.new() which is deprecated in Python 3.x (uses hmac.new). Should use hmac.new() from the hmac module directly. Actually: `import hmac as hmac_module` then `hmac_module.new(key, msg, digest).hexdigest()` is correct syntax."
+  ],
+  "updated_files": [
+    "/app/frontend/src/contexts/AuthContext.js",
+    "/app/backend/tests/test_p2_features.py"
+  ],
+  "success_rate": {
+    "backend": "94.7% (18/19 - 1 failure on /me encrypted email)",
+    "frontend": "100% (all P2 frontend features working after TDZ fix)"
+  },
+  "test_credentials": "Admin: deathproofrebel@protonmail.com / Peaches1776@",
+  "seed_data_creation": "Duplicate admin user 'Admin' was created during server restart due to seeding bug. DB has 3 users: Bob (original admin, id=6a483bbd8ebfbb9b7696ee5a, encrypted email, email_hash set), Admin (duplicate, plaintext email, no email_hash), TEST_P1_BanUser (test user, plaintext email, no email_hash - created before P2).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P2 features mostly working. CRITICAL FIX APPLIED: logout TDZ in AuthContext.js fixed (moved logout declaration before useEffect that uses it). Backend bugs remain: (1) /me endpoint returns encrypted email - add safe_decrypt in get_me(), (2) server.py seeding creates duplicate admin on restart - fix find_one to use email_hash. DB has duplicate admin 'Admin' user that should be cleaned up. TEST_P1_BanUser can't be found by email search (no email_hash - created before P2). Verified working: login (HMAC hash lookup), admin users list (decrypted), sessionStorage tokens, no screenshot-protected class for admin, no blur overlay for admin, Trader ID visible on profile page.",
+  "rca_of_issues": {
+    "tzdfix": {
+      "bug": "AuthContext.js: const logout = useCallback(...) declared at line 168, but useEffect at line 104-121 has [user, logout] in dependency array. In non-Babel-transpiled modern JS environments, this causes ReferenceError: Cannot access 'logout' before initialization (TDZ). The entire React app crashes on load - complete black screen.",
+      "reproduction": "Clear sessionStorage, load app - immediate black screen with console error 'Cannot access logout before initialization'",
+      "fix": "Moved logout useCallback declaration to line 103 (BEFORE the useEffect that references it). Fixed in this iteration."
+    },
+    "me_endpoint_email": {
+      "bug": "routes/auth.py get_me() returns raw user dict from MongoDB without decrypting email field. Location is decrypted (try/except block) but email is not. After page refresh, checkAuth() calls /me which returns encrypted email, setting user.email = 'gAAAAABq...' in React state.",
+      "fix": "Add user['email'] = safe_decrypt(user.get('email', '')) in get_me() before returning the user dict."
+    },
+    "seeding_bug": {
+      "bug": "server.py startup seeding: db.users.find_one({'email': admin_email}) searches by plaintext email. After P2 migration, admin email is stored as Fernet token (gAAAA...). Lookup returns None, create new user runs, creates duplicate admin 'Admin' with plaintext email.",
+      "fix": "Change seeding lookup to: db.users.find_one({'$or': [{'email_hash': hash_email(admin_email)}, {'email': admin_email}]}). Requires importing hash_email from database in server.py."
+    }
+  },
+  "verified_p2_features": {
+    "email_encryption": "Login works via HMAC hash lookup for migrated admin. Login response returns decrypted email. /api/admin/users returns decrypted emails. Fernet migration confirmed (Bob has email_hash=True in DB).",
+    "session_storage": "rtn_access_token and rtn_refresh_token stored in sessionStorage. Not in localStorage. Verified via JS evaluation.",
+    "screenshot_prevention_admin": "Admin (privileged) has NO screenshot-protected class. Admin has NO rtn-watermark. Admin has NO security-blur-overlay. Dashboard app-shell classes: ['app-shell'] only.",
+    "blur_overlay": "Window blur event listeners NOT attached for admin (isPrivileged check works). Verified: no security-blur-overlay visible.",
+    "trader_id_profile": "Profile page shows 'YOUR TRADER ID: N9TMTL6B' with 'Share this ID so others can find you' text. Copy button present.",
+    "visibilitychange_listener": "visibilitychange event listener attached via useEffect when user is logged in. 30-min SESSION_IDLE_MS timer set on document.hidden. Verified by code review."
+  }
+}

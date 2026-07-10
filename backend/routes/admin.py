@@ -67,11 +67,12 @@ async def get_audit_log(skip: int = 0, limit: int = 50, _: dict = Depends(requir
 
 @router.get("/users")
 async def get_admin_users(skip: int = 0, limit: int = 50, _: dict = Depends(require_admin)):
-    users = await db.users.find({}, {"password_hash": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    users = await db.users.find({}, {"password_hash": 0, "totp_secret": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     for user in users:
         user["_id"] = str(user["_id"])
         user["location"] = safe_decrypt(user.get("location"))
         user["bio"] = safe_decrypt(user.get("bio"))
+        user["email"] = safe_decrypt(user.get("email", ""))
     total = await db.users.count_documents({})
     return {"users": users, "total": total}
 

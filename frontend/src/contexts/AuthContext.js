@@ -7,28 +7,30 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ACCESS_KEY = 'rtn_access_token';
 const REFRESH_KEY = 'rtn_refresh_token';
+const SESSION_IDLE_MS = 30 * 60 * 1000; // 30 minutes
 
 // Always send cookies (same-origin) AND restore a stored bearer token on load,
 // so auth survives environments where cross-site cookies are blocked (mobile/PWA).
+// Using sessionStorage so tokens clear when the browser session ends (tab close).
 axios.defaults.withCredentials = true;
-const savedAccess = localStorage.getItem(ACCESS_KEY);
+const savedAccess = sessionStorage.getItem(ACCESS_KEY);
 if (savedAccess) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${savedAccess}`;
 }
 
 function setTokens(access, refresh) {
   if (access) {
-    localStorage.setItem(ACCESS_KEY, access);
+    sessionStorage.setItem(ACCESS_KEY, access);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
   }
   if (refresh) {
-    localStorage.setItem(REFRESH_KEY, refresh);
+    sessionStorage.setItem(REFRESH_KEY, refresh);
   }
 }
 
 function clearTokens() {
-  localStorage.removeItem(ACCESS_KEY);
-  localStorage.removeItem(REFRESH_KEY);
+  sessionStorage.removeItem(ACCESS_KEY);
+  sessionStorage.removeItem(REFRESH_KEY);
   delete axios.defaults.headers.common['Authorization'];
 }
 
@@ -48,7 +50,7 @@ axios.interceptors.response.use(
       url.includes('/api/auth/logout');
 
     if (status === 401 && original && !original._retry && !isAuthCall) {
-      const refresh = localStorage.getItem(REFRESH_KEY);
+      const refresh = sessionStorage.getItem(REFRESH_KEY);
       if (!refresh) return Promise.reject(error);
       original._retry = true;
       try {
@@ -98,6 +100,36 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, [checkAuth]);
 
+  // logout declared here so the auto-sign-out useEffect below can reference it without TDZ issues
+  const logout = useCallback(async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    } catch (_) { /* ignore */ }
+    clearTokens();
+    sessionStorage.removeItem('ws_token');
+    setUser(false);
+  }, []);
+
+  // Auto sign-out: after 30 minutes hidden (tab switched / app backgrounded)
+  useEffect(() => {
+    if (!user) return;
+    let idleTimer = null;
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        idleTimer = setTimeout(() => {
+          logout();
+        }, SESSION_IDLE_MS);
+      } else {
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (idleTimer) clearTimeout(idleTimer);
+    };
+  }, [user, logout]);
+
   const login = useCallback(async (email, password) => {
     const response = await axios.post(
       `${API_URL}/api/auth/login`,
@@ -141,15 +173,6 @@ export function AuthProvider({ children }) {
     }
     setUser(response.data);
     return response.data;
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-    } catch (_) { /* ignore */ }
-    clearTokens();
-    sessionStorage.removeItem('ws_token');
-    setUser(false);
   }, []);
 
   const updateUser = useCallback((userData) => {

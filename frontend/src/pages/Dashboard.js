@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import { ShieldCheck } from '@phosphor-icons/react';
 import Sidebar from '../components/Sidebar';
 import Feed from '../components/Feed';
 import RightPanel from '../components/RightPanel';
@@ -42,6 +43,22 @@ export default function Dashboard() {
   const [chatUserId, setChatUserId] = useState(null);
   const [viewingGallery, setViewingGallery] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
+  const [windowFocused, setWindowFocused] = useState(true);
+
+  const isPrivileged = user?.role === 'admin' || user?.role === 'moderator';
+
+  // Screenshot prevention: blur content when window loses focus (regular users only)
+  useEffect(() => {
+    if (isPrivileged) return;
+    const onBlur = () => setWindowFocused(false);
+    const onFocus = () => setWindowFocused(true);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [isPrivileged]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -173,7 +190,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="app-shell" data-testid="dashboard">
+    <div className={`app-shell ${!isPrivileged ? 'screenshot-protected' : ''}`} data-testid="dashboard">
+      {/* Watermark for regular users */}
+      {!isPrivileged && (
+        <div className="rtn-watermark" data-user={user?.name || 'RTN'} aria-hidden="true" />
+      )}
+
+      {/* Security blur overlay on window blur (regular users only) */}
+      {!isPrivileged && !windowFocused && (
+        <div
+          className="security-blur-overlay"
+          onClick={() => setWindowFocused(true)}
+          data-testid="security-blur-overlay"
+        >
+          <ShieldCheck size={48} className="text-[var(--brand-primary)]" />
+          <p className="text-[var(--text-primary)] text-xl font-bold">Paused for Security</p>
+          <p className="text-[var(--text-muted)] text-sm">Click anywhere to resume</p>
+        </div>
+      )}
       {/* Mobile Header */}
       <MobileHeader 
         onMenuClick={() => setSidebarOpen(true)}
