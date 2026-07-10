@@ -13,7 +13,7 @@ import os
 import logging
 from datetime import datetime, timezone
 
-from database import db, client
+from database import db, client, encrypt_data, hash_email
 from auth import hash_password, verify_password
 from routes import api_router
 from storage import init_storage
@@ -125,15 +125,19 @@ async def startup():
     await db.reports.create_index([("status", 1), ("created_at", -1)])
     await db.reports.create_index([("reporter_id", 1), ("target_type", 1), ("target_id", 1), ("status", 1)])
 
-    # Seed admin
+    # Seed admin — use email_hash for lookup to handle encrypted emails
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@rebeltrade.network")
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
-    existing = await db.users.find_one({"email": admin_email})
+    admin_hash = hash_email(admin_email)
+    existing = await db.users.find_one(
+        {"$or": [{"email_hash": admin_hash}, {"email": admin_email}]}
+    )
 
     if existing is None:
         hashed = hash_password(admin_password)
         await db.users.insert_one({
-            "email": admin_email,
+            "email": encrypt_data(admin_email),
+            "email_hash": admin_hash,
             "password_hash": hashed,
             "name": "Admin",
             "location": "",
@@ -150,7 +154,10 @@ async def startup():
         })
         logger.info(f"Admin user created: {admin_email}")
     elif not verify_password(admin_password, existing["password_hash"]):
-        await db.users.update_one({"email": admin_email}, {"$set": {"password_hash": hash_password(admin_password)}})
+        await db.users.update_one(
+            {"$or": [{"email_hash": admin_hash}, {"email": admin_email}]},
+            {"$set": {"password_hash": hash_password(admin_password)}}
+        )
         logger.info("Admin password updated")
 
     # Write test credentials

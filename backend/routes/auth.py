@@ -266,6 +266,8 @@ async def get_me(request: Request):
             user["location"] = decrypt_data(user["location"])
         except Exception:
             pass
+    # Decrypt email stored with Fernet encryption
+    user["email"] = safe_decrypt(user.get("email", ""))
     pending = await backfill_pending_achievements(user_id, user)
     if "_id" in user:
         user["id"] = user.pop("_id")

@@ -415,8 +415,13 @@ async def search_traders(request: Request, q: str = "", limit: int = 20):
         exclude_oids.append(ObjectId(user["_id"]))
 
     # Email search: if query looks like an email, use deterministic HMAC hash lookup
+    # Also include plaintext fallback for legacy users not yet migrated
     if "@" in query:
-        search_filter = {"$or": [{"email_hash": hash_email(query)}, {"public_id": query.upper()}]}
+        search_filter = {"$or": [
+            {"email_hash": hash_email(query)},
+            {"email": query.lower()},  # legacy plaintext fallback
+            {"public_id": query.upper()}
+        ]}
     else:
         search_filter = {"$or": [{"name": regex}, {"public_id": query.upper()}]}
 
