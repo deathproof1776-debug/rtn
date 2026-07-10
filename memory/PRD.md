@@ -1,6 +1,27 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (Jul 10, 2026) — P1: Admin Overhaul, Community Board, Unique Trader ID
+## Latest Updates (Jul 10, 2026) — P2 Yellow: Auto Sign-Out, Screenshot Prevention, Email Encryption
+
+### Auto Sign-Out on App Leave (DONE, tested 100%)
+- Switched from `localStorage` → `sessionStorage` for auth tokens (`rtn_access_token`, `rtn_refresh_token`) — tokens automatically clear when the browser tab/window closes
+- Added 30-minute `visibilitychange` idle timer in `AuthContext.js` — if app stays hidden (backgrounded/tab switched) for 30+ minutes, user is signed out automatically
+
+### Screenshot Prevention for Non-Admin/Mod Users (DONE, tested 100%)
+- CSS `@media print { .screenshot-protected { visibility: hidden } }` — blocks printing for regular users
+- Security blur overlay: when window loses focus (window blur event), non-admin/mod users see a "Paused for Security" glass-morphism overlay with click-to-resume
+- Subtle diagonal watermark with username overlaid on content for regular users
+- Admins and moderators are completely exempt from all screenshot restrictions (`isPrivileged` check)
+
+### Email Encryption (DONE, tested 100%)
+- Added `hash_email()` HMAC-SHA256 function in `database.py` for deterministic DB lookup
+- All new users registered with Fernet-encrypted email + `email_hash` in DB
+- Login: tries hash lookup first, falls back to plaintext (legacy), migrates on-the-fly at login
+- `GET /api/auth/me`: now decrypts email before returning
+- `GET /api/admin/users`: decrypts email in user list
+- `GET /api/network/search`: email queries use HMAC hash lookup + plaintext fallback for legacy
+- `server.py` startup seeding: uses `email_hash` lookup to prevent duplicate admin on restart
+- DB audit: location ✅ bio ✅ post descriptions ✅ comment content ✅ messages ✅ emails ✅ (all PII encrypted)
+
 
 ### Admin Dashboard UI Overhaul (DONE, tested 100%)
 - **Horizontal scroll fix**: Added `overflow-x-hidden` + `min-w-0` to grid columns — no more horizontal scrollbar
