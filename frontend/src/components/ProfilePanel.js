@@ -141,7 +141,15 @@ export default function ProfilePanel() {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setProfile({ ...profile, avatar: `${API_URL}${response.data.url}` });
+      const avatarUrl = `${API_URL}${response.data.url}`;
+      // Auto-save avatar immediately — also backfills all existing posts on backend
+      await axios.put(`${API_URL}/api/profile`, { avatar: avatarUrl }, {
+        withCredentials: true
+      });
+      setProfile(prev => ({ ...prev, avatar: avatarUrl }));
+      updateUser({ avatar: avatarUrl });
+      setMessage('Profile picture updated!');
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Error uploading avatar:', error);
       alert(error.response?.data?.detail || 'Failed to upload avatar');
@@ -224,7 +232,7 @@ export default function ProfilePanel() {
                 </span>
               )}
             </div>
-            <p className="text-xs md:text-sm text-[var(--text-muted)]">Tap the camera to change avatar</p>
+            <p className="text-xs md:text-sm text-[var(--text-muted)]">Tap the camera to update your photo</p>
             <button
               onClick={() => setShowGallery(true)}
               className="mt-2 flex items-center gap-1.5 text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] transition-colors"

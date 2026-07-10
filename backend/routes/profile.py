@@ -37,6 +37,18 @@ async def update_profile(profile: UserProfile, request: Request):
         update_data["avatar"] = profile.avatar
 
     await db.users.update_one({"_id": ObjectId(user["_id"])}, {"$set": update_data})
+
+    # Backfill avatar on all existing posts and community posts when avatar changes
+    if profile.avatar is not None:
+        await db.posts.update_many(
+            {"user_id": user["_id"]},
+            {"$set": {"user_avatar": profile.avatar}}
+        )
+        await db.community_posts.update_many(
+            {"user_id": user["_id"]},
+            {"$set": {"user_avatar": profile.avatar}}
+        )
+
     return {"message": "Profile updated successfully"}
 
 
