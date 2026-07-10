@@ -11,7 +11,8 @@ import {
   Carrot,
   Wrench,
   Briefcase,
-  Images
+  Images,
+  Trash
 } from '@phosphor-icons/react';
 import CategorySelector from './CategorySelector';
 import Gallery from './Gallery';
