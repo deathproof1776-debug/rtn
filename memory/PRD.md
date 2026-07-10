@@ -1,6 +1,23 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (Jul 3, 2026) — Production login troubleshooting + hardening
+## Latest Updates (Jul 10, 2026) — P0: Avatar Deletion, Avatars App-Wide, Clickable Links
+
+### Profile Picture Deletion (DONE, tested 100%)
+- Added `handleRemoveAvatar()` in `ProfilePanel.js` — calls `PUT /api/profile` with `avatar: ''`, updates local state + AuthContext
+- Trash icon button renders conditionally on avatar (only visible when avatar is set, positioned top-right of avatar)
+- `handleSave` now also syncs `avatar` to AuthContext (so Sidebar updates immediately after photo upload)
+
+### Profile Pictures Shown App-Wide (DONE, tested 100%)
+- **Sidebar.js**: Bottom user card now shows `user.avatar` image if set, falls back to letter initial
+- **MessagesPanel.js**: Conversation list + chat header both now show `conv.user_avatar` / `selectedConversation.user_avatar` with letter fallback
+- **ThreadedComments.js**: Comment avatar circles now render `comment.user_avatar` with letter fallback (backend already stores `user_avatar` on comments)
+- Already correct: PostCard, CommunityPostCard, ConnectionCard, RecommendedTraderCard, TraderSearchResultCard
+
+### Clickable Links (DONE, tested 100%)
+- Created `/app/frontend/src/lib/linkify.js` — `linkifyText(text)` splits on URL regex, returns array with `<a>` elements for http/https URLs
+- Applied to: PostCard.js (description), CommunityPostCard.js (content), MessagesPanel.js (message bubbles), ThreadedComments.js (comment content)
+
+
 - **Root-cause context**: user reported "Something went wrong. Please try again." on the installed PRODUCTION PWA. That message is the login fallback shown ONLY when there is no structured error response (network/CORS/server-unreachable), NOT for wrong credentials (which returns 401 `Invalid email or password`).
 - **CORS hardening** (`server.py`): when `CORS_ORIGINS="*"`, now uses `allow_origin_regex=".*"` with `allow_credentials=True` (spec-valid for credentialed cookie auth; a literal `*` is rejected by browsers on credentialed requests). Note: the Emergent ingress also injects CORS headers; preview is same-origin so CORS isn't enforced there.
 - **PWA service worker** (`public/sw.js`): bumped `CACHE_NAME` v2→v3 so a redeploy purges stale cached assets on activate (prevents installed PWAs being trapped on old bundles).
