@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { linkifyText } from '../lib/linkify';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -223,8 +224,12 @@ export default function MessagesPanel({ initialChatUserId = null }) {
             >
               <ArrowLeft size={20} />
             </button>
-            <div className="w-9 h-9 md:w-10 md:h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm md:text-base flex-shrink-0">
-              {selectedConversation.user_name?.charAt(0)?.toUpperCase() || 'U'}
+            <div className="w-9 h-9 md:w-10 md:h-10 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm md:text-base flex-shrink-0 overflow-hidden">
+              {selectedConversation.user_avatar ? (
+                <img src={selectedConversation.user_avatar} alt={selectedConversation.user_name} className="w-full h-full object-cover" />
+              ) : (
+                selectedConversation.user_name?.charAt(0)?.toUpperCase() || 'U'
+              )}
             </div>
             <div className="min-w-0">
               <h3 className="font-medium text-[var(--text-primary)] text-sm md:text-base truncate">{selectedConversation.user_name}</h3>
@@ -244,7 +249,7 @@ export default function MessagesPanel({ initialChatUserId = null }) {
                   className={`message-bubble ${msg.sender_id === user.id ? 'message-sent' : 'message-received'}`}
                   data-testid={`message-${msg.id}`}
                 >
-                  <p className="text-sm">{msg.content}</p>
+                  <p className="text-sm">{linkifyText(msg.content)}</p>
                   <p className="text-[10px] md:text-xs opacity-60 mt-1">
                     {msg.created_at ? formatDistanceToNow(new Date(msg.created_at), { addSuffix: true }) : ''}
                   </p>
@@ -295,8 +300,12 @@ export default function MessagesPanel({ initialChatUserId = null }) {
               >
                 <div className="flex items-center gap-2.5 md:gap-3">
                   <div className="relative flex-shrink-0">
-                    <div className="w-11 h-11 md:w-12 md:h-12 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm md:text-base">
-                      {conv.user_name?.charAt(0)?.toUpperCase() || 'U'}
+                    <div className="w-11 h-11 md:w-12 md:h-12 theme-surface-hover flex items-center justify-center text-[var(--brand-primary)] font-semibold text-sm md:text-base overflow-hidden">
+                      {conv.user_avatar ? (
+                        <img src={conv.user_avatar} alt={conv.user_name} className="w-full h-full object-cover" />
+                      ) : (
+                        conv.user_name?.charAt(0)?.toUpperCase() || 'U'
+                      )}
                     </div>
                     {conv.unread_count > 0 && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-[var(--brand-primary)] flex items-center justify-center text-[10px] md:text-xs">

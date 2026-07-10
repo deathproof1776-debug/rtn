@@ -2,38 +2,51 @@
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
-**what currently exists?**: A robust, feature-rich full-stack MVP for Rebel Trade Network (React/FastAPI/MongoDB). Features include custom JWT auth, Fernet data encryption, real-time WebSockets DMs, Media Gallery, threaded comments, community boards, restricted invites, and trusted trader badges. High-impact security hardening has just been implemented (Rate limiting, account lockout, TOTP 2FA, password strength validation, session management). The backend has been significantly refactored for code reuse ( dependency,  helper, centralized WebSocket routing).
+**what currently exists?**: A robust, feature-rich full-stack MVP (React/FastAPI/MongoDB). Features include custom JWT auth (with Bearer token fallback for mobile PWAs), Fernet data encryption, real-time WebSockets DMs, Media Gallery (with deletion capabilities), threaded comments, community boards, restricted invites, trusted trader badges, mutual user blocking, an 8-reason reporting system with an admin moderation queue, onboarding tours, and trader search by name/email. Security hardening (rate limits, encryption fallbacks) is fully implemented.
 
 **Last working item**:
-    - Last item agent was working: Code refactoring to condense and improve application flow. The backend was heavily deduped (removed duplicated admin checks, try/except decryption blocks, and extracted websocket handlers). The frontend  was slimmed down by extracting a reusable .
-    - Status: COMPLETED
-    - Agent Testing Done: Y
-    - Which testing method agent to use?: NA (already verified via curl, bash scripts, and screenshot tool)
+    - Last item agent was working: Implementing Remove photo (Profile picture / avatar deletion) functionality in the user profile. The agent investigated the codebase and discovered that contrary to the previous summary,  has **not** been implemented in the frontend yet. The backend already supports clearing the avatar. The agent has proposed a plan via  and is waiting for user approval.
+    - Status: BLOCKED (Waiting for user response to )
+    - Agent Testing Done: N
+    - Which testing method agent to use?: screenshot tool / frontend testing agent
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  None
+  Issue 1: Profile picture deletion incomplete (P0)
+     - Attempted fixes: Agent analyzed  and . Confirmed the backend API can handle clearing the avatar by receiving an empty string, but the frontend lacks the UI button and the handler function . Sent the plan to the user for confirmation.
+     - Next debug checklist: Wait for user confirmation, then inject  into . Add a trash/delete icon next to the camera icon that triggers the API call to clear the avatar string, then update local state.
+     - Why fix this issue and what will be achieved with the fix?: User explicitly requested the ability to delete profile pictures, mirroring the newly added gallery deletion feature.
+     - Status: IN PROGRESS / USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix?: Both
 
 **In progress Task List**:
   None
 
 **Upcoming and Future Tasks**
   Upcoming Tasks:
-  - 🔴 Task 1: Advanced Frontend Component Refactoring - Split  (per-tab components),  (extract media/actions), and  (extract upload/view modals) to reduce file bloat safely without regressions (P1)
-  - 🔴 Task 2: User Blocking/Reporting - Essential safety feature for community moderation (P1)
+  - 🔴 Task 1 (P1): Admin push/email alerts on new moderation reports.
+  - 🔴 Task 2 (P1): Trust system gaps: add Trusted Trader downgrade path, proof-of-exchange anti-collusion, and Community Guardian badge for good reporters.
+  - 🔴 Task 3 (P1): Unified  replacing native  across the app.
+  - 🔴 Task 4 (P1): Frontend Test Coverage - Add React Testing Library (RTL) tests for critical components (, , , , ).
   
   Future Tasks:
-  - 🟡 Task 3: Location Radius setting - Let users specify travel/trade distance, expanding matching beyond exact city matches (Enhancement / P2)
-  - 🟢 Task 4: Trade Ratings/Reviews - After a trade, both parties can rate the experience (1-5 stars + optional comment) (Enhancement / P3)
-  - 🟢 Task 5: AI NSFW Image Moderation ( integration) - Server-side NSFW filtering on uploads (Backlog / Enhancement)
+  - 🟡 Task 5 (P2): Feed denormalization ( +  onto posts) to eliminate N+1 latency at scale.
+  - 🟡 Task 6 (P2): Standardize soft-delete strategy and create a cron/job for Object Storage orphan cleanup.
+  - 🟡 Task 7 (P2): Account deletion + data export endpoints (GDPR compliance).
+  - 🟢 Task 8 (P3): Trade ratings and AI NSFW Image Moderation.
+  - 🔵 Refactoring Backlog: Refactor , , , and . Address React hook dependency warnings and backend cyclomatic complexity flagged in recent code reviews.
 
 **Completed work in this session**
-- Security Hardening: Implemented rate limiting (), account lockouts, TOTP 2FA (), password strength validation (), and session management (DONE)
-- UI Security Updates: Added  panel to Dashboard and Sidebar,  to registration (DONE)
-- Bug Fix (Messages Scroll): Fixed flexbox issue () preventing the  from scrolling up properly (DONE)
-- Bug Fix (Notifications Toggle): Resolved SW registration race conditions, fixed permissions state handling, and ensured dropdown UX behaves predictably on push subscribe (DONE)
-- Backend Refactoring: Centralized , added  FastAPI dependency, extracted  utilities, and moved WebSockets to  (DONE)
-- Frontend Refactoring: Extracted  from  (DONE)
+- Investigated  and  for avatar deletion logic.
+- Sent  to confirm the avatar deletion implementation plan with the user.
+
+- Recently completed (from previous sessions):
+  - P0 Security Hardening: Write rate limits () and removed encryption key fallback (DONE)
+  - P1 Moderator Role: Hybrid verified role with reporting dashboard and content deletion rights (DONE)
+  - Auth Hardening: Added hybrid Cookie + Bearer token auth path (DONE)
+  - Gallery Deletion: Added deletion endpoints and UI for media gallery (DONE)
+  - Network Search: Added a Search tab to find traders (DONE)
 
 **Earlier issues found/mentioned but not fixed**
   - None
@@ -44,46 +57,38 @@
   - Status: RESOLVED
 
 **Code Architecture**
-safe_decryptrequire_admin
+
 
 **Key Technical Concepts**
-React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encryption, JWT Authentication, Web Push Notifications via VAPID, PWA, Emergent Cloud Object Storage, TOTP 2FA (), Rate Limiting (), Password Strength Measurement ().
+React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encryption, JWT Authentication (Cookie +  fallback), Web Push Notifications via VAPID, PWA, Emergent Cloud Object Storage, Rate Limiting ().
 
 **key DB schema**
   - :  
   - : 
-  - : 
-  - :  (New)
-  - :  (New)
 
 **changes in tech stack**
-  - Installed Python security packages:  (2FA), ,  (Rate Limiting),  (Password checking), , .
+  - Authentication relies on a hybrid model (HttpOnly Cookie + client-side stored token passed via  header) for PWA mobile compatibility.
 
 **All files of reference** 
-  - ,  (Created: Core modules handling 2FA, rate limits, session invalidation)
-  - ,  (Created: UI for security updates)
-  -  (Updated: Broad refactor utilizing new  dependency and )
-  - ,  (Created: Code organization refactoring)
-  -  (Created: Extracted from Register.js for code cleanup)
-  - ,  (Updated: Resolved service worker race condition and logic bugs)
-  -  (Updated: CSS layout fixes for scrollability)
-  -  (Updated: Refreshed with latest endpoints and user credentials)
+  -  (Target file for current avatar delete task)
+  -  (Confirmed backend already supports avatar clearing)
+  - 
 
 **Areas that need refactoring**: 
-  -  (556 lines) - Must split into per-tab components.
-  -  (450 lines) - Must extract  + .
-  -  (547 lines) - Must extract  + .
-  *Note: These are scheduled as Task 1 for the new agent, as they require careful decoupling to prevent regressions.*
+  -  (347 lines)
+  -  (353 lines)
+  -  (374 lines)
+  -  (366 lines)
 
 **key api endpoints**
-  - Auth/Security: , , , 
-  - Push Notifications: 
-  - Admin/Moderation: 
+  - Auth: , 
+  - Profile:  (Handles profile updates, including avatar)
 
 **Critical Info for New Agent**
-  - **Security Layer**: 2FA is implemented but strictly *opt-in* for all users right now. Rate limiting is active (5 failed attempts = 15 min HTTP 429 lockout). 
-  - **Refactored Checks**: You no longer need to write  for Fernet decryption (use  from ). You no longer need to manually check if a user is an admin (use the  FastAPI Depends injection in your route signatures).
-  - **Push API Testing Note**: Standard Chromium incognito mode will throw a permission denied error during Web Push subscriptions. This is intended browser behavior (crbug.com/401439). 
+  - **IMMEDIATE ACTION**: Wait for the user's response to the pending  tool request. Once confirmed, write the  function in  to send an empty string/null for the avatar field to the backend API, and render a trash icon for it. 
+  - **Misinformation correction**: The previous handoff stated  was already injected. The agent has verified it **is not** in the file. You will need to build it.
+  - **Environment Separation**: The app has strict Preview and Production environments. Never hardcode the production URL into .
+  - **No Wipes**: The user explicitly stated no database wipes. Do NOT drop databases.
 
 **documents and test reports created in this job** 
   - 
@@ -91,37 +96,25 @@ React, Tailwind CSS, FastAPI, MongoDB, WebSockets (Real-time Chat), Fernet Encry
   - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- 1. Are there any additional security measures we could implement? (Agent provided recommendations)
- 2. Implement all high impact items (COMPLETED - Security hardened)
- 3. Messages cant scroll (COMPLETED - Flexbox bug fixed)
- 4. Restrict ability to screenshot to admin only (Agent offered choices)
- 5. Cancel action (Action aborted)
- 6. Is there a way to regulate nsfw images/video? (Agent explained approaches)
- 7. Is there a way to regulate nsfw images/video? (Agent re-summarized and offered default)
- 8. Put this action on to do list, notifications toggle not working (COMPLETED - Notification SW toggle fixed, NSFW added to backlog)
- 9. Health check (COMPLETED - All endpoints and DB verified healthy)
- 10. Can we make code condensed and flow better? -> Proceed with all (COMPLETED - Backend Refactored, Frontend  extracted, remaining JS extraction deferred to task list for safety).
-
-*Pending HUMAN message*: None.
+ 1. Please use ask_human tool and confirm your plan now. (COMPLETED - Agent analyzed files and fired )
+ *Pending HUMAN message*: The agent is currently waiting for the user to reply to the  tool prompting them with the plan to finalize the Profile Picture deletion feature.
 
 **Project Health Check:**
   - Broken: None
   - Mocked: None
 
 **3rd Party Integrations** 
-  - Custom JWT Auth
+  - Emergent Cloud Object Storage — uses Emergent LLM Key
   - Web Push Notifications via VAPID
-  - Emergent Cloud Object Storage — uses Emergent LLM Key 
 
 **Testing status**
-  - Testing agent used after significant changes: YES ()
+  - Testing agent used after significant changes: NO (Agent only investigated files and paused)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
 
 **Credentials to test flow:**
-  - Production Admin:  (Password: ) OR  (Password: )
-  - Demo User Email:  (Password: )
+  - Primary Admin:  (Password: )
 
 **What agent forgot to execute**
-  - The heavy frontend component splitting (, , ) and User Blocking/Reporting were deferred to maintain stability. They are tracked under Upcoming Tasks.</analysis>
+  - Nothing was forgotten. The agent followed instructions perfectly by verifying the codebase facts before proposing a plan via  and is successfully pausing for the user's input.</analysis>

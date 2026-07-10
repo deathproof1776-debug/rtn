@@ -14,6 +14,7 @@ import {
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { linkifyText } from '../lib/linkify';
 import ThreadedComments from './ThreadedComments';
 import PostMedia from './post/PostMedia';
 import PostActions from './post/PostActions';
@@ -249,7 +250,7 @@ export default function PostCard({
           }`}
           data-testid={`post-description-${post._id}`}
         >
-          {post.description}
+          {linkifyText(post.description)}
         </p>
 
         {isLongPost && (

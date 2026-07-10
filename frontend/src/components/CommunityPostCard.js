@@ -18,6 +18,7 @@ import {
 } from '@phosphor-icons/react';
 import { formatDistanceToNow } from 'date-fns';
 import ThreadedComments from './ThreadedComments';
+import { linkifyText } from '../lib/linkify';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -239,7 +240,7 @@ export default function CommunityPostCard({
             !expanded && isLongPost ? 'line-clamp-4' : ''
           }`}
         >
-          {post.content}
+          {linkifyText(post.content)}
         </p>
         
         {isLongPost && (

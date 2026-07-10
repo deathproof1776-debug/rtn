@@ -97,8 +97,12 @@ export default function Sidebar({ activeView, setActiveView, onCreatePost, isMob
 
       <div className="p-4 border-t border-[var(--border-color)]">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+          <div className="w-10 h-10 bg-[var(--bg-surface-hover)] flex items-center justify-center text-[var(--brand-primary)] font-semibold overflow-hidden flex-shrink-0">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.charAt(0)?.toUpperCase() || 'U'
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[var(--text-primary)] truncate">{user?.name || 'User'}</p>

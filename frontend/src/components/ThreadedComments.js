@@ -11,6 +11,7 @@ import {
   Check,
   X
 } from '@phosphor-icons/react';
+import { linkifyText } from '../lib/linkify';
 
 /**
  * ThreadedComments - Reusable comment component with reply threading
@@ -103,8 +104,12 @@ export default function ThreadedComments({
         <div className="py-2">
           {/* Comment header */}
           <div className="flex items-start gap-2">
-            <div className="w-7 h-7 rounded-full bg-[var(--brand-primary)] flex items-center justify-center text-white font-bold text-xs shrink-0">
-              {comment.user_name?.[0]?.toUpperCase() || '?'}
+            <div className="w-7 h-7 rounded-full bg-[var(--brand-primary)] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden">
+              {comment.user_avatar ? (
+                <img src={comment.user_avatar} alt={comment.user_name} className="w-full h-full object-cover" />
+              ) : (
+                comment.user_name?.[0]?.toUpperCase() || '?'
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -165,7 +170,7 @@ export default function ThreadedComments({
                 </div>
               ) : (
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5 break-words">
-                  {comment.content}
+                  {linkifyText(comment.content)}
                   {comment.updated_at && comment.updated_at !== comment.created_at && (
                     <span className="text-xs text-[var(--text-muted)] ml-1">(edited)</span>
                   )}

@@ -90,7 +90,7 @@ export default function ProfilePanel() {
       await axios.put(`${API_URL}/api/profile`, profile, {
         withCredentials: true
       });
-      updateUser({ name: profile.name, location: profile.location });
+      updateUser({ name: profile.name, location: profile.location, avatar: profile.avatar });
       setMessage('Profile saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -98,6 +98,20 @@ export default function ProfilePanel() {
       console.error('Error saving profile:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await axios.put(`${API_URL}/api/profile`, { ...profile, avatar: '' }, {
+        withCredentials: true
+      });
+      setProfile({ ...profile, avatar: '' });
+      updateUser({ avatar: '' });
+      setMessage('Profile picture removed');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      setMessage('Error removing profile picture');
     }
   };
 
@@ -171,9 +185,21 @@ export default function ProfilePanel() {
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 w-7 h-7 md:w-8 md:h-8 bg-[var(--brand-primary)] text-white flex items-center justify-center"
+              data-testid="avatar-upload-button"
+              title="Change profile picture"
             >
               <Camera size={14} />
             </button>
+            {profile.avatar && (
+              <button
+                onClick={handleRemoveAvatar}
+                className="absolute -top-1 -right-1 w-6 h-6 bg-[var(--brand-danger)] text-white flex items-center justify-center rounded-full hover:opacity-80 transition-opacity"
+                data-testid="avatar-remove-button"
+                title="Remove profile picture"
+              >
+                <Trash size={11} weight="bold" />
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"

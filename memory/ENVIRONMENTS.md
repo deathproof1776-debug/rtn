@@ -7,7 +7,7 @@ deployments and code updates.
 ## The two environments
 | | PREVIEW (dev/test) | PRODUCTION (live) |
 |---|---|---|
-| Frontend URL | https://homestead-barter.preview.emergentagent.com | https://homestead-barter.emergent.host |
+| Frontend URL | https://rebel-trade-preview-1.preview.emergentagent.com | https://homestead-barter.emergent.host |
 | Backend URL | same preview host (`/api`) | same production host (`/api`) |
 | Database | local Mongo, `DB_NAME="test_database"` | Emergent-managed Mongo (separate `MONGO_URL`/`DB_NAME` injected at deploy) |
 | Purpose | build & test freely | real users/data only |
