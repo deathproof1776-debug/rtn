@@ -5,6 +5,7 @@ Hardened with: rate limiting, account lockout, password strength validation,
 TOTP-based 2FA challenge for admin/verified users, and refresh-token rotation.
 """
 import secrets
+import string
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from bson import ObjectId
@@ -34,6 +35,12 @@ from achievements import backfill_pending_achievements
 router = APIRouter(prefix="/auth")
 
 
+def _generate_public_id() -> str:
+    """Generate a unique 8-character alphanumeric Trader ID."""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(8))
+
+
 def _set_auth_cookies(response: JSONResponse, access_token: str, refresh_token: str):
     response.set_cookie(key="access_token", value=access_token, httponly=True,
                         secure=True, samesite="none", max_age=3600, path="/")
@@ -60,6 +67,7 @@ def _user_response_payload(user: dict) -> dict:
         "role": user.get("role", "user"),
         "has_seen_onboarding": bool(user.get("has_seen_onboarding", False)),
         "pending_achievements": user.get("pending_achievements", []),
+        "banned": user.get("banned", False),
     }
 
 
@@ -111,6 +119,11 @@ async def register(request: Request, user_data: UserRegister):
     validate_password_strength(user_data.password, user_inputs=[email, user_data.name or ""])
 
     hashed = hash_password(user_data.password)
+    # Generate unique public Trader ID
+    while True:
+        pid = _generate_public_id()
+        if not await db.users.find_one({"public_id": pid}):
+            break
     user_doc = {
         "email": email,
         "password_hash": hashed,
@@ -126,6 +139,7 @@ async def register(request: Request, user_data: UserRegister):
         "role": "user",
         "is_verified": False,
         "two_factor_enabled": False,
+        "public_id": pid,
         "invited_by": str(invite["created_by"]),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
@@ -159,6 +173,9 @@ async def login(request: Request, user_data: UserLogin):
     if not verify_password(user_data.password, user["password_hash"]):
         await record_failed_attempt(request, email)
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if user.get("banned"):
+        raise HTTPException(status_code=403, detail="This account has been suspended. Contact an admin for assistance.")
 
     await clear_failed_attempts(email)
 

@@ -77,6 +77,20 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
     setConfirmAction({ type, id, label: `Delete ${label}? This cannot be undone.` });
   };
 
+  const handleBan = async (userId) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/admin/users/${userId}/ban`, {}, { withCredentials: true });
+      setUsers(users.map(u => u._id === userId ? { ...u, banned: res.data.banned } : u));
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update ban status');
+    }
+  };
+
+  const handleRemoveUserFromReport = (userId, userName) => {
+    setConfirmAction({ type: 'user', id: userId, label: `Delete user "${userName}" and all their data? This cannot be undone.` });
+  };
+
   const executeConfirmAction = async () => {
     if (!confirmAction) return;
     try {
@@ -134,7 +148,7 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto" data-testid="admin-dashboard">
+    <div className="max-w-6xl mx-auto overflow-x-hidden" data-testid="admin-dashboard">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button onClick={onBack} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]">
@@ -156,7 +170,7 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
 
       {/* Main Grid - All sections on one page */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4 min-w-0">
           <UsersPanel
             users={users}
             filteredUsers={filteredUsers}
@@ -166,17 +180,18 @@ export default function AdminDashboard({ onBack, onViewProfile }) {
             onVerify={handleVerify}
             onChangeRole={handleChangeRole}
             onDelete={handleDelete}
+            onBan={handleBan}
             onViewProfile={onViewProfile}
           />
         </div>
 
-        <div className="lg:col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4 min-w-0">
           <PostsPanel posts={posts} onDelete={handleDelete} />
           <CommunityPanel communityPosts={communityPosts} onDelete={handleDelete} />
         </div>
 
-        <div className="lg:col-span-1 space-y-4">
-          <ReportsPanel onViewProfile={onViewProfile} />
+        <div className="lg:col-span-1 space-y-4 min-w-0">
+          <ReportsPanel onViewProfile={onViewProfile} onBanUser={handleBan} onRemoveUser={handleRemoveUserFromReport} />
           <ActivityLogPanel auditLogs={auditLogs} />
         </div>
       </div>

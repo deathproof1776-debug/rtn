@@ -236,7 +236,7 @@ export default function CommunityPostCard({
       {/* Content */}
       <div className="relative">
         <p 
-          className={`text-sm md:text-base text-[var(--text-secondary)] mb-3 leading-relaxed whitespace-pre-wrap ${
+          className={`text-sm md:text-base text-[var(--text-secondary)] mb-3 leading-relaxed whitespace-pre-wrap break-words overflow-hidden ${
             !expanded && isLongPost ? 'line-clamp-4' : ''
           }`}
         >

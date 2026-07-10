@@ -172,6 +172,23 @@ async def admin_delete_user(user_id: str, admin: dict = Depends(require_admin)):
     return {"message": "User and all associated data deleted"}
 
 
+@router.put("/users/{user_id}/ban")
+async def ban_user(user_id: str, admin: dict = Depends(require_admin)):
+    if user_id == admin["_id"]:
+        raise HTTPException(status_code=400, detail="Cannot ban your own account")
+    target = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    new_banned = not target.get("banned", False)
+    await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"banned": new_banned}})
+    action = "banned" if new_banned else "unbanned"
+    await log_admin_action(
+        admin, action, "user", user_id, target.get("name", "Unknown"),
+        f"User {target.get('email', '')} {action}"
+    )
+    return {"banned": new_banned, "message": f"User {action} successfully"}
+
+
 # ========================
 # System Messages (Banner Announcements)
 # ========================

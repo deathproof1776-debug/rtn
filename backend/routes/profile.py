@@ -55,9 +55,19 @@ async def update_profile(profile: UserProfile, request: Request):
 @router.get("/profile/{user_id}")
 async def get_profile(user_id: str, request: Request):
     await get_current_user(request)
-    user = await db.users.find_one({"_id": ObjectId(user_id)}, {"password_hash": 0})
+    user = await db.users.find_one({"_id": ObjectId(user_id)}, {"password_hash": 0, "totp_secret": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Lazy backfill public_id for existing users created before this feature
+    if not user.get("public_id"):
+        from routes.auth import _generate_public_id
+        while True:
+            pid = _generate_public_id()
+            if not await db.users.find_one({"public_id": pid}):
+                break
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"public_id": pid}})
+        user["public_id"] = pid
 
     user["_id"] = str(user["_id"])
     user["location"] = safe_decrypt(user.get("location"))

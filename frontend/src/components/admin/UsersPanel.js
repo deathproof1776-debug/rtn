@@ -10,6 +10,7 @@ export default function UsersPanel({
   onVerify,
   onChangeRole,
   onDelete,
+  onBan,
   onViewProfile
 }) {
   return (
@@ -33,8 +34,9 @@ export default function UsersPanel({
           />
         </div>
       </div>
-      <div className="max-h-[400px] overflow-y-auto">
-        {filteredUsers.slice(0, 20).map(u => (
+      {/* No overflow constraint — page scrolls naturally so dropdowns are never clipped */}
+      <div>
+        {filteredUsers.slice(0, 50).map(u => (
           <QuickUserRow
             key={u._id}
             user={u}
@@ -42,6 +44,7 @@ export default function UsersPanel({
             onVerify={onVerify}
             onChangeRole={onChangeRole}
             onDelete={(id, name) => onDelete(id, `user "${name}"`, 'user')}
+            onBan={onBan}
             onViewProfile={onViewProfile}
           />
         ))}

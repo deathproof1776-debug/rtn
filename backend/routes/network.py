@@ -417,7 +417,7 @@ async def search_traders(request: Request, q: str = "", limit: int = 20):
     cursor = db.users.find(
         {
             "_id": {"$nin": exclude_oids},
-            "$or": [{"name": regex}, {"email": regex}],
+            "$or": [{"name": regex}, {"email": regex}, {"public_id": query.upper()}],
         },
         {"password_hash": 0, "totp_secret": 0},
     ).limit(min(max(limit, 1), 50))

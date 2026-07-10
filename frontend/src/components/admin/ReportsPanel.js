@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Flag, Check, X as XIcon, Eye, ArrowFatUp, Lock } from '@phosphor-icons/react';
+import { Flag, Check, X as XIcon, Eye, ArrowFatUp, Lock, Prohibit, UserMinus } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,7 +25,7 @@ const TARGET_LABELS = {
   gallery_item: 'Gallery Item'
 };
 
-export default function ReportsPanel({ onViewProfile }) {
+export default function ReportsPanel({ onViewProfile, onBanUser, onRemoveUser }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [filter, setFilter] = useState('pending');
@@ -149,7 +149,7 @@ export default function ReportsPanel({ onViewProfile }) {
               {r.details && (
                 <p className="text-[var(--text-secondary)] mb-1.5 line-clamp-2 italic">"{r.details}"</p>
               )}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {r.target_type === 'user' && (
                   <button
                     onClick={() => onViewProfile?.(r.target_id)}
@@ -159,6 +159,27 @@ export default function ReportsPanel({ onViewProfile }) {
                     <Eye size={11} />
                     View User
                   </button>
+                )}
+                {/* Admin escalation actions for user reports */}
+                {isAdmin && r.target_type === 'user' && (r.escalated || r.status === 'pending') && (
+                  <>
+                    <button
+                      onClick={() => onBanUser?.(r.target_id)}
+                      className="px-2 py-1 text-[10px] font-medium bg-amber-700 hover:bg-amber-800 text-white flex items-center gap-1"
+                      data-testid={`report-ban-user-${r._id}`}
+                    >
+                      <Prohibit size={11} />
+                      Ban User
+                    </button>
+                    <button
+                      onClick={() => onRemoveUser?.(r.target_id, r.reporter_name || 'User')}
+                      className="px-2 py-1 text-[10px] font-medium bg-red-700 hover:bg-red-800 text-white flex items-center gap-1"
+                      data-testid={`report-remove-user-${r._id}`}
+                    >
+                      <UserMinus size={11} />
+                      Remove User
+                    </button>
+                  </>
                 )}
                 {r.status === 'pending' && (
                   <>

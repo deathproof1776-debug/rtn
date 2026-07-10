@@ -12,7 +12,9 @@ import {
   Wrench,
   Briefcase,
   Images,
-  Trash
+  Trash,
+  Copy,
+  Check
 } from '@phosphor-icons/react';
 import CategorySelector from './CategorySelector';
 import Gallery from './Gallery';
@@ -34,9 +36,11 @@ export default function ProfilePanel() {
     is_verified: false,
     is_trusted_trader: false
   });
+  const [publicId, setPublicId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [copied, setCopied] = useState(false);
   const [networkConnections, setNetworkConnections] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
   const fileInputRef = useRef(null);
@@ -60,6 +64,7 @@ export default function ProfilePanel() {
         is_verified: response.data.is_verified || false,
         is_trusted_trader: response.data.is_trusted_trader || false
       });
+      setPublicId(response.data.public_id || '');
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -156,6 +161,13 @@ export default function ProfilePanel() {
     }
   };
 
+  const copyPublicId = () => {
+    if (!publicId) return;
+    navigator.clipboard.writeText(publicId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -244,9 +256,29 @@ export default function ProfilePanel() {
           </div>
         </div>
 
+        {/* Trader ID */}
+        {publicId && (
+          <div className="bg-[var(--bg-main)] border border-[var(--border-color)] p-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-0.5">Your Trader ID</p>
+              <p className="text-sm font-mono font-bold text-[var(--brand-primary)] tracking-widest" data-testid="trader-public-id">
+                {publicId}
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Share this ID so others can find you</p>
+            </div>
+            <button
+              onClick={copyPublicId}
+              className="flex-shrink-0 p-2 text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors"
+              title="Copy Trader ID"
+              data-testid="copy-trader-id-btn"
+            >
+              {copied ? <Check size={16} className="text-[var(--brand-success)]" /> : <Copy size={16} />}
+            </button>
+          </div>
+        )}
+
         {/* Basic Info */}
-        <div className="grid grid-cols-1 gap-4">
-          <div>
+        <div className="grid grid-cols-1 gap-4">          <div>
             <label className="block text-xs md:text-sm text-[var(--text-secondary)] mb-1.5 md:mb-2">Name</label>
             <input
               type="text"
