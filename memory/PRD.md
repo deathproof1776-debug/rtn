@@ -1,6 +1,22 @@
 # Rebel Trade Network - Bartering Platform
 
-## Latest Updates (Jul 10, 2026) — P0: Avatar Deletion, Avatars App-Wide, Clickable Links
+## Latest Updates (Jul 10, 2026) — P1: Admin Overhaul, Community Board, Unique Trader ID
+
+### Admin Dashboard UI Overhaul (DONE, tested 100%)
+- **Horizontal scroll fix**: Added `overflow-x-hidden` + `min-w-0` to grid columns — no more horizontal scrollbar
+- **Dropdown clipping fix** (`QuickUserRow.js`): Switched from `absolute` to `position:fixed` dropdown using `getBoundingClientRect` — last user in list is now fully accessible
+- **Ban/Unban user**: New `PUT /api/admin/users/{id}/ban` endpoint; QuickUserRow gets "Ban User" / "Unban User" option; banned users show a red "Banned" badge; banned accounts are blocked at login (HTTP 403)
+- **Escalated report actions** (`ReportsPanel.js`): Admin-only "Ban User" (amber) + "Remove User" (red) buttons on user-target reports
+- `UsersPanel.js`: Removed `max-h-[400px] overflow-y-auto` that caused dropdown clipping
+
+### Community Board Text Margins (DONE, tested 100%)  
+- Added `break-words overflow-hidden` to content paragraph in `CommunityPostCard.js` — long text and URLs stay within card boundaries
+
+### Unique Trader ID (DONE, tested 100%)
+- **Backend** (`auth.py`): Generates a unique 8-char alphanumeric `public_id` at registration (e.g. "N9TMTL6B"); lazy backfills existing users on first profile fetch
+- **Backend** (`network.py`): Search endpoint now also matches by `public_id` exact (uppercase)
+- **Frontend** (`ProfilePanel.js`): "Your Trader ID" box shows on own profile only — displays `public_id` with one-click copy button and "Share this ID so others can find you" hint
+
 
 ### Profile Picture Deletion (DONE, tested 100%)
 - Added `handleRemoveAvatar()` in `ProfilePanel.js` — calls `PUT /api/profile` with `avatar: ''`, updates local state + AuthContext
