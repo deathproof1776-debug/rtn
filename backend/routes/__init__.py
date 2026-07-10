@@ -20,6 +20,7 @@ from .community import router as community_router
 from .security import router as security_router
 from .moderation import router as moderation_router, admin_router as moderation_admin_router
 from .engagement import router as engagement_router
+from .changelog import router as changelog_router, admin_router as changelog_admin_router
 
 # Create main API router
 api_router = APIRouter(prefix="/api")
@@ -42,6 +43,8 @@ api_router.include_router(security_router, tags=["Security"])
 api_router.include_router(moderation_router, tags=["Moderation"])
 api_router.include_router(moderation_admin_router, tags=["Moderation Admin"])
 api_router.include_router(engagement_router, tags=["Engagement"])
+api_router.include_router(changelog_router, tags=["Changelog"])
+api_router.include_router(changelog_admin_router, tags=["Changelog Admin"])
 
 
 # Health check at API root

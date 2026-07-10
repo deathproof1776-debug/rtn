@@ -23,6 +23,7 @@ import SecuritySettings from '../components/SecuritySettings';
 import ModerationDashboard from './ModerationDashboard';
 import OnboardingTour from '../components/OnboardingTour';
 import AchievementCelebration from '../components/AchievementCelebration';
+import ChangelogModal from '../components/ChangelogModal';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [viewingGallery, setViewingGallery] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [windowFocused, setWindowFocused] = useState(true);
+  const [changelog, setChangelog] = useState(null);
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'moderator';
 
@@ -70,6 +72,14 @@ export default function Dashboard() {
     if (user && !user.has_seen_onboarding) {
       setShowOnboarding(true);
     }
+  }, [user]);
+
+  // Fetch unread changelog for this user
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API_URL}/api/changelog/latest`, { withCredentials: true })
+      .then(r => { if (r.data?.changelog) setChangelog(r.data.changelog); })
+      .catch(() => {});
   }, [user]);
 
   const pendingAchievements = (user && user.pending_achievements) || [];
@@ -373,6 +383,14 @@ export default function Dashboard() {
           key={currentAchievement}
           achievementKey={currentAchievement}
           onAck={handleAckAchievement}
+        />
+      )}
+
+      {/* One-time changelog — shown after onboarding & achievements */}
+      {!showOnboarding && !currentAchievement && changelog && (
+        <ChangelogModal
+          changelog={changelog}
+          onDismiss={() => setChangelog(null)}
         />
       )}
     </div>
